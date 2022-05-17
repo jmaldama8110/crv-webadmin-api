@@ -3,11 +3,13 @@ const User = require('../model/user')
 
 const auth = async (req, res, next ) => {
 
+    const temp = req.header('Authorization').replace('Bearer ','')
+    console.log(temp);
     try{
         
         const token = req.header('Authorization').replace('Bearer ','')
+        
         const decoded = jwt.verify(token,process.env.JWT_SECRET_KEY)
-        console.log(token);
 
         const expiresAt = new Date(decoded.expires_at);
         if( expiresAt.getTime() < new Date().getTime() ) {
@@ -21,15 +23,12 @@ const auth = async (req, res, next ) => {
         }
         
         req.currentToken = token
-        const data = user.tokens.find( i => i.token === token );
-        req.currentVeridocToken = data.veridoc_token;
-
         req.user = user;
         next()
 
-    }catch(error) {
-        console.log(error);
-        res.status(401).send( {error: 'Not authenticated...'} )
+    }
+    catch(error) {    
+        res.status(401).send( {error:'No authorization!'} )
 
     }
 

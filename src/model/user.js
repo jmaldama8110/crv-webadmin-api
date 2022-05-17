@@ -41,10 +41,10 @@ const userSchema = new mongoose.Schema({
                 type: String,
                 required: true
             },
-            veridoc_token: {
-                type: String,
-                required: true
-            }
+            // veridoc_token: {
+            //     type: String,
+            //     required: true
+            // }
         }]
 
 },
@@ -63,23 +63,25 @@ userSchema.methods.generateAuthToken = async function () {
     const token  = jwt.sign(    {   _id : user._id.toString(), expires_at } , jwt_secret_key)
 
     /// Veridoc Access Token
-    const api = axios.create({
-        method: 'post',
-        url:'/auth/token',
-        baseURL: process.env.VERIDOC_URL,
-        headers: { 'content-type': 'application/x-www-form-urlencoded' }
-    })
-    const params = new url.URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: process.env.VERIDOC_CLIENT_ID,
-        client_secret: process.env.VERIDOC_CLIENT_SECRET,
-        audience: 'veridocid'
-    });
-    const veridocRes = await api.post('/auth/token',params);
-    const veridoc_token = veridocRes.data.access_token;
+    // const api = axios.create({
+    //     method: 'post',
+    //     url:'/auth/token',
+    //     baseURL: process.env.VERIDOC_URL,
+    //     headers: { 'content-type': 'application/x-www-form-urlencoded' }
+    // })
+    // const params = new url.URLSearchParams({
+    //     grant_type: 'client_credentials',
+    //     client_id: process.env.VERIDOC_CLIENT_ID,
+    //     client_secret: process.env.VERIDOC_CLIENT_SECRET,
+    //     audience: 'veridocid'
+    // });
+    // const veridocRes = await api.post('/auth/token',params);
+    // const veridoc_token = veridocRes.data.access_token;
     ////////////////////////////////////////////////////////
 
-    user.tokens = user.tokens.concat( { token, veridoc_token  } )
+    user.tokens = user.tokens.concat( { token  } )
+
+    // user.tokens = user.tokens.concat( { token, veridoc_token  } )
     await user.save()
 
     return token

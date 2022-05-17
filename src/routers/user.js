@@ -91,7 +91,7 @@ router.patch("/users/me", auth, async (req, res) => {
   // PATCH (actualiza) usuario
 
   const actualizaciones = Object.keys(req.body);
-  const camposPermitidos = ["name", "email", "password", "lastname", "cart"];
+  const camposPermitidos = ["name", "email", "password", "lastname"];
 
   if (!isComparaArreglosJSON(actualizaciones, camposPermitidos)) {
     return res
@@ -117,7 +117,7 @@ router.delete("/users/me", auth, async (req, res) => {
 
     // sendGoodbyEmail(req.user.email,req.user.name)
 
-    return res.send(req.user);
+    res.send(req.user);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -127,7 +127,7 @@ router.post("/users/login", async (req, res) => {
   // Enviar peticion Login, generar un nuevo token
 
   try {
-    const user = await User.findUserByCredentials(
+      const user = await User.findUserByCredentials(
       req.body.email,
       req.body.password
     );
@@ -136,7 +136,7 @@ router.post("/users/login", async (req, res) => {
 
     res.send({ user: user, token });
   } catch (error) {
-    console.log(error);
+    
     res.status(400).send(error);
   }
 });
