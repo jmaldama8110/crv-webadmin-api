@@ -7,11 +7,13 @@ const moment = require("moment");
 const multer = require("multer"); // parar cargar imagenes
 const sharp = require("sharp");
 
+
 const axios = require("axios");
 
 const {
   sendWelcomeEmail,
   sendGoodbyEmail,
+  sendRecoverPasswordEmail,
   sendConfirmationEmail,
 } = require("../emails/account");
 const sendWelcomeSMS = require("../sms/sendsms");
@@ -50,7 +52,7 @@ router.post("/users/create/:signup_code", async (req, res) => {
     // calculate 20 minutes of time to live for the signup code
     const createdTime = moment(signup.createdAt);
     const now = moment();
-    ttl = now - createdTime;
+    let ttl = now - createdTime;
     if (ttl > 1200000) {
       throw new Error("Confirmation code has expired!");
     }
@@ -73,7 +75,12 @@ router.post("/users/create/:signup_code", async (req, res) => {
 });
 
 router.get("/users/me", auth, async (req, res) => {
-  res.send(req.user);
+  try{
+    res.send(req.user);
+  } catch (e) {
+    
+    res.status(400).send(e);
+  }
 });
 
 router.post("/notifications", async (req, res) => {
@@ -101,7 +108,7 @@ router.patch("/users/me", auth, async (req, res) => {
 
   try {
     actualizaciones.forEach((valor) => (req.user[valor] = req.body[valor]));
-
+    req.user.password = await User.passwordHashing(req.user.password);
     await req.user.save();
     res.status(200).send(req.user);
   } catch (e) {
@@ -126,6 +133,8 @@ router.delete("/users/me", auth, async (req, res) => {
 router.post("/users/login", async (req, res) => {
   // Enviar peticion Login, generar un nuevo token
 
+  // console.log(req.body.email, req.body.password)
+
   try {
       const user = await User.findUserByCredentials(
       req.body.email,
@@ -134,10 +143,10 @@ router.post("/users/login", async (req, res) => {
 
     const token = await user.generateAuthToken();
 
-    res.send({ user: user, token });
+    res.status(200).send({ user: user, token });
   } catch (error) {
     
-    res.status(400).send(error);
+    res.status(400).send(error + '');
   }
 });
 
@@ -150,10 +159,10 @@ router.post("/users/logout", auth, async (req, res) => {
     });
 
     await req.user.save();
-    res.send();
+    res.status(200).send('Closed sesion...');
   } catch (error) {
-    console.log(error);
-    res.status(500).send();
+    console.log(error + '');
+    res.status(500).send(error);
   }
 });
 
@@ -163,11 +172,64 @@ router.post("/users/logoutall", auth, async (req, res) => {
   try {
     req.user.tokens = [];
     await req.user.save();
-    res.send();
+    res.status(200).send('Closed sesions...');
   } catch (error) {
-    res.status(500).send();
+    res.status(500).send(error);
   }
 });
+
+router.post("/users/recoverpassword", async(req, res) => {
+  //recibir el email
+  const email = req.body.email;
+  const code = passwordGenerator(10);
+
+  try{
+    const user = await User.findOne( {email} );
+    if( !user ){
+      return res.status(400).send();
+    }
+
+    sendRecoverPasswordEmail(email, user.name, code);
+
+    await User.updateOne({email}, {$set:{code, datecode: moment()}})
+    .then(() =>{
+      res.status(200).send({user: user.email,code: code});
+    })
+    .catch(() =>  res.status(400).send())
+
+  } catch (error) {
+    console.log(error + '');
+    res.status(500).send(error);
+  }
+});
+
+router.post("/users/newpassword", async(req,res) => {
+
+  try{
+    const user = await User.findOne({ code: req.body.code});
+    
+    if(!user){
+      throw new Error("Code not found!!");
+    }
+    // Validamos el tiempo del código
+    const codeTime = moment(user.datecode);
+    const now = moment();
+    let timefinal = now - codeTime;
+    console.log(timefinal);
+    if (timefinal > 1200000) {
+      throw new Error("Confirmation code has expired!");
+    }
+    
+    req.body.password = await User.passwordHashing(req.body.password);
+    await User.updateOne({email: user.email}, {$set:{password: req.body.password}})
+    res.status(200).send({user: user});
+
+  } catch(e) {
+    res.status(400).send(e + '')
+  }
+  
+
+})
 
 const upload = multer({
   //dest: 'avatars', commentado para evitar que envie el archivo sea enviado a la carpeta avatars
@@ -190,11 +252,7 @@ const upload = multer({
 });
 
 // POST actualizar imagen avater del usuario autenticado
-router.post(
-  "/users/me/avatar",
-  auth,
-  upload.single("avatar"),
-  async (req, res) => {
+router.post("/users/me/avatar", auth, upload.single("avatar"), async (req, res) => {
     const buffer = await sharp(req.file.buffer)
       .resize({ width: 250, height: 250 })
       .png()
@@ -202,9 +260,15 @@ router.post(
 
     req.user.selfi = buffer;
 
-    await req.user.save();
+    await req.user.save()
+    .then(() => {
+      res.status(200).send(req.user);
+    })
+    .catch(() => {
+      res.status(400).send('Could not update');
+    })
 
-    res.send();
+    // res.send();
   },
   (error, req, res, next) => {
     // handle error while loading upload
@@ -214,25 +278,33 @@ router.post(
 
 // DELETE elminar el avatar del usuario autenticado
 router.delete("/users/me/avatar", auth, async (req, res) => {
-  req.user.avatar = undefined;
-  await req.user.save();
+  // console.log(req.user.selfi)
+  req.user.selfi = undefined;
+  await req.user.save()
+  .then(() => {
+    res.status(200).send('Removed successfully');
+  })
+  .catch(() => {
+    res.status(400).send('Could not delete');
+  })
 
-  res.send();
+  // res.send();
 });
 
 // GET obtener el avatar de cualquier usuario (sin estar logeado)
 router.get("/users/:id/avatar", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
+    // console.log(user)
 
-    if (!user || !user.avatar) {
+    if (!user || !user.selfi) {
       throw new Error();
     }
 
     res.set("Content-Type", "image/png"); // respues en modo imagen desde el server
-    res.send(user.avatar); // send -> campo buffer
+    res.send(user.selfi); // send -> campo buffer
   } catch (error) {
-    res.status(404).send();
+    res.status(404).send('Error');
   }
 });
 
