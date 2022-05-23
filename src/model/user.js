@@ -51,15 +51,16 @@ const userSchema = new mongoose.Schema({
             //     required: true
             // }
         }],
-    code:{
-        type: String,
-        required: false
-    },
-    datecode:{
-        type: Date,
-        required: false
-    }
-
+    recoverpassword: [{
+        recoverpasswordcode:{
+            type: String,
+            required: false
+        },
+        codedate:{
+            type: Date,
+            required: false
+        }
+    }]
 },
 { timestamps: true } )
 
@@ -113,8 +114,7 @@ userSchema.methods.toJSON = function(){
     delete userPublic.password
     delete userPublic.tokens
     delete userPublic.selfi
-    delete userPublic.code
-    delete userPublic.datecode
+    delete userPublic.recoverpassword
 
     return userPublic
 

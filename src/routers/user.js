@@ -186,16 +186,24 @@ router.post("/users/recoverpassword", async(req, res) => {
   try{
     const user = await User.findOne( {email} );
     if( !user ){
-      return res.status(400).send();
+      return res.status(400).send('No se encontro');
     }
 
     sendRecoverPasswordEmail(email, user.name, code);
 
-    await User.updateOne({email}, {$set:{code, datecode: moment()}})
+    // await User.updateOne({email}, {$set:{code, datecode: moment()}})
+    await User.updateOne(
+      {email}, 
+      {$push:{
+        recoverpassword: {
+          recoverpasswordcode: code,
+          codedate: moment()
+      }
+      }})
     .then(() =>{
       res.status(200).send({user: user.email,code: code});
     })
-    .catch(() =>  res.status(400).send())
+    .catch((e) =>  res.status(400).send(e))
 
   } catch (error) {
     console.log(error + '');
@@ -203,10 +211,10 @@ router.post("/users/recoverpassword", async(req, res) => {
   }
 });
 
-router.post("/users/newpassword", async(req,res) => {
+router.post("/users/verifycode", async(req, res) => {
 
   try{
-    const user = await User.findOne({ code: req.body.code});
+    const user = await User.findOne({ 'recoverpassword.recoverpasswordcode': req.body.code});
     
     if(!user){
       throw new Error("Code not found!!");
@@ -214,10 +222,28 @@ router.post("/users/newpassword", async(req,res) => {
     // Validamos el tiempo del código
     const codeTime = moment(user.datecode);
     const now = moment();
-    let timefinal = now - codeTime;
-    console.log(timefinal);
+    let arrCodeRP= user.recoverpassword;
+    const result = arrCodeRP.find(codedate => codedate.recoverpasswordcode === req.body.code);
+    let timefinal = now - result.codedate;
     if (timefinal > 1200000) {
       throw new Error("Confirmation code has expired!");
+    }
+    
+    res.status(200).send({user: user});
+
+  } catch(e) {
+    res.status(400).send(e + '')
+  }
+
+});
+
+router.post("/users/newpassword", async(req,res) => {
+
+  try{
+    const user = await User.findOne({ email: req.body.email});
+    
+    if(!user){
+      throw new Error("email not found!!");
     }
     
     req.body.password = await User.passwordHashing(req.body.password);
