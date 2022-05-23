@@ -30,7 +30,12 @@ const userSchema = new mongoose.Schema({
     },
     password:{
         type: String,
-        trim: true
+        trim: true,
+        validate(pass){
+            if( ! (validador.isLength( pass, { min:6 } ) )  ){
+                throw new Error('Longitud minimo 6 ')
+            }
+        }
     },
     selfi:{
         type: Buffer,
@@ -45,8 +50,17 @@ const userSchema = new mongoose.Schema({
             //     type: String,
             //     required: true
             // }
-        }]
-
+        }],
+    recoverpassword: [{
+        recoverpasswordcode:{
+            type: String,
+            required: false
+        },
+        codedate:{
+            type: Date,
+            required: false
+        }
+    }]
 },
 { timestamps: true } )
 
@@ -87,6 +101,10 @@ userSchema.methods.generateAuthToken = async function () {
     return token
 }
 
+userSchema.statics.passwordHashing = async (password) => {
+    return bcrypt.hash(password,8)
+}
+
 userSchema.methods.toJSON = function(){
     const user = this
 
@@ -96,6 +114,7 @@ userSchema.methods.toJSON = function(){
     delete userPublic.password
     delete userPublic.tokens
     delete userPublic.selfi
+    delete userPublic.recoverpassword
 
     return userPublic
 
@@ -107,13 +126,13 @@ userSchema.statics.findUserByCredentials = async ( email, password ) => {
     const user = await User.findOne( {email} )
 
     if( !user ){
-        throw new Error('No puede logearse...')
+        throw new Error('Username does not exist...')
     }
 
     const isMatch = await bcrypt.compare( password, user.password )
 
     if( !isMatch ){
-        throw new Error ('No puede logearse...')
+        throw new Error ('Verify your password...')
     }
 
     return user

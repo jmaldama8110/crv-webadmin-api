@@ -9,7 +9,7 @@ const sendConfirmationEmail = ( email, name, code )=>{
         to: email,
         from: 'Servicio de Atención a Clientes<contacto@grupoconserva.mx>',
         subject: `${name} confirma tu correo!`,
-        text: `Para poder confirmar tu cuenta, debes ingresar este codigo: ${code}`
+        text: `Para poder confirmar tu cuenta, debes ingresar este código: ${code}`
     })
 
 }
@@ -24,6 +24,17 @@ const sendWelcomeEmail = ( email, name )=>{
     })
 
 }
+
+const sendRecoverPasswordEmail = (email, name, code) =>{
+
+    sgMail.send({
+        to: email,
+        from: 'Servicio de Atención a Clientes<contacto@grupoconserva.mx>',
+        subject: 'Recuperación de contraseña',
+        text: `Hola ${name}, recibimos tu solicitud de recuperación de contraseña, para ayudarte a restablecer tu contraseña y recuperar el acceso a la cuenta, debes ingresar el siguiente código ${code}`
+    }) 
+}
+
 const sendGoodbyEmail = (email, name) =>{
 
     sgMail.send({
@@ -38,5 +49,6 @@ const sendGoodbyEmail = (email, name) =>{
 module.exports = {
     sendConfirmationEmail,
     sendWelcomeEmail,
+    sendRecoverPasswordEmail,
     sendGoodbyEmail
 }

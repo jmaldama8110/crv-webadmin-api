@@ -3,9 +3,9 @@ const User = require('../model/user')
 
 const auth = async (req, res, next ) => {
 
-    const temp = req.header('Authorization').replace('Bearer ','')
-    console.log(temp);
     try{
+        const temp = req.header('Authorization').replace('Bearer ','')
+        // console.log(temp);
         
         const token = req.header('Authorization').replace('Bearer ','')
         
