@@ -365,6 +365,7 @@ const upload = multer({
 
 // POST actualizar imagen avater del usuario autenticado
 router.post("/users/me/avatar", auth, upload.single("avatar"), async (req, res) => {
+    //sharp convierte imagenes grandes en formatos comunes compatibles con la web
     const buffer = await sharp(req.file.buffer)
       .resize({ width: 250, height: 250 })
       .png()

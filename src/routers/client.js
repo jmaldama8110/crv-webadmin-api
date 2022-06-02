@@ -88,7 +88,7 @@ router.post("/clients", auth, async(req, res) =>{
             email: data.email,
             curp: "",
             ine_folio: "",
-            dob: req.body.dob,
+            dob: data.dob,
             segmento: "0",
             loan_cicle: data.loan_cicle,
             client_type: data.client_type,
