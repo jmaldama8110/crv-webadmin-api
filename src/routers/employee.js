@@ -77,6 +77,7 @@ router.post("/employees", auth, async(req, res) =>{
             position_id: data.position_id
         });
 
+        data.password = await User.passwordHashing(data.password)
         await employee.save().then( async (response)=>{
             console.log('Employee created...');
             const user = new User({
