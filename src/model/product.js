@@ -1,10 +1,97 @@
 const mongoose = require("mongoose")
+const mongoose_delete = require('mongoose-delete');
 
 
 const productSchema = new mongoose.Schema({
-    product_name: {
-        type: Stryng,
+    // agregar todos los campos requeridos conforme lo vimos le sabado
+    product_type: { // TNC, VIV
+        type: String,
         required: true,
-        trim:true
+        trim: true
+    },
+    product_name: { // Tu negocio conserva
+        type: String,
+        required: true,
+        trim: true
+    },
+    min_amount: { // 30,000
+        type: String,
+        required: true,
+        trim: true
+    },
+    max_amount: { // 150,000
+        type: String,
+        required: true,
+        trim: true
+    },
+    min_term: { // 2
+        type: Number,
+        required: true,
+    },
+    max_term: { // 12 
+        type: Number,
+        required: true,
+    },
+    // allowed_frequency:[],
+    allowed_frequency: [{// B
+        identifier:{
+            type: String,
+            required: true,
+            trim: true
+        },
+        value: {
+            type: String,
+            required: true,
+            trim: true
+        },
+    }],
+    allowed_term_type: [{ // Meses, Bimestres
+        identifier: { // B
+            type: String,
+            required: true,
+            trim: true
+        },
+        value: { // B
+            type: String,
+            required: true,
+            trim: true
+        },
+        year_periods: { // 6
+            type: String,
+            required: true,
+            trim: true
+        },
+    }],
+    year_days: { // 360 | 365 | 364
+        type: Number,
+        required: true,
+    },
+    rate: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    loan_purpose: [{
+        external_id: {
+            type: String
+        },
+        description: {
+            type: String
+        }
+    }],
+    logo:{
+        type: Buffer,
+        required: false
+    },
+    avatar:{
+        type: Buffer,
+        required: false
     }
-})
+
+}, { timestamps: true })
+
+productSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
+
+const Product = mongoose.model('Products',productSchema)
+
+module.exports = Product
