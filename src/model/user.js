@@ -5,17 +5,34 @@ const jwt = require('jsonwebtoken')
 
 const axios = require('axios');
 const url = require('url');
+const mongoose_delete = require('mongoose-delete');
 
 const userSchema = new mongoose.Schema({
+    client_id: {
+        type: String,
+        required: false,
+    },
+    employee_id: {
+        type: String,
+        required: false,
+    },
     name: {
         type: String,
-        required: true,
-        trim: true
+        trim: true,
+        uppercase: true,
+        required: false
     },
     lastname: {
         type: String,
         trim: true,
-        required: true
+        uppercase: true,
+        required: false
+    },
+    second_lastname: {
+        type: String,
+        trim: true,
+        uppercase: true,
+        required: false
     },
     email:{
         type: String,
@@ -61,6 +78,16 @@ const userSchema = new mongoose.Schema({
             required: false
         }
     }]
+    // is_client: {
+    //     type:Boolean,
+    //     required: true,
+    //     default:false
+    // },
+    // is_employee:{
+    //     type:Boolean,
+    //     required: true,
+    //     default:false
+    // }
 },
 { timestamps: true } )
 
@@ -110,7 +137,7 @@ userSchema.methods.toJSON = function(){
 
     const userPublic = user.toObject()
     
-    delete userPublic._id;
+    // delete userPublic._id;
     delete userPublic.password
     delete userPublic.tokens
     delete userPublic.selfi
@@ -137,6 +164,8 @@ userSchema.statics.findUserByCredentials = async ( email, password ) => {
 
     return user
 }
+
+userSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
 const User = mongoose.model('User',userSchema )
 
