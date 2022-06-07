@@ -126,7 +126,9 @@ router.get("/employees", auth, async(req, res) =>{
         for(let i=0; i < employee.length; i++){
             const _id = employee[i].hierarchy_id;
             const workstation = await Hierarchy.findOne({_id});
-            employee[i].workstation = workstation.hierarchy_name;
+            if(workstation){
+                employee[i].workstation = workstation.hierarchy_name;
+            }
         }
         
         // console.log(employee)
