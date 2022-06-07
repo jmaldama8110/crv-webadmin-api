@@ -145,7 +145,6 @@ userSchema.methods.toJSON = function(){
 
     return userPublic
 
-    
 }
 
 userSchema.statics.findUserByCredentials = async ( email, password ) => {

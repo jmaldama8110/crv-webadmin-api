@@ -90,6 +90,19 @@ const productSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
+productSchema.methods.toJSON = function(){
+    const product = this
+
+    const productPublic = product.toObject()
+    
+    // delete userPublic._id;
+    delete productPublic.logo
+    delete productPublic.avatar
+
+    return productPublic
+
+}
+
 productSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
 const Product = mongoose.model('Products',productSchema)
