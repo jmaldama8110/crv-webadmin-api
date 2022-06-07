@@ -75,7 +75,7 @@ router.post("/employees", auth, async(req, res) =>{
             second_lastname: removeAccents(data.second_lastname),
             email: data.email,
             dob: data.dob,
-            position_id: data.position_id
+            hierarchy_id: data.hierarchy_id
         });
 
         data.password = await User.passwordHashing(data.password)
@@ -129,7 +129,7 @@ router.get("/employees", auth, async(req, res) =>{
             employee[i].workstation = workstation.hierarchy_name;
         }
         
-        console.log(employee)
+        // console.log(employee)
         res.status(200).send(employee);
     } catch(e){
         res.status(400).send(e + '');
