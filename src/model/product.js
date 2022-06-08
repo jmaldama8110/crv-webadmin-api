@@ -80,15 +80,29 @@ const productSchema = new mongoose.Schema({
         }
     }],
     logo:{
-        type: Buffer,
+        type: String,
         required: false
     },
     avatar:{
-        type: Buffer,
+        type: String,
         required: false
     }
 
 }, { timestamps: true })
+
+productSchema.methods.toJSON = function(){
+    const product = this
+
+    const productPublic = product.toObject()
+    
+    // delete userPublic._id;
+    // delete productPublic.logo
+    // delete productPublic.avatar
+    delete productPublic.deleted
+
+    return productPublic
+
+}
 
 productSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 

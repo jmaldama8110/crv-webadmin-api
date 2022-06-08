@@ -186,7 +186,7 @@ router.patch("/users/me", auth, async (req, res) => {
       }
     }
     //Actualizar si es empleado, función de la web
-    if(req.body.is_employee != undefined || req.body.is_employee != ""){
+    if(req.body.employee_id != undefined || req.body.employee_id != ""){
       const _id = req.user.employee_id;
       const employee = await Employee.findOne({_id});
       if(employee != null){
@@ -366,20 +366,26 @@ const upload = multer({
 // POST actualizar imagen avater del usuario autenticado
 router.post("/users/me/avatar", auth, upload.single("avatar"), async (req, res) => {
     //sharp convierte imagenes grandes en formatos comunes compatibles con la web
-    const buffer = await sharp(req.file.buffer)
-      .resize({ width: 250, height: 250 })
-      .png()
-      .toBuffer();
+    if(req.file != undefined){
+      const buffer = await sharp(req.file.buffer)
+        .resize({ width: 250, height: 250 })
+        .png()
+        .toBuffer();
+  
+      req.user.selfi = buffer;
 
-    req.user.selfi = buffer;
+      // console.log(req.user)
+  
+      await req.user.save()
+      .then(() => {
+        res.status(200).send(req.user);
+      })
+      .catch(() => {
+        res.status(400).send('Could not update');
+      })
+    }
 
-    await req.user.save()
-    .then(() => {
-      res.status(200).send(req.user);
-    })
-    .catch(() => {
-      res.status(400).send('Could not update');
-    })
+    res.status(400).send('Empty avatar');
 
     // res.send();
   },
