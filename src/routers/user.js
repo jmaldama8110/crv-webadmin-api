@@ -186,7 +186,7 @@ router.patch("/users/me", auth, async (req, res) => {
       }
     }
     //Actualizar si es empleado, función de la web
-    if(req.body.is_employee != undefined || req.body.is_employee != ""){
+    if(req.body.employee_id != undefined || req.body.employee_id != ""){
       const _id = req.user.employee_id;
       const employee = await Employee.findOne({_id});
       if(employee != null){

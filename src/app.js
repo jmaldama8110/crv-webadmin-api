@@ -8,8 +8,7 @@ const employeeRouter = require('./routers/employee')
 const hierarchyRouter = require('./routers/hierarchy')
 
 const app = express()
-
-app.use(express.json())
+app.use(express.json({limit: '1mb'}))
 app.use(userRouter)
 app.use(productRouter)
 app.use(clientRouter)

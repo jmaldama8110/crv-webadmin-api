@@ -57,6 +57,7 @@ employeeSchema.methods.toJSON = function(){
     // delete employeePublic._id
     // delete employeePublic.user_id
     delete employeePublic.__v
+    delete employeePublic.deleted
 
     return employeePublic
 

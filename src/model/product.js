@@ -80,11 +80,11 @@ const productSchema = new mongoose.Schema({
         }
     }],
     logo:{
-        type: Buffer,
+        type: String,
         required: false
     },
     avatar:{
-        type: Buffer,
+        type: String,
         required: false
     }
 
@@ -96,8 +96,9 @@ productSchema.methods.toJSON = function(){
     const productPublic = product.toObject()
     
     // delete userPublic._id;
-    delete productPublic.logo
-    delete productPublic.avatar
+    // delete productPublic.logo
+    // delete productPublic.avatar
+    delete productPublic.deleted
 
     return productPublic
 

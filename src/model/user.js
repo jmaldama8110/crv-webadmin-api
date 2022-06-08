@@ -78,16 +78,6 @@ const userSchema = new mongoose.Schema({
             required: false
         }
     }]
-    // is_client: {
-    //     type:Boolean,
-    //     required: true,
-    //     default:false
-    // },
-    // is_employee:{
-    //     type:Boolean,
-    //     required: true,
-    //     default:false
-    // }
 },
 { timestamps: true } )
 
@@ -142,6 +132,7 @@ userSchema.methods.toJSON = function(){
     delete userPublic.tokens
     delete userPublic.selfi
     delete userPublic.recoverpassword
+    delete userPublic.deleted
 
     return userPublic
 

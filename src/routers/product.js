@@ -30,31 +30,37 @@ const convertToBuffer = async(img) => {
 }
 
 const images = upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'avatar', maxCount: 1 }])
-router.post("/products", auth,images, async(req,res) => {
+router.post("/products", auth, async(req,res) => {
     //Creamos un nuevo producto
     try{
-        const newProduct = req.body; // checar si el contenido viene en el body o en el body.data
-        const actualizaciones = Object.keys(newProduct);
-        const camposPermitidos = ["product_type","product_name","min_amount","max_amount","min_term","max_term","allowed_frequency","allowed_term_type","year_days","rate","loan_purpose","logo","avatar"];
+        const newProduct = req.body.data;
+        const registro = Object.keys(newProduct);
         
-        if (!isComparaArreglos(actualizaciones, camposPermitidos)) {
+        if (!isComparaArreglos(registro)) {
             return res.status(400).send({ error: "Body includes invalid properties..." });
         }
+        // console.log(req.files);
 
         const product = new Product(newProduct);
 
-        if(req.files.logo != undefined){
-            const logo = req.files.logo;
-            const bufferlogo = await convertToBuffer(logo[0]);
-            product.logo = bufferlogo;
-        }
-        if(req.files.avatar != undefined){
-            const avatar = req.files.avatar;
-            const bufferavatar = await convertToBuffer(avatar[0]);
-            product.avatar = bufferavatar;
-        }
+        // if(req.files != undefined){
+        //     console.log('Trae archivos')
+        //     if(req.files.logo != undefined){
+        //         console.log('trae logo');
+        //         const logo = req.files.logo;
+        //         const bufferlogo = await convertToBuffer(logo[0]);
+        //         product.logo = bufferlogo;
+        //     }
+        //     if(req.files.avatar != undefined){
+        //         console.log('trae avatar');
+        //         const avatar = req.files.avatar;
+        //         const bufferavatar = await convertToBuffer(avatar[0]);
+        //         product.avatar = bufferavatar;
+        //     }
+        // }
 
-        // Si no trae las imágenes guardamos solo el cuerpo
+        // console.log(newProduct)
+
         product.save().then((response)=>{
             res.status(200).send(response.product_name)
         }).catch((e) => {
@@ -62,11 +68,12 @@ router.post("/products", auth,images, async(req,res) => {
         })
 
     } catch(e){
+        console.log(e)
         res.status(400).send(e + '')
     }
 });
 
-// GET obtener todos los conceptos Varios
+
 router.get('/products', auth, async(req, res) => {
 
     const match = {};
@@ -82,6 +89,7 @@ router.get('/products', auth, async(req, res) => {
             throw new Error("Not able to find the product");
         }
         
+        // console.log(data)
         res.status(200).send(data);
 
     } catch (e) {
@@ -90,34 +98,31 @@ router.get('/products', auth, async(req, res) => {
 
 })
 
-router.patch('/products/:id', auth, images, async(req, res) => {
+router.patch('/products/:id', auth, async(req, res) => {
 
     try {
         // console.log(req.body.data)
-        const data = req.body;
+        const data = req.body.data;
+        const _id = req.params.id;
         const actualizaciones = Object.keys(data);
-        const camposPermitidos = ["product_type","product_name","min_amount","max_amount","min_term","max_term","allowed_frequency","allowed_term_type","year_days","rate","loan_purpose","logo","avatar"];
         
-        if (!isComparaArreglos(actualizaciones, camposPermitidos)) {
+        if (!isComparaArreglos(actualizaciones)) {
             return res.status(400).send({ error: "Body includes invalid properties..." });
         }
 
-        const _id = req.params.id;
-
-        if(req.files.logo != undefined){
-            const logo = req.files.logo;
-            const bufferlogo = await convertToBuffer(logo[0]);
-            data.logo = bufferlogo;
-        }
-        if(req.files.avatar != undefined){
-            const avatar = req.files.avatar;
-            const bufferavatar = await convertToBuffer(avatar[0]);
-            data.avatar = bufferavatar;
-        }
+        // if(req.files.logo != undefined){
+        //     const logo = req.files.logo;
+        //     const bufferlogo = await convertToBuffer(logo[0]);
+        //     data.logo = bufferlogo;
+        // }
+        // if(req.files.avatar != undefined){
+        //     const avatar = req.files.avatar;
+        //     const bufferavatar = await convertToBuffer(avatar[0]);
+        //     data.avatar = bufferavatar;
+        // }
 
 
         const product = await Product.findOne( {_id} );
-        // console.log(data)
         if (!product) {
             throw new Error("Not able to find the product");
         }
@@ -173,7 +178,8 @@ router.post('/products/restore/:id',auth,async(req, res) => {
 
 });
 
-const isComparaArreglos = (actualizar, permitido) => {
+const isComparaArreglos = (actualizar) => {
+    const permitido = ["product_type","product_name","min_amount","max_amount","min_term","max_term","allowed_frequency","allowed_term_type","year_days","rate","loan_purpose","logo","avatar"];
     const result = actualizar.every((campo) => permitido.includes(campo));
     return result;
   };
