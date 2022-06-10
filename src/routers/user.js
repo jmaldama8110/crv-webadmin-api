@@ -40,7 +40,7 @@ router.post("/users/signup", async (req, res) => {
       const isClientExist = await Client.findOne({email: data.email});
       
       if(isClientExist){
-        console.log("cliente encontrado")
+        // console.log("cliente encontrado")
         const FullNameClient = isClientExist.name + ' ' + isClientExist.lastname + ' ' + isClientExist.second_lastname;
 
         if(fullName != FullNameClient){
@@ -61,7 +61,7 @@ router.post("/users/signup", async (req, res) => {
         });
         
       } else{
-        console.log("No se encontró el cliente") // Si no se encuentra el cliente se debe registrar como un usuario común
+        // console.log("No se encontró el cliente") // Si no se encuentra el cliente se debe registrar como un usuario común
 
         //guardamos los datos en signup
         const signup = new Signup({ code, ...data });
@@ -170,8 +170,6 @@ router.patch("/users/me", auth, async (req, res) => {
     if(update.second_lastname != undefined){
         update.second_lastname = removeAccents(update.second_lastname)
     }
-
-    const data = update;
 
     actualizaciones.forEach((valor) => (req.user[valor] = update[valor]));
     await req.user.save();
