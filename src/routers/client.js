@@ -104,7 +104,7 @@ router.post("/clients", auth, async(req, res) =>{
         });
     
         await client.save().then((result)=>{
-            console.log('Client created...');
+            // console.log('Client created...');
             return res.status(200).send(result);
         }).catch(async(e) =>{
             return res.status(400).send(e);
@@ -114,6 +114,21 @@ router.post("/clients", auth, async(req, res) =>{
         res.status(400).send(e + '')
     }
 });
+
+router.get("/clientsDeleted", async(req, res) =>{
+    try{
+
+        const client = await Client.findDeleted()
+        if(!client || client.length === 0){
+            throw new Error("Not able to find the client");
+        }
+
+        res.status(200).send(client)
+
+    }catch(e) {
+        res.status(400).send(e + '')
+    }
+})
 
 router.get("/clients", auth, async(req, res) =>{
 

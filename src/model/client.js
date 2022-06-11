@@ -236,7 +236,7 @@ clientSchema.methods.toJSON = function(){
     const client = this
 
     const clientPublic = client.toObject()
-    // delete clientPublic._id
+    delete clientPublic._id
     // delete clientPublic.user_id
     delete clientPublic.deleted
 

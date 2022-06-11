@@ -109,7 +109,7 @@ router.patch('/products/:id', auth, async(req, res) => {
         if (!isComparaArreglos(actualizaciones)) {
             return res.status(400).send({ error: "Body includes invalid properties..." });
         }
-
+        
         // if(req.files.logo != undefined){
         //     const logo = req.files.logo;
         //     const bufferlogo = await convertToBuffer(logo[0]);
@@ -119,20 +119,27 @@ router.patch('/products/:id', auth, async(req, res) => {
         //     const avatar = req.files.avatar;
         //     const bufferavatar = await convertToBuffer(avatar[0]);
         //     data.avatar = bufferavatar;
-        // }
-
+        // }    
 
         const product = await Product.findOne( {_id} );
         if (!product) {
             throw new Error("Not able to find the product");
         }
-        // actualizaciones.forEach((valor) => (product[valor] = data[valor]));
-        await Product.findByIdAndUpdate(_id,data)
-        // await product.save();
+        if(data.default_mobile_product != undefined && data.default_mobile_product === true){
+            const default_mobile = await Product.findOne({"default_mobile_product": true})
+            if(default_mobile != null){
+                if(default_mobile._id != _id){//id diferentes cambiar a falso el que estaba por defecto
+                    await Product.updateOne({_id: default_mobile._id},{"default_mobile_product": false})
+                }
+            }
+        }
+        actualizaciones.forEach((valor) => (product[valor] = data[valor]));
+        // await Product.findByIdAndUpdate(_id,data)
+        await product.save();
 
-        res.status(200).send(data.product_name);
+        res.status(200).send(product);
     } catch (e) {
-        console.log('error' + e);
+        console.log('error' + e + '');
         res.status(400).send(JSON.stringify(e + ''));
     }
 
@@ -179,7 +186,7 @@ router.post('/products/restore/:id',auth,async(req, res) => {
 });
 
 const isComparaArreglos = (actualizar) => {
-    const permitido = ["product_type","product_name","min_amount","max_amount","min_term","max_term","allowed_frequency","allowed_term_type","year_days","rate","loan_purpose","logo","avatar"];
+    const permitido = ["deleted","product_type","product_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency","allowed_term_type","year_days","rate","loan_purpose","logo","avatar","description","default_mobile_product", "enabled"];
     const result = actualizar.every((campo) => permitido.includes(campo));
     return result;
   };

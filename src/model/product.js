@@ -14,6 +14,10 @@ const productSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    step_amount: {
+        type: String,
+        trim: true
+    },
     min_amount: { // 30,000
         type: String,
         required: true,
@@ -24,6 +28,10 @@ const productSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    default_amount: {
+        type: String,
+        trim: true
+    },
     min_term: { // 2
         type: Number,
         required: true,
@@ -32,7 +40,10 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    // allowed_frequency:[],
+    default_term: {
+        type: String,
+        trim: true
+    },
     allowed_frequency: [{// B
         identifier:{
             type: String,
@@ -79,13 +90,25 @@ const productSchema = new mongoose.Schema({
             type: String
         }
     }],
-    logo:{
+    logo: {
         type: String,
         required: false
     },
-    avatar:{
+    avatar: {
         type: String,
         required: false
+    },
+    description:{
+        type: String,
+        trim: true
+    },
+    default_mobile_product: {
+        type: Boolean,
+        default: false
+    },
+    enabled:{
+        type: Boolean,
+        default: true
     }
 
 }, { timestamps: true })
