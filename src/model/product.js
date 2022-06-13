@@ -40,10 +40,7 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    default_term: {
-        type: String,
-        trim: true
-    },
+    default_term: [],
     allowed_frequency: [{// B
         identifier:{
             type: String,

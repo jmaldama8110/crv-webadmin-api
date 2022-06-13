@@ -199,7 +199,8 @@ router.patch("/clients/:id", auth, async(req, res) =>{
         
 
     }catch(e) {
-       res.status(400).send(e + '');
+        console.log(e);
+        res.status(400).send(e + '');
     }
 
 })

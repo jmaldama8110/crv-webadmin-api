@@ -189,6 +189,6 @@ const isComparaArreglos = (actualizar) => {
     const permitido = ["deleted","product_type","product_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency","allowed_term_type","year_days","rate","loan_purpose","logo","avatar","description","default_mobile_product", "enabled"];
     const result = actualizar.every((campo) => permitido.includes(campo));
     return result;
-  };
+};
 
 module.exports = router;
