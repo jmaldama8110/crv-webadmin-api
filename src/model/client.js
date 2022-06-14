@@ -6,20 +6,17 @@ const clientSchema = new mongoose.Schema({
     name: {
         type: String,
         trim: true,
-        uppercase: true,
-        required: true
+        uppercase: true
     },
     lastname: {
         type: String,
         trim: true,
-        uppercase: true,
-        required: true
+        uppercase: true
     },
     second_lastname: {
         type: String,
         trim: true,
-        uppercase: true,
-        required: true
+        uppercase: true
     },
     email:{
         type: String,
@@ -28,7 +25,7 @@ const clientSchema = new mongoose.Schema({
         trim: true,
         validate(value){
             if( ! (validador.isEmail(value)) ){
-                throw new Error('Correo electronico no valido..')
+                throw new Error('Correo electronico no válido..')
             }   
         }
     },
@@ -42,7 +39,7 @@ const clientSchema = new mongoose.Schema({
         trim: true,
         required: false
     },
-    dob: {//Fecha de nacimiento
+    dob: {
         type: Date,
         required: false
     },
@@ -51,7 +48,7 @@ const clientSchema = new mongoose.Schema({
         required:false,
         trim: false
     },
-    loan_cicle: { //Cuántos creditos ha tenido el cliente
+    loan_cycle: { //Cuántos creditos ha tenido el cliente
         type: Number,
         required: false
     },
@@ -67,86 +64,6 @@ const clientSchema = new mongoose.Schema({
         type: Boolean,
         required: false
     },
-    bussiness_data: [{//datos socieconómicos
-        /*
-        total_sale:{
-            type: String,
-            trim:true
-        },
-        spouse_salary:{
-            type: String,
-            trim:true
-        },
-        other_work:{
-            type: String,
-            trim:true
-        },
-        money_from_abroad:{//dinero del extranjero
-            type: String,
-            trim:true
-        },
-        other_income:{//otros ingresos
-            type: String,
-            trim:true
-        },
-        family_expenses:{
-            type: String,
-            trim:true
-        },
-        business_expenses:{
-            type: String,
-            trim:true
-        },
-        acounts_payable:{//cuentas por pagar
-            type: String,
-            trim:true
-        },
-        credit_card:{
-            type: String,
-            trim:true
-        },
-        economic_dependents:{
-            type: String,
-            trim:true
-        },
-        montly_income:{
-            type: String,
-            trim:true
-        },
-        total_business_income:{//ingreso total del negocio
-            type: String,
-            trim:true
-        },
-        total_amount_income:{
-            type: String,
-            trim:true
-        },
-        house_payment:{//pago casa 
-            type: String,
-            trim:true
-        },
-        family_spending:{
-            type: String,
-            trim:true
-        },
-        transportation_expense:{
-            type: String,
-            trim:true
-        },
-        housing_expense:{
-            type: String,
-            trim:true
-        },
-        other_expenses:{
-            type: String,
-            trim:true
-        },
-        total_amount_expenses:{//monto total gastos
-            type: String,
-            trim:true
-        }
-        */
-    }],
     gender: {
         type: String,
         required: false
@@ -155,50 +72,236 @@ const clientSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    address: [{
-        address_type:{//dirección de casa/ofina/negocio
-            type: String,
-            trim:true
-        },
-        federal_entity:{//entidad federativa
-            type: String,
-            trim:true
-        },
-        municipality:{
-            type: String,
-            trim:true
-        },
-        locality:{
-            type: String,
-            trim:true
-        },
-        settlement:{//asentamiento
-            type: String,
-            trim:true
-        }
-    }],
+    address: [],
     phones: [{
         phone: {
             type: String,
+            trim: true,
             required: false
             // unique:true
         },
         phone_type: {
             type: String,
+            trim: true,
             required: false
         },
         phone_propierty: {
             type: Boolean,
             required: false
-        },
+        }
     }],
-    credit_circuit_data: [//arreglo por fechas(por checar)
-
-    ],
-    external_id:{//El id del otro sistema
+    credit_circuit_data: [],//arreglo por fechas(por checar)
+    external_id:{
         type: String,
         trim:true
-    }
+    },
+    //TODO:Campos nuevos
+    tributary_regime: {
+        type: String,
+        trim:true
+    },
+    rfc:{
+        type: String,
+        trim:true
+    },
+    nationality:{
+        type: String,
+        trim:true
+    },
+    province_of_birth: {
+        type: String,
+        trim:true
+    },
+    country_of_birth: {
+        type: String,
+        trim:true
+    },
+    ocupation: {
+        type: String,
+        trim:true
+    },
+    marital_status: {
+        type: String,
+        trim:true
+    },
+    identification_type: {// INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
+        type: String,
+        trim:true
+    },
+    guarantor:[{//Revisar si queda en objetos con los campos definidos o deja vacío el array
+        name: {
+            type: String,
+            trim: true,
+            uppercase: true
+        },
+        lastname: {
+            type: String,
+            trim: true,
+            uppercase: true
+        },
+        second_lastname: {
+            type: String,
+            trim: true,
+            uppercase: true
+        },
+        dob: {
+            type: Date,
+            required: false
+        },
+        gender: {
+            type: String,
+            required: false
+        },
+        nationality: {
+            type: String,
+            trim:true
+        },
+        province_of_birth: {
+            type: String,
+            trim:true
+        },
+        country_of_birth: {
+            type: String,
+            trim:true
+        },
+        rfc: {
+            type: String,
+            trim:true
+        },
+        curp: {
+            type: String,
+            trim:true
+        },
+        ocupation: {
+            type: String,
+            trim:true
+        },
+        e_signature: {
+            type: String,
+            trim:true
+        },
+        marital_status: {
+            type: String,
+            trim:true
+        },
+        phones: [{
+            phone: {
+                type: String,
+                trim: true,
+                required: false
+                // unique:true
+            },
+            phone_type: {
+                type: String,
+                trim: true,
+                required: false
+            },
+            phone_propierty: {
+                type: Boolean,
+                required: false
+            }
+        }],
+        email:{
+            type: String,
+            unique: true,
+            trim: true,
+            validate(value){
+                if( ! (validador.isEmail(value)) ){
+                    throw new Error('Correo electronico no válido..')
+                }   
+            }
+        },
+        identification_type: {
+            type: String,
+            trim:true
+        },
+        identification_number: {
+            type: String,
+            trim:true
+        },
+        company_works_at: {
+            type: String,
+            trim:true
+        },
+        address: [],
+        person_resides_at: {
+            type: String,
+            trim:true
+        },
+    }],
+    business_data:[{
+        business_name: {
+            type: String,
+            trim:true
+        },
+        economic_activity: {
+            type: String,
+            trim:true
+        },
+        sector: {
+            type: String,
+            trim:true
+        },
+        business_since: {
+            type: String,
+            trim:true
+        },
+        prmise_type: {
+            type: String,
+            trim:true
+        },
+        phones: [{
+            phone: {
+                type: String,
+                trim: true,
+                required: false
+                // unique:true
+            },
+            phone_type: {
+                type: String,
+                trim: true,
+                required: false
+            }
+        }],
+        previous_business_activity: {
+            type: String,
+            trim: true,
+            required: false
+        },
+        address: []
+    }],
+    beneficiaries:[{
+        name: {
+            type: String,
+            trim: true,
+            uppercase: true
+        },
+        lastname: {
+            type: String,
+            trim: true,
+            uppercase: true
+        },
+        second_lastname: {
+            type: String,
+            trim: true,
+            uppercase: true
+        },
+        dob: {
+            type: Date,
+            required: false
+        },
+        relationship:  {
+            type: String,
+            trim: true
+        },
+        percentage:  { //Verificar que del total de beneficiarios sume 100%
+            type: String,
+            trim: true,
+            uppercase: true
+        },
+    }],
+    personal_references: [],
+    guarantee: []
 }, { timestamps: true })
 
 
@@ -206,8 +309,6 @@ clientSchema.methods.toJSON = function(){
     const client = this
 
     const clientPublic = client.toObject()
-    // delete clientPublic._id
-    // delete clientPublic.user_id
     delete clientPublic.deleted
 
     return clientPublic
@@ -221,3 +322,4 @@ clientSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overri
 
 const Client = mongoose.model('Client', clientSchema)
 module.exports = Client
+
