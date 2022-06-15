@@ -60,10 +60,6 @@ const clientSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    // is_new: {
-    //     type: Boolean,
-    //     required: false
-    // },
     gender: {
         type: String,
         required: false
@@ -77,13 +73,10 @@ const clientSchema = new mongoose.Schema({
         phone: {
             type: String,
             trim: true,
-            required: false
-            // unique:true
         },
         phone_type: {
             type: String,
             trim: true,
-            required: false
         },
         phone_propierty: {
             type: Boolean,
@@ -188,17 +181,10 @@ const clientSchema = new mongoose.Schema({
             phone: {
                 type: String,
                 trim: true,
-                required: false
-                // unique:true
             },
             phone_type: {
                 type: String,
                 trim: true,
-                required: false
-            },
-            phone_propierty: {
-                type: Boolean,
-                required: false
             }
         }],
         email:{
@@ -253,13 +239,10 @@ const clientSchema = new mongoose.Schema({
             phone: {
                 type: String,
                 trim: true,
-                required: false
-                // unique:true
             },
             phone_type: {
                 type: String,
                 trim: true,
-                required: false
             }
         }],
         previous_business_activity: {
@@ -297,13 +280,10 @@ const clientSchema = new mongoose.Schema({
             phone: {
                 type: String,
                 trim: true,
-                required: false
-                // unique:true
             },
             phone_type: {
                 type: String,
                 trim: true,
-                required: false
             }
         }],
         percentage:  { //Verificar que del total de beneficiarios sume 100%
