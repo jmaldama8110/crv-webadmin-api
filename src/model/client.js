@@ -72,11 +72,11 @@ const clientSchema = new mongoose.Schema({
     phones: [{
         phone: {
             type: String,
-            trim: true,
+            trim: true
         },
         phone_type: {
             type: String,
-            trim: true,
+            trim: true
         },
         phone_propierty: {
             type: Boolean,
@@ -180,11 +180,11 @@ const clientSchema = new mongoose.Schema({
         phones: [{
             phone: {
                 type: String,
-                trim: true,
+                trim: true
             },
             phone_type: {
                 type: String,
-                trim: true,
+                trim: true
             }
         }],
         email:{
@@ -238,11 +238,11 @@ const clientSchema = new mongoose.Schema({
         phones: [{
             phone: {
                 type: String,
-                trim: true,
+                trim: true
             },
             phone_type: {
                 type: String,
-                trim: true,
+                trim: true
             }
         }],
         previous_business_activity: {
