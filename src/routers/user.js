@@ -36,7 +36,6 @@ router.post("/users/signup", async (req, res) => {
     };
 
     const fullName = data.name.trim() + ' ' + data.lastname.trim() + ' ' + data.second_lastname.trim();
-    
       const isClientExist = await Client.findOne({email: data.email});
       
       if(isClientExist){

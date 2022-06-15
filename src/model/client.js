@@ -60,10 +60,10 @@ const clientSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    is_new: {
-        type: Boolean,
-        required: false
-    },
+    // is_new: {
+    //     type: Boolean,
+    //     required: false
+    // },
     gender: {
         type: String,
         required: false
@@ -203,7 +203,6 @@ const clientSchema = new mongoose.Schema({
         }],
         email:{
             type: String,
-            unique: true,
             trim: true,
             validate(value){
                 if( ! (validador.isEmail(value)) ){
@@ -224,7 +223,7 @@ const clientSchema = new mongoose.Schema({
             trim:true
         },
         address: [],
-        person_resides_at: {
+        person_resides_in: {
             type: String,
             trim:true
         },
@@ -246,7 +245,7 @@ const clientSchema = new mongoose.Schema({
             type: String,
             trim:true
         },
-        prmise_type: {
+        premise_type: {
             type: String,
             trim:true
         },
@@ -294,6 +293,19 @@ const clientSchema = new mongoose.Schema({
             type: String,
             trim: true
         },
+        phones: [{
+            phone: {
+                type: String,
+                trim: true,
+                required: false
+                // unique:true
+            },
+            phone_type: {
+                type: String,
+                trim: true,
+                required: false
+            }
+        }],
         percentage:  { //Verificar que del total de beneficiarios sume 100%
             type: String,
             trim: true,
