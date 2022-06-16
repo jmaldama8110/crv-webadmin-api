@@ -43,92 +43,46 @@ const clientSchema = new mongoose.Schema({
         type: Date,
         required: false
     },
-    segmento: {
-        type: String,
-        required:false,
-        trim: false
-    },
     loan_cycle: { //Cuántos creditos ha tenido el cliente
         type: Number,
         required: false
     },
-    client_type:{
-        type: String,
-        required: false
-    },
-    branch : { //Sucursal
-        type: String,
-        required: false
-    },
-    is_new: {
-        type: Boolean,
-        required: false
-    },
-    gender: {
-        type: String,
-        required: false
-    },
-    scolarship: {
-        type: String,
-        required: false
-    },
+    client_type:[],
+    branch : [],
+    sex: [],
+    scolarship: [],
     address: [],
     phones: [{
         phone: {
             type: String,
-            trim: true,
-            required: false
-            // unique:true
+            trim: true
         },
         phone_type: {
             type: String,
-            trim: true,
-            required: false
+            trim: true
         },
         phone_propierty: {
             type: Boolean,
             required: false
         }
     }],
-    credit_circuit_data: [],//arreglo por fechas(por checar)
     external_id:{
         type: String,
         trim:true
     },
     //TODO:Campos nuevos
-    tributary_regime: {
-        type: String,
-        trim:true
-    },
+    tributary_regime: [],
     rfc:{
         type: String,
         trim:true
     },
-    nationality:{
-        type: String,
-        trim:true
-    },
-    province_of_birth: {
-        type: String,
-        trim:true
-    },
-    country_of_birth: {
-        type: String,
-        trim:true
-    },
-    ocupation: {
-        type: String,
-        trim:true
-    },
-    marital_status: {
-        type: String,
-        trim:true
-    },
-    identification_type: {// INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
-        type: String,
-        trim:true
-    },
-    guarantor:[{//Revisar si queda en objetos con los campos definidos o deja vacío el array
+    nationality:[],
+    province_of_birth: [],
+    country_of_birth: [],
+    ocupation: [],
+    marital_status: [],
+    identification_type: [],// INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
+    guarantor:[{
         name: {
             type: String,
             trim: true,
@@ -148,22 +102,10 @@ const clientSchema = new mongoose.Schema({
             type: Date,
             required: false
         },
-        gender: {
-            type: String,
-            required: false
-        },
-        nationality: {
-            type: String,
-            trim:true
-        },
-        province_of_birth: {
-            type: String,
-            trim:true
-        },
-        country_of_birth: {
-            type: String,
-            trim:true
-        },
+        sex: [],
+        nationality:[],
+        province_of_birth: [],
+        country_of_birth: [],
         rfc: {
             type: String,
             trim:true
@@ -172,49 +114,27 @@ const clientSchema = new mongoose.Schema({
             type: String,
             trim:true
         },
-        ocupation: {
-            type: String,
-            trim:true
-        },
+        ocupation: [],
         e_signature: {
             type: String,
             trim:true
         },
-        marital_status: {
-            type: String,
-            trim:true
-        },
+        marital_status: [],
         phones: [{
             phone: {
                 type: String,
-                trim: true,
-                required: false
-                // unique:true
+                trim: true
             },
             phone_type: {
                 type: String,
-                trim: true,
-                required: false
-            },
-            phone_propierty: {
-                type: Boolean,
-                required: false
+                trim: true
             }
         }],
         email:{
             type: String,
-            unique: true,
             trim: true,
-            validate(value){
-                if( ! (validador.isEmail(value)) ){
-                    throw new Error('Correo electronico no válido..')
-                }   
-            }
         },
-        identification_type: {
-            type: String,
-            trim:true
-        },
+        identification_type: [],
         identification_number: {
             type: String,
             trim:true
@@ -224,7 +144,7 @@ const clientSchema = new mongoose.Schema({
             trim:true
         },
         address: [],
-        person_resides_at: {
+        person_resides_in: {
             type: String,
             trim:true
         },
@@ -234,33 +154,21 @@ const clientSchema = new mongoose.Schema({
             type: String,
             trim:true
         },
-        economic_activity: {
-            type: String,
-            trim:true
-        },
-        sector: {
-            type: String,
-            trim:true
-        },
+        economic_activity: [],
+        sector: [],
         business_since: {
             type: String,
             trim:true
         },
-        prmise_type: {
-            type: String,
-            trim:true
-        },
+        store_type: [],
         phones: [{
             phone: {
                 type: String,
-                trim: true,
-                required: false
-                // unique:true
+                trim: true
             },
             phone_type: {
                 type: String,
-                trim: true,
-                required: false
+                trim: true
             }
         }],
         previous_business_activity: {
@@ -290,15 +198,23 @@ const clientSchema = new mongoose.Schema({
             type: Date,
             required: false
         },
-        relationship:  {
-            type: String,
-            trim: true
-        },
+        relationship:  [],
+        phones: [{
+            phone: {
+                type: String,
+                trim: true,
+            },
+            phone_type: {
+                type: String,
+                trim: true,
+            }
+        }],
         percentage:  { //Verificar que del total de beneficiarios sume 100%
             type: String,
             trim: true,
             uppercase: true
         },
+        address: []
     }],
     personal_references: [],
     guarantee: []
