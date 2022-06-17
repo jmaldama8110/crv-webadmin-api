@@ -50,7 +50,7 @@ const clientSchema = new mongoose.Schema({
     client_type:[],
     branch : [],
     sex: [],
-    scolarship: [],
+    education_level: [],
     address: [],
     phones: [{
         phone: {
