@@ -7,9 +7,10 @@ const auth = require("../middleware/auth");
 router.post("/clients", auth, async(req, res) =>{
 
     try{
-        const registro = Object.keys(req.body.data)
+        const registro = Object.keys(req.body)
 
-        const data = req.body.data;
+        const data = req.body;
+
         const client = new Client({...data});
     
         await client.save().then((result)=>{
@@ -65,7 +66,7 @@ router.patch("/clients/:id", auth, async(req, res) =>{
 
     
     try{
-        // const update = req.body.data;
+        // const update = req.body;
         // if(!comparar(actualizar)){
         //     return res.status(400).send({ error: "Body includes invalid properties..." });
         // }
@@ -80,7 +81,7 @@ router.patch("/clients/:id", auth, async(req, res) =>{
         // }
 
         const _id = req.params.id;
-        const data = req.body.data;
+        const data = req.body;
         const actualizar = Object.keys(data)
 
         const client = await Client.findOne({_id});
