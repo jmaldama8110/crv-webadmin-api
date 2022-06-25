@@ -6,17 +6,20 @@ const clientSchema = new mongoose.Schema({
     name: {
         type: String,
         trim: true,
-        uppercase: true
+        uppercase: true,
+        required: true
     },
     lastname: {
         type: String,
         trim: true,
-        uppercase: true
+        uppercase: true,
+        required: true
     },
     second_lastname: {
         type: String,
         trim: true,
-        uppercase: true
+        uppercase: true,
+        required: true
     },
     email:{
         type: String,

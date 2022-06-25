@@ -28,8 +28,8 @@ const auth = async (req, res, next ) => {
 
     }
     catch(error) {    
-        res.status(401).send( {error:'No authorization!'} )
-
+        // res.status(401).send( {error:'No authorization!'} )
+        res.status(401).send('No authorization!' )
     }
 
 }

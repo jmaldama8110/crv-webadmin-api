@@ -3,10 +3,6 @@ const mongoose_delete = require('mongoose-delete');
 const validador = require('validator')
 
 const employeeSchema = new mongoose.Schema({
-    // user_id: {
-    //     type: String,
-    //     required: true,
-    // },
     name: {
         type: String,
         trim:true,
@@ -36,7 +32,7 @@ const employeeSchema = new mongoose.Schema({
             }   
         }
     },
-    dob: {//Fecha de nacimiento
+    dob: {
         type: Date,
         required: false
     },
@@ -54,8 +50,6 @@ employeeSchema.methods.toJSON = function(){
 
     const employee = this
     const employeePublic = employee.toObject()
-    // delete employeePublic._id
-    // delete employeePublic.user_id
     delete employeePublic.__v
     delete employeePublic.deleted
 

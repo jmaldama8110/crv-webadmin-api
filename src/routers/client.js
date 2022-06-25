@@ -10,17 +10,19 @@ router.post("/clients", auth, async(req, res) =>{
         const registro = Object.keys(req.body)
 
         const data = req.body;
+        // console.log('datos cliente', data)
 
         const client = new Client({...data});
     
         await client.save().then((result)=>{
             // console.log('Client created...');
-            return res.status(200).send(result);
+            return res.status(201).send(result);
         }).catch(async(e) =>{
             return res.status(400).send(e);
         });
 
     } catch(e){
+        console.log(e)
         res.status(400).send(e + '')
     }
 });
@@ -57,7 +59,7 @@ router.get("/clients", auth, async(req, res) =>{
         res.status(200).send(client);
 
    } catch(e) {
-       console.log(e)
+    //    console.log(e)
        res.status(400).send(e + '');
    }
 })
@@ -107,7 +109,6 @@ router.patch("/clients/:id", auth, async(req, res) =>{
 
         res.status(200).send(client);
         
-
     }catch(e) {
         console.log(e);
         res.status(400).send(e + '');

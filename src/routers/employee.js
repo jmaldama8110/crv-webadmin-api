@@ -62,17 +62,27 @@ const auth = require("../middleware/auth");
 router.post("/employees", auth, async(req, res) =>{
 
     try{
-        const registro = Object.keys(req.body.data)
+        const registro = Object.keys(req.body)
         if(!comparar(registro)){
             return res.status(400).send({ error: "Body includes invalid properties..." });
         }
 
-        const data = req.body.data;
+        const data = req.body;
+
+        if(data.name != undefined){
+            data.name = removeAccents(data.name)
+        }
+        if(data.lastname != undefined){
+            data.lastname = removeAccents(data.lastname)
+        }
+        if(data.second_lastname != undefined){
+            data.second_lastname = removeAccents(data.second_lastname)
+        }
 
         const employee = new Employee({
-            name: removeAccents(data.name),
-            lastname: removeAccents(data.lastname),
-            second_lastname: removeAccents(data.second_lastname),
+            name: data.name,
+            lastname: data.lastname,
+            second_lastname: data.second_lastname,
             email: data.email,
             dob: data.dob,
             hierarchy_id: data.hierarchy_id
@@ -80,7 +90,7 @@ router.post("/employees", auth, async(req, res) =>{
 
         data.password = await User.passwordHashing(data.password)
         await employee.save().then( async (response)=>{
-            console.log('Employee created...');
+            // console.log('Employee created...');
             const user = new User({
                 employee_id: response._id,
                 name: response.name,
@@ -91,7 +101,7 @@ router.post("/employees", auth, async(req, res) =>{
               });
 
               await user.save().then((resp) => {
-                return res.status(200).send(resp);
+                return res.status(201).send(resp);
               })
               .catch(async(e) =>{
                 await Employee.findOneAndDelete({ _id: response._id })
@@ -100,6 +110,7 @@ router.post("/employees", auth, async(req, res) =>{
               })
 
         }).catch(async(e) =>{
+            console.log(e + '')
             res.status(400).send(e + '');
         });
 
@@ -128,6 +139,8 @@ router.get("/employees", auth, async(req, res) =>{
             const workstation = await Hierarchy.findOne({_id});
             if(workstation){
                 employee[i].workstation = workstation.hierarchy_name;
+            } else{
+                employee[i].workstation = 'Sin puesto asignado';
             }
         }
         
@@ -143,7 +156,7 @@ router.patch("/employees/:id", auth, async(req, res) => {
 
     
     try{
-        const update = req.body.data;
+        const update = req.body;
         const actualizar = Object.keys(update);
         if(!comparar(actualizar)){
             return res.status(400).send({ error: "Body includes invalid properties..." });

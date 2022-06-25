@@ -33,7 +33,7 @@ const images = upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'avatar', m
 router.post("/products", auth, async(req,res) => {
     //Creamos un nuevo producto
     try{
-        const newProduct = req.body.data;
+        const newProduct = req.body;
         const registro = Object.keys(newProduct);
         
         if (!isComparaArreglos(registro)) {
@@ -62,7 +62,7 @@ router.post("/products", auth, async(req,res) => {
         // console.log(newProduct)
 
         product.save().then((response)=>{
-            res.status(200).send(response.product_name)
+            res.status(201).send(response)
         }).catch((e) => {
             res.status(400).send(e + '');
         })
@@ -80,20 +80,19 @@ router.get('/products', auth, async(req, res) => {
 
     try {
 
-        if (req.query.id) {
-            match._id = req.query.id;
+        if(req.query.id){
+            match._id = req.query.id
         }
 
-        const data = await Product.find(match);
-        if (!data) {
+        const product = await Product.find(match);
+        if (!product || product.length === 0) {
             throw new Error("Not able to find the product");
         }
         
-        // console.log(data)
-        res.status(200).send(data);
+        res.status(200).send(product);
 
     } catch (e) {
-        res.status(400).send(e);
+        res.status(400).send(e + '');
     }
 
 })
@@ -102,7 +101,7 @@ router.patch('/products/:id', auth, async(req, res) => {
 
     try {
         // console.log(req.body.data)
-        const data = req.body.data;
+        const data = req.body;
         const _id = req.params.id;
         const actualizaciones = Object.keys(data);
         

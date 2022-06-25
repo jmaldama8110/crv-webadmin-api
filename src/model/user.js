@@ -128,7 +128,7 @@ userSchema.methods.toJSON = function(){
     const userPublic = user.toObject()
     
     // delete userPublic._id;
-    delete userPublic.password
+    // delete userPublic.password
     delete userPublic.tokens
     delete userPublic.selfi
     delete userPublic.recoverpassword

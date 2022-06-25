@@ -22,62 +22,90 @@ const sendWelcomeSMS = require("../sms/sendsms");
 const passwordGenerator = require("../utils/codegenerator");
 
 
+// router.post("/users/signup", async (req, res) => {
+//   const code = passwordGenerator(10);
+
+//   try {
+//     const data = {
+//       name: removeAccents(req.body.name),
+//       lastname : removeAccents(req.body.lastname),
+//       second_lastname: removeAccents(req.body.second_lastname),
+//       email: req.body.email,
+//       password: req.body.password,
+//       dob: req.body.dob
+//     };
+
+//     const fullName = data.name.trim() + ' ' + data.lastname.trim() + ' ' + data.second_lastname.trim();
+//       const isClientExist = await Client.findOne({email: data.email});
+      
+//       if(isClientExist){
+//         // console.log("cliente encontrado")
+//         const FullNameClient = isClientExist.name + ' ' + isClientExist.lastname + ' ' + isClientExist.second_lastname;
+
+//         if(fullName != FullNameClient){
+//           throw new Error("Check your full name");
+//         }
+
+//         const client_id = isClientExist._id;
+//         const signup = new Signup({ code,client_id, ...data});
+//         await signup.save();
+
+//         // sendConfirmationEmail(req.body.email, req.body.name, code)
+//         return res.status(201).send({
+//           signup: {
+//             name: signup.name,
+//             lastname: signup.lastname,
+//             email: signup.email,
+//           },
+//         });
+        
+//       } else{
+//         // console.log("No se encontró el cliente") // Si no se encuentra el cliente se debe registrar como un usuario común
+
+//         //guardamos los datos en signup
+//         const signup = new Signup({ code, ...data });
+//         await signup.save();
+
+//         // sendConfirmationEmail(req.body.email, req.body.name, code)
+//         return res.status(201).send({
+//           signup: {
+//             name: signup.name,
+//             lastname: signup.lastname,
+//             second_lastname: signup.second_lastname,
+//             email: signup.email,
+//           },
+//         });
+    
+//       }
+
+//   } catch (err) {
+//     res.status(400).send(err + '');
+//   }
+// });
+
 router.post("/users/signup", async (req, res) => {
   const code = passwordGenerator(10);
 
   try {
-    const data = {
-      name: removeAccents(req.body.name),
-      lastname : removeAccents(req.body.lastname),
-      second_lastname: removeAccents(req.body.second_lastname),
-      email: req.body.email,
-      password: req.body.password,
-      dob: req.body.dob
-    };
 
-    const fullName = data.name.trim() + ' ' + data.lastname.trim() + ' ' + data.second_lastname.trim();
-      const isClientExist = await Client.findOne({email: data.email});
-      
-      if(isClientExist){
-        // console.log("cliente encontrado")
-        const FullNameClient = isClientExist.name + ' ' + isClientExist.lastname + ' ' + isClientExist.second_lastname;
+    const data = req.body;
 
-        if(fullName != FullNameClient){
-          throw new Error("Check your full name");
-        }
+    const signup = new Signup({ code, ...data });
+    await signup.save();
 
-        const client_id = isClientExist._id;
-        const signup = new Signup({ code,client_id, ...data});
-        await signup.save();
-
-        // sendConfirmationEmail(req.body.email, req.body.name, code)
-        return res.status(201).send({
-          signup: {
-            name: signup.name,
-            lastname: signup.lastname,
-            email: signup.email,
-          },
-        });
-        
-      } else{
-        // console.log("No se encontró el cliente") // Si no se encuentra el cliente se debe registrar como un usuario común
-
-        //guardamos los datos en signup
-        const signup = new Signup({ code, ...data });
-        await signup.save();
-
-        // sendConfirmationEmail(req.body.email, req.body.name, code)
-        return res.status(201).send({
-          signup: {
-            name: signup.name,
-            lastname: signup.lastname,
-            second_lastname: signup.second_lastname,
-            email: signup.email,
-          },
-        });
+    // sendConfirmationEmail(req.body.email, req.body.name, code)
+    return res.status(201).send({
+      signup
+      // signup: {
+      //   id: signup._id,
+      //   name: signup.name,
+      //   lastname: signup.lastname,
+      //   second_lastname: signup.second_lastname,
+      //   email: signup.email,
+      //   code: signup.code
+      // },
+    });
     
-      }
-
   } catch (err) {
     res.status(400).send(err + '');
   }
@@ -99,33 +127,51 @@ router.post("/users/create/:signup_code", async (req, res) => {
     if (ttl > 1200000) {
       throw new Error("Confirmation code has expired!");
     }
-    
-    const user = new User({
-      client_id: signup.client_id,
-      employee_id: signup.employee_id,
+
+    const employee = new Employee({
       name: signup.name,
       lastname: signup.lastname,
       second_lastname: signup.second_lastname,
-      email: signup.email,
-      password: signup.password
+      dob: signup.dob,
+      email: signup.email
     });
 
-    const token = await user.generateAuthToken();
-    const userSaved = await user.save();
-    await Signup.findOneAndDelete({ _id: signup._id })
-    
-    // sendWelcomeEmail(user.email, user.name)
-    res.status(200).send({ userSaved, token });
+    await employee.save().then( async (response)=>{
 
-    
+      const user = new User({
+        employee_id: response._id,
+        name: signup.name,
+        lastname: signup.lastname,
+        second_lastname: signup.second_lastname,
+        email: signup.email,
+        password: signup.password
+      });
+      
+      await user.save().then(async (data) => {
+        const token = await user.generateAuthToken();
+        await Signup.findOneAndDelete({ _id: signup._id })
+        // sendWelcomeEmail(user.email, user.name)
+        return res.status(200).send({data, token});
+      })
+      .catch(async(e) =>{
+        await Employee.findOneAndDelete({ _id: response._id })
+        console.log("EmployeeDeleted");
+        throw new Error(e);
+      })
+
+    }).catch(async(e) =>{
+        res.status(400).send(e + '');
+    });
+
   } catch (e) {
+    console.log(e)
     res.status(400).send(e + '');
   }
 });
 
 router.get("/users/me", auth, async (req, res) => {
   try{
-    res.send(req.user);
+    res.status(200).send(req.user);
   } catch (e) {
     
     res.status(400).send(e);
@@ -149,9 +195,9 @@ router.patch("/users/me", auth, async (req, res) => {
   // PATCH (actualiza) usuario
   try {
 
-    const update = req.body.data;
+    const update = req.body;
     const actualizaciones = Object.keys(update);
-    const camposPermitidos = ["name", "email", "password", "lastname","second_lastname"];
+    const camposPermitidos = ["name", "password", "lastname","second_lastname"];
 
     if (!isComparaArreglosJSON(actualizaciones, camposPermitidos)) {
       return res.status(400).send({ error: "Body includes invalid properties..." });
@@ -272,7 +318,7 @@ router.post("/users/recoverpassword", async(req, res) => {
       return res.status(400).send('User not found');
     }
 
-    sendRecoverPasswordEmail(email, user.name, code);
+    // sendRecoverPasswordEmail(email, user.name, code);
 
     // await User.updateOne({email}, {$set:{code, datecode: moment()}})
     await User.updateOne(
@@ -341,7 +387,7 @@ router.post("/users/newpassword", async(req,res) => {
 })
 
 const upload = multer({
-  //dest: 'avatars', commentado para evitar que envie el archivo sea enviado a la carpeta avatars
+  //dest: 'avatars', comentado para evitar que envie el archivo sea enviado a la carpeta avatars
   limits: {
     fileSize: 1000000, // 1,0 megabytes
   },
@@ -373,7 +419,7 @@ router.post("/users/me/avatar", auth, upload.single("avatar"), async (req, res) 
 
       // console.log(req.user)
   
-      await req.user.save()
+      return await req.user.save()
       .then(() => {
         res.status(200).send(req.user);
       })
@@ -394,7 +440,7 @@ router.post("/users/me/avatar", auth, upload.single("avatar"), async (req, res) 
 
 // DELETE elminar el avatar del usuario autenticado
 router.delete("/users/me/avatar", auth, async (req, res) => {
-  // console.log(req.user.selfi)
+  // console.log('eliminar el avatar de', req.user)
   req.user.selfi = undefined;
   await req.user.save()
   .then(() => {
