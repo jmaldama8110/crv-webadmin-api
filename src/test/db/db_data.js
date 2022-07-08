@@ -1,6 +1,36 @@
 const {TNC_logo, CTA_logo, MDP_logo} = require('./base64_images');
+const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
+const Signup = require('../../model/signup');
+const Employee = require('../../model/employee');
+const Client = require('../../model/client');
+const User = require('../../model/user');
+const Product = require('../../model/product');
+
+const conservaId = mongoose.Types.ObjectId()
+
+const conserva = {
+    _id: conservaId,
+    name: "CONSERVA",
+    lastname: "N/A",
+    second_lastname: "N/A",
+    email: 'conserva@gmail.com',
+    dob: "2000-10-01T00:00:00.000Z"
+}
+
+const userConserva = {
+    name: "CONSERVA",
+    lastname: "N/A",
+    second_lastname: "N/A",
+    email: 'conserva@gmail.com',
+    password: '123456',
+    employee_id: conservaId
+};
+
 //Datos para los empleados
+const employee01Id = mongoose.Types.ObjectId()
 const employee01 = {
+    _id: employee01Id,
     name: "JOSE LUIS",
     lastname: "SOLORZANO",
     second_lastname: "LOPEZ",
@@ -443,7 +473,22 @@ const product01_update = {
     logo: MDP_logo
 }
 
+const initDB = async() => {
+    await Signup.deleteMany()
+    await User.deleteMany()
+    await Employee.deleteMany()
+    await Client.deleteMany()
+    await Product.deleteMany()
+    await new Employee(conserva).save()
+    userConserva.password = await User.passwordHashing(userConserva.password)
+    await new User(userConserva).save()
+}
+
 module.exports = {
+    conserva,
+    userConserva,
+    initDB,
+    employee01Id,
     employee01,
     employee02,
     employee03,

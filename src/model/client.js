@@ -220,7 +220,8 @@ const clientSchema = new mongoose.Schema({
         address: []
     }],
     personal_references: [],
-    guarantee: []
+    guarantee: [],
+    status: []
 }, { timestamps: true })
 
 
@@ -228,7 +229,10 @@ clientSchema.methods.toJSON = function(){
     const client = this
 
     const clientPublic = client.toObject()
-    delete clientPublic.deleted
+    delete clientPublic.deletedAt
+    delete clientPublic.createdAt
+    delete clientPublic.updatedAt
+    delete clientPublic.__v
 
     return clientPublic
 }

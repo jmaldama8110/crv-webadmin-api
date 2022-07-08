@@ -156,7 +156,11 @@ router.delete('/products/:id', auth, async(req, res) => {
         }
 
         await product.delete();
-        res.status(200).send('ok');
+        
+        res.status(200).send({
+            deleted: product.deleted,
+            message: `'${product.product_name}' product has been successfully enabled`
+        });
 
     } catch(e){
         res.status(400).send(e + '')
@@ -175,7 +179,11 @@ router.post('/products/restore/:id',auth,async(req, res) => {
         }
 
         product.restore();
-        res.status(200).send('ok')
+        
+        res.status(200).send({
+            deleted: product.deleted,
+            message: `'${product.product_name}' product has been successfully enabled`
+        });
 
 
     } catch(e) {

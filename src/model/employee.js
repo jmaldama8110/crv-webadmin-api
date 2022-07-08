@@ -37,9 +37,10 @@ const employeeSchema = new mongoose.Schema({
         required: false
     },
     hierarchy_id: {
-        type: String,
+        type: mongoose.Types.ObjectId,
         required: false,
     },
+    // hierarchy_id: {},
     workstation: {//No es requerido, sólo sirve al momento de enviar la respuesta
         type: String,
         trim: true
@@ -51,7 +52,11 @@ employeeSchema.methods.toJSON = function(){
     const employee = this
     const employeePublic = employee.toObject()
     delete employeePublic.__v
-    delete employeePublic.deleted
+    // delete employeePublic.deleted
+    delete employeePublic.createdAt
+    delete employeePublic.updatedAt
+    delete employeePublic.deletedAt
+    // delete employeePublic.dob
 
     return employeePublic
 
