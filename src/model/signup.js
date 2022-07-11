@@ -47,6 +47,7 @@ const signupSchema = new mongoose.Schema({
     },
     password:{
         type: String,
+        required: true,
         trim: true,
         validate(pass){
             if( ! (validador.isLength( pass, { min:6 } ) )  ){

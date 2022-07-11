@@ -6,17 +6,20 @@ const clientSchema = new mongoose.Schema({
     name: {
         type: String,
         trim: true,
-        uppercase: true
+        uppercase: true,
+        required: true
     },
     lastname: {
         type: String,
         trim: true,
-        uppercase: true
+        uppercase: true,
+        required: true
     },
     second_lastname: {
         type: String,
         trim: true,
-        uppercase: true
+        uppercase: true,
+        required: true
     },
     email:{
         type: String,
@@ -50,7 +53,7 @@ const clientSchema = new mongoose.Schema({
     client_type:[],
     branch : [],
     sex: [],
-    scolarship: [],
+    education_level: [],
     address: [],
     phones: [{
         phone: {
@@ -217,7 +220,8 @@ const clientSchema = new mongoose.Schema({
         address: []
     }],
     personal_references: [],
-    guarantee: []
+    guarantee: [],
+    status: []
 }, { timestamps: true })
 
 
@@ -225,7 +229,10 @@ clientSchema.methods.toJSON = function(){
     const client = this
 
     const clientPublic = client.toObject()
-    delete clientPublic.deleted
+    delete clientPublic.deletedAt
+    delete clientPublic.createdAt
+    delete clientPublic.updatedAt
+    delete clientPublic.__v
 
     return clientPublic
 }
