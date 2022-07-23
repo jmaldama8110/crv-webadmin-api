@@ -1,9 +1,10 @@
 const mongoose = require("mongoose")
 const mongoose_delete = require('mongoose-delete');
+const { sqlConfig } = require("../db/connSQL");
+const sql = require("mssql");
 
 
 const productSchema = new mongoose.Schema({
-    // agregar todos los campos requeridos conforme lo vimos le sabado
     product_type: { // TNC, VIV
         type: String,
         required: true,
@@ -70,23 +71,25 @@ const productSchema = new mongoose.Schema({
             trim: true
         },
     }],
-    year_days: { // 360 | 365 | 364
-        type: Number,
-        required: true,
+    years_type: {
+        type: String,
+    },
+    // year_days: {
+    //     type: String,
+    // },
+    min_rate: {
+        type: String,
+        trim: true
+    },
+    max_rate: {
+        type: String,
+        trim: true
     },
     rate: {
         type: String,
         required: true,
         trim: true
     },
-    loan_purpose: [{
-        external_id: {
-            type: String
-        },
-        description: {
-            type: String
-        }
-    }],
     logo: {
         type: String,
         required: false
@@ -106,8 +109,27 @@ const productSchema = new mongoose.Schema({
     enabled:{
         type: Boolean,
         default: true
+    },
+    external_id: {
+        type: Number,
+        trim: true
+    },
+    requires_insurance: {
+        type: Boolean,
+        trim: true
+    },
+    liquid_guarantee: {
+        type: String,
+        trim: true
+    },
+    GL_financeable: {
+        type: Boolean,
+        trim: true
+    },
+    tax: {
+        type: String,
+        trim: true
     }
-
 }, { timestamps: true })
 
 productSchema.methods.toJSON = function() {
@@ -121,6 +143,22 @@ productSchema.methods.toJSON = function() {
 
     return productPublic
 }
+
+productSchema.statics.getAllProducts = async(id) => {
+    try {
+        let pool = await sql.connect(sqlConfig);
+        // let result = await pool
+        //     .request()
+        //     .execute("MOV_ObtenerInformacionProductos");
+        let result = await pool
+            .request()
+            .execute("MOV_ObtenerInformacionProductos");
+        return result;
+    } catch (err) {
+        console.log(err)
+        return err;
+    }
+};
 
 productSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 

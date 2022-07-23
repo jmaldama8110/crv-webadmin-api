@@ -69,28 +69,53 @@ const client01 = {
     loan_cycle: 0,
     client_type: "Persona Fisica",
     branch : "",
-    sex: "Masculino",
+    sex: [4, "Hombre"],
     education_level: "Universidad",
     address: [
         {
-            address_type: "Casa",
-            country: "México",
-            province: "Chiapas",
-            municipality: "Rayón",
-            locality: "Rayón",
-            settlement: "Rayón, Chiapas",
-            ownership_type: "Vivienda",
-            residence_since: "5 años",
-            address_line1: "AV CENTRAL PNTE S/N",
-            address_line2: "Barrio San Bartolo",
-            street_reference: "Entre primera sur poniente y central poniente"
+            _id: 1,
+            type: "DOMICILIO",
+            address_line1: "Barrio San Bartolo",
+            ext_number: "12",
+            int_number: "12",
+            street_reference: "Entre primera sur poniente y central poniente",
+            ownership: true,
+            post_code: "29740",
+            residence_since: "2012-12-12T06:00:00.000Z",
+            residence_to: "2012-12-12T06:00:00.000Z",
+            country: [1,"México"],
+            province: [5,"Chiapas"],
+            municipality: [961,"Rayón"],
+            city: [6231,"Rayón"],
+            colony: [961,"Rayón"],
+        },
+        {
+            _id: 2,
+            type: "NEGOCIO",
+            address_line1: "Barrio San Bartolo",
+            ext_number: "12",
+            int_number: "12",
+            street_reference: "Entre primera sur poniente y central poniente",
+            ownership: true,
+            post_code: "29740",
+            residence_since: "2012-12-12T06:00:00.000Z",
+            residence_to: "2012-12-12T06:00:00.000Z",
+            country: [1,"México"],
+            province: [5,"Chiapas"],
+            municipality: [961,"Rayón"],
+            city: [6231,"Rayón"],
+            colony: [961,"Rayón"],
         }
     ],
-    phones: [{
-        phone: "9191475689",
-        phone_type: "Movile",
-        phone_propierty: true
-    }],
+    phones: [
+        {
+            _id: 1,
+            phone: "9192354798",
+            type: "Móvil",
+            validated: false,
+            company: ""
+        }
+    ],
     credit_circuit_data: [],
     external_id: "",
     tributary_regime: "",
@@ -107,7 +132,7 @@ const client01 = {
             lastname: "DOMINGUEZ",
             second_lastname: "ALVAREZ",
             dob: "2000-10-01T00:00:00.000Z",
-            sex: "Masculino",
+            sex: [4, "Hombre"],
             nationality: "Mexicana",
             province_of_birth: "Chiapas",
             country_of_birth: "México",
@@ -143,31 +168,11 @@ const client01 = {
             person_resides_in: "Familia"
         }
     ],
-    business_data: [
-        {
-            business_name: "Materiales el Constructor",
-            economic_activity: "Venta de materiales de construcción",
-            sector: "Construcción",
-            business_since: "3 años",
-            store_type: "",
-            previous_business_activity: "Venta de planos arquitectónicos",
-            address: [
-                {
-                    address_type: "Negocio",
-                    country: "México",
-                    province: "Chiapas",
-                    municipality: "Rayón",
-                    locality: "Rayón",
-                    settlement: "Rayón, Chiapas",
-                    ownership_type: "Local",
-                    residence_since: "3 años",
-                    address_line1: "Tercera Poniente Sur",
-                    address_line2: "Barrio San Bartolo",
-                    street_reference: "Entre primera sur poniente y central poniente"
-                }
-            ],
-        }
-    ],
+    business_data: {
+        business_name: "Materiales el Constructor",
+        economic_activity:[5,"CULTIVO DE CEBADA"],
+        business_start_date: "2022-07-12T16:09:00.000+00:00"
+    },
     beneficiaries: [
         {
             name: "FABIOLA",
@@ -248,7 +253,8 @@ const client01 = {
             percentage: "60%",
             expiration_date: "2022-10-01T00:00:00.000Z"
         },
-    ]
+    ],
+    status: ["PENDING"]
 }
 
 const client02 = {
@@ -263,28 +269,53 @@ const client02 = {
     loan_cycle: 0,
     client_type: "Persona Fisica",
     branch : "",
-    sex: "Masculino",
+    sex: [4, "Hombre"],
     education_level: "Universidad",
     address: [
         {
-            address_type: "Casa",
-            country: "México",
-            province: "Chiapas",
-            municipality: "Rayón",
-            locality: "Rayón",
-            settlement: "Rayón, Chiapas",
-            ownership_type: "Vivienda",
-            residence_since: "5 años",
-            address_line1: "Colonia",
-            address_line2: "Guayabal",
-            street_reference: "Entre primera sur poniente y central poniente"
+            _id: 1,
+            type: "DOMICILIO",
+            address_line1: "Barrio San Bartolo",
+            ext_number: "12",
+            int_number: "12",
+            street_reference: "Entre primera sur poniente y central poniente",
+            ownership: true,
+            post_code: "29740",
+            residence_since: "2012-12-12T06:00:00.000Z",
+            residence_to: "2012-12-12T06:00:00.000Z",
+            country: [1,"México"],
+            province: [5,"Chiapas"],
+            municipality: [961,"Rayón"],
+            city: [6231,"Rayón"],
+            colony: [961,"Rayón"],
+        },
+        {
+            _id: 2,
+            type: "NEGOCIO",
+            address_line1: "Barrio San Bartolo",
+            ext_number: "12",
+            int_number: "12",
+            street_reference: "Entre primera sur poniente y central poniente",
+            ownership: true,
+            post_code: "29740",
+            residence_since: "2012-12-12T06:00:00.000Z",
+            residence_to: "2012-12-12T06:00:00.000Z",
+            country: [1,"México"],
+            province: [5,"Chiapas"],
+            municipality: [961,"Rayón"],
+            city: [6231,"Rayón"],
+            colony: [961,"Rayón"],
         }
     ],
-    phones: [{
-        phone: "9191475689",
-        phone_type: "Movile",
-        phone_propierty: true
-    }],
+    phones: [
+        {
+            _id: 1,
+            phone: "9192354798",
+            type: "Móvil",
+            validated: false,
+            company: ""
+        }
+    ],
     credit_circuit_data: [],
     external_id: "",
     tributary_regime: "",
@@ -301,7 +332,7 @@ const client02 = {
             lastname: "DOMINGUEZ",
             second_lastname: "ALVAREZ",
             dob: "2000-10-01T00:00:00.000Z",
-            sex: "Masculino",
+            sex: [4, "Hombre"],
             nationality: "Mexicana",
             province_of_birth: "Chiapas",
             country_of_birth: "México",

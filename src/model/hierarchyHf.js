@@ -4,15 +4,11 @@ const { sqlConfig } = require("../db/connSQL");
 const sql = require("mssql");
 
 // Cambiar nombre por hierarchy
-const hierarchySchema = new mongoose.Schema({
+const hierarchyHfSchema = new mongoose.Schema({
     hierarchy_name: {
         type: String,
         required: true,
     },
-    // department:{ //Area
-    //     type: String,
-    //     required: true,
-    // },
     workstation: {
         type: String,
         trim: true,
@@ -25,13 +21,21 @@ const hierarchySchema = new mongoose.Schema({
     parent: [//2 valores => 1- Id, 2- Padre 
         
     ],
+    external_id:  {
+        type: String,
+        trim: true
+    },
+    external_idEmployee:  {
+        type: String,
+        trim: true
+    },
     name_employee: {
         type: String,
         trim: true
     }
 })
 
-hierarchySchema.statics.getAllHierarchies= async(id) => {
+hierarchyHfSchema.statics.getAllHierarchies= async(id) => {
     try {
         let pool = await sql.connect(sqlConfig);
         let result = await pool
@@ -45,11 +49,11 @@ hierarchySchema.statics.getAllHierarchies= async(id) => {
     }
 };
 
-hierarchySchema.plugin(mongoose_delete, { 
+hierarchyHfSchema.plugin(mongoose_delete, { 
     deletedAt: true, 
     deletedBy : true, 
     overrideMethods: 'all'}
 );
 
-const Hierarchy = mongoose.model('Hierarchy', hierarchySchema)
-module.exports = Hierarchy
+const HierarchyHf = mongoose.model('HF_Hierarchy', hierarchyHfSchema)
+module.exports = HierarchyHf

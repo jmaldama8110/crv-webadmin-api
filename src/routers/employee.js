@@ -109,6 +109,22 @@ router.get("/employees", auth, async(req, res) =>{
 
 });
 
+router.get('/employees/hf', auth, async(req, res) => {
+
+    try{
+
+        const employees = await Employee.getAllEmployees();
+        console.log((employees.recordsets[1]).length);
+
+        res.status(200).send(employees.recordsets[1]);
+
+    } catch (e){
+        // console.log(e + '')
+        res.status(400).send(e + '');
+    }
+
+})
+
 router.patch("/employees/:id", auth, async(req, res) => {
 
     

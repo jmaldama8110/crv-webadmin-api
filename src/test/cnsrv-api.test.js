@@ -577,7 +577,7 @@ describe('Enpoints para el control de productos', () => {
                             .set('Authorization', `Bearer ${token}`)
                             .expect(400)
 
-        expect(res.text).toBe('Error: Not able to find the product');
+        expect(res.text).toBe('Error: Not able to find the product(s)');
     });
 
 
@@ -609,7 +609,7 @@ describe('Enpoints para el control de productos', () => {
                             .set('Authorization', `Bearer ${token}`)
                             .expect(400)
 
-        expect(res.text).toBe('Error: Not able to find the product');
+        expect(res.text).toBe('Error: Not able to find the product(s)');
     });
 
     test('Habilitar el producto', async() => {
