@@ -19,8 +19,6 @@ router.get('/neighborhood/:cp', async(req, res) => {
 
         
         const data = await Neighborhood.find(match);
-        console.log(match);
-        console.log(data);
 
         for( let i=0; i< data.length; i++){
             const n1 = await data[i].populate('ciudad_localidad').execPopulate()
@@ -28,8 +26,6 @@ router.get('/neighborhood/:cp', async(req, res) => {
             const n3 = await n2.municipio.populate('estado').execPopulate();
             await n3.estado.populate('pais').execPopulate();
         }
-
-        console.log('ese es el resultado final', data)
             
         res.status(200).send(data);
 

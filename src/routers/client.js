@@ -4,6 +4,8 @@ const User = require("../model/user");
 const Client = require('../model/client');
 const auth = require("../middleware/auth");
 const mongoose = require('mongoose')
+const Identityimg = require('../model/identityimg');
+
 
 router.post("/clients", auth, async(req, res) =>{
 
@@ -74,6 +76,11 @@ router.get("/clients", auth, async(req, res) =>{
         // console.log(client);
         if(!client || client.length === 0){
             throw new Error("Not able to find the client");
+        }
+
+        for(let i = 0; i < client.length; i++) {
+            const c1 = await client[i].populate('user_id',{veridoc:1}).execPopulate();
+            await c1.user_id.populate('veridoc', {frontImage: 1, backImage:1, faceImage: 1, _id:0}).execPopulate()
         }
 
         res.status(200).send(client);

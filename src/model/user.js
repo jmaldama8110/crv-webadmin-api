@@ -8,8 +8,6 @@ const url = require('url');
 const mongoose_delete = require('mongoose-delete');
 
 const userSchema = new mongoose.Schema({
-    client_id: {},
-    employee_id: {},
     name: {
         type: String,
         trim: true,
@@ -71,7 +69,10 @@ const userSchema = new mongoose.Schema({
             type: Date,
             required: false
         }
-    }]
+    }],
+    client_id: {type: mongoose.Schema.Types.ObjectId, ref: 'Client'},
+    employee_id: {},
+    veridoc: { type: mongoose.Schema.Types.ObjectId, ref: 'Identityimg'}
 },
 { timestamps: true } )
 
