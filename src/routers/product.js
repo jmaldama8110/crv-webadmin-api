@@ -30,6 +30,7 @@ const convertToBuffer = async(img) => {
 }
 
 const images = upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'avatar', maxCount: 1 }])
+
 router.post("/products", auth, async(req,res) => {
     //Creamos un nuevo producto
     try{
@@ -61,7 +62,7 @@ router.post("/products", auth, async(req,res) => {
 
         // console.log(newProduct)
 
-        product.save().then((response)=>{
+        return product.save().then((response)=>{
             res.status(201).send(response)
         }).catch((e) => {
             res.status(400).send(e + '');
@@ -86,12 +87,64 @@ router.get('/products', auth, async(req, res) => {
 
         const product = await Product.find(match);
         if (!product || product.length === 0) {
-            throw new Error("Not able to find the product");
+            throw new Error("Not able to find the product(s)");
         }
         
         res.status(200).send(product);
 
     } catch (e) {
+        res.status(400).send(e + '');
+    }
+
+});
+
+router.get('/products/hf', auth, async(req, res) => {
+
+    try{
+
+        const products = await Product.getAllProducts();
+        // console.log(products.recordsets[0]);
+        
+        // const result = products.recordsets[0];
+        const result = (products.recordsets[0]).filter(configuracion => configuracion.configuracion === "MONTOS_OTORGADOS");
+        // console.log(result);
+
+        const rowData = [];
+
+        result.forEach((item) => {
+            const periodicidades = item.periodicidades.split(",");
+            // console.log(periodicidades);
+
+            rowData.push(
+                {
+                    external_id: item.id,
+                    default_mobile_product: false,
+                    enabled: item.estatus === "Activo" ? true : false,
+                    product_type: item.tipo_credito,
+                    product_name: item.nombre,
+                    min_amount: item.valor_minimo,
+                    max_amount: item.valor_maximo,
+                    default_amount: "00.00",
+                    allowed_term_type: periodicidades,
+                    min_term: item.periodo_min,
+                    max_term: item.periodo_max,
+                    min_rate: item.tasa_anual_min,
+                    max_rate: item.tasa_anual_max,
+                    requires_insurance: item.requiere_seguro,
+                    liquid_guarantee: item.garantia_liquida,
+                    GL_financeable: item.garantia_liquida_financiable,
+                    tax: item.impuesto,
+                    years_type: item.tipo_ano
+                }
+            )
+        });
+        // console.log(rowData);
+
+        // res.status(200).send(products.recordsets[0]);
+        res.status(200).send(rowData);
+
+    } catch (e){
+        // console.log(e + '')
         res.status(400).send(e + '');
     }
 
@@ -193,7 +246,7 @@ router.post('/products/restore/:id',auth,async(req, res) => {
 });
 
 const isComparaArreglos = (actualizar) => {
-    const permitido = ["deleted","product_type","product_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency","allowed_term_type","year_days","rate","loan_purpose","logo","avatar","description","default_mobile_product", "enabled"];
+    const permitido = ["deleted","product_type","product_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency","allowed_term_type","year_days","min_rate", "max_rate", "rate","logo","avatar","description","default_mobile_product", "enabled", "years_type", "requires_insurance", "liquid_guarantee", "GL_financeable", "tax", "external_id"];
     const result = actualizar.every((campo) => permitido.includes(campo));
     return result;
 };

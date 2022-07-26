@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const mongoose_delete = require('mongoose-delete');
 const validador = require('validator')
+const { sqlConfig } = require("../db/connSQL");
+const sql = require("mssql");
 
 const employeeSchema = new mongoose.Schema({
     name: {
@@ -61,6 +63,20 @@ employeeSchema.methods.toJSON = function(){
     return employeePublic
 
 }
+
+employeeSchema.statics.getAllEmployees = async(id) => {
+    try {
+        let pool = await sql.connect(sqlConfig);
+        let result = await pool
+            .request()
+            .execute("MOV_ObtenerDatosDelPersonal");
+        return result;
+        // console.log(result)
+    } catch (err) {
+        console.log(err)
+        return err;
+    }
+};
 
 employeeSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
