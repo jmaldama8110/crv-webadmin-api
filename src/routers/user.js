@@ -22,67 +22,6 @@ const sendWelcomeSMS = require("../sms/sendsms");
 const passwordGenerator = require("../utils/codegenerator");
 
 
-// router.post("/users/signup", async (req, res) => {
-//   const code = passwordGenerator(10);
-
-//   try {
-//     const data = {
-//       name: removeAccents(req.body.name),
-//       lastname : removeAccents(req.body.lastname),
-//       second_lastname: removeAccents(req.body.second_lastname),
-//       email: req.body.email,
-//       password: req.body.password,
-//       dob: req.body.dob
-//     };
-
-//     const fullName = data.name.trim() + ' ' + data.lastname.trim() + ' ' + data.second_lastname.trim();
-//       const isClientExist = await Client.findOne({email: data.email});
-      
-//       if(isClientExist){
-//         // console.log("cliente encontrado")
-//         const FullNameClient = isClientExist.name + ' ' + isClientExist.lastname + ' ' + isClientExist.second_lastname;
-
-//         if(fullName != FullNameClient){
-//           throw new Error("Check your full name");
-//         }
-
-//         const client_id = isClientExist._id;
-//         const signup = new Signup({ code,client_id, ...data});
-//         await signup.save();
-
-//         // sendConfirmationEmail(req.body.email, req.body.name, code)
-//         return res.status(201).send({
-//           signup: {
-//             name: signup.name,
-//             lastname: signup.lastname,
-//             email: signup.email,
-//           },
-//         });
-        
-//       } else{
-//         // console.log("No se encontró el cliente") // Si no se encuentra el cliente se debe registrar como un usuario común
-
-//         //guardamos los datos en signup
-//         const signup = new Signup({ code, ...data });
-//         await signup.save();
-
-//         // sendConfirmationEmail(req.body.email, req.body.name, code)
-//         return res.status(201).send({
-//           signup: {
-//             name: signup.name,
-//             lastname: signup.lastname,
-//             second_lastname: signup.second_lastname,
-//             email: signup.email,
-//           },
-//         });
-    
-//       }
-
-//   } catch (err) {
-//     res.status(400).send(err + '');
-//   }
-// });
-
 router.post("/users/signup", async (req, res) => {
   const code = passwordGenerator(10);
 
