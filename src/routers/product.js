@@ -124,12 +124,14 @@ router.get('/products/hf', auth, async(req, res) => {
                     product_name: item.nombre,
                     min_amount: item.valor_minimo,
                     max_amount: item.valor_maximo,
-                    default_amount: "00.00",
+                    default_amount: item.valor_minimo,
                     allowed_term_type: periodicidades,
                     min_term: item.periodo_min,
                     max_term: item.periodo_max,
+                    default_term: item.periodo_min,
                     min_rate: item.tasa_anual_min,
                     max_rate: item.tasa_anual_max,
+                    rate: item.tasa_anual_min,
                     requires_insurance: item.requiere_seguro,
                     liquid_guarantee: item.garantia_liquida,
                     GL_financeable: item.garantia_liquida_financiable,
@@ -140,7 +142,8 @@ router.get('/products/hf', auth, async(req, res) => {
         });
         // console.log(rowData);
 
-        // res.status(200).send(products.recordsets[0]);
+        // res.status(200).send(result);
+        // console.log(result);
         res.status(200).send(rowData);
 
     } catch (e){
@@ -246,7 +249,7 @@ router.post('/products/restore/:id',auth,async(req, res) => {
 });
 
 const isComparaArreglos = (actualizar) => {
-    const permitido = ["deleted","product_type","product_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency","allowed_term_type","year_days","min_rate", "max_rate", "rate","logo","avatar","description","default_mobile_product", "enabled", "years_type", "requires_insurance", "liquid_guarantee", "GL_financeable", "tax", "external_id"];
+    const permitido = ["deleted","product_type","product_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency", "default_frecuency","allowed_term_type","year_days","min_rate", "max_rate", "rate","logo","avatar","description","default_mobile_product", "enabled", "years_type", "requires_insurance", "liquid_guarantee", "GL_financeable", "tax", "external_id"];
     const result = actualizar.every((campo) => permitido.includes(campo));
     return result;
 };

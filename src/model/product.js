@@ -41,7 +41,10 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    default_term: [],
+    default_term: {
+        type: Number,
+        required: true,
+    },
     allowed_frequency: [{// B
         identifier:{
             type: String,
@@ -54,6 +57,7 @@ const productSchema = new mongoose.Schema({
             trim: true
         },
     }],
+    default_frecuency: [],
     allowed_term_type: [{ // Meses, Bimestres
         identifier: { // B
             type: String,
