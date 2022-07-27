@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const sql = require ('mssql');
-const {sqlConfig} = require('../db/ConnSQL');
+const {sqlConfig} = require('../db/connSQL');
 
 const catalogSchema =  new mongoose.Schema({
     name: {

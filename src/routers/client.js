@@ -5,6 +5,8 @@ const Client = require('../model/client');
 const auth = require("../middleware/auth");
 const mongoose = require('mongoose')
 const Identityimg = require('../model/identityimg');
+const moment = require("moment");
+const formato = 'YYYY-MM-DD';
 
 
 router.post("/clients", auth, async(req, res) =>{
@@ -83,7 +85,7 @@ router.get("/clients", auth, async(req, res) =>{
                 const c1 = await client[i].populate('user_id',{veridoc:1}).execPopulate();
                 await c1.user_id.populate('veridoc', {frontImage: 1, backImage:1, faceImage: 1, _id:0}).execPopulate()
             }
-            
+
         }
 
         res.status(200).send(client);
@@ -177,9 +179,6 @@ router.post("/approveClient/:id", auth, async(req, res) => {
         const approve = Object.keys(req.body);
         const data = req.body;
 
-        console.log(_id);
-        console.log(data);
-
         const client = await Client.findOne({_id});
         if(!client){
             throw new Error("Not able to find the client");
@@ -199,19 +198,19 @@ router.post("/approveClient/:id", auth, async(req, res) => {
             {
                 nombre: client.name,
                 apellido_paterno: client.lastname,
-                apellido_materno: "",
-                fecha_nacimiento: "2000-08-02",
+                apellido_materno: client.second_lastname ? client.second_lastname : "S/A",
+                fecha_nacimiento: client.dob ? getDates(client.dob) : "2000-08-02",
                 id_sexo: client.sex[0],
                 id_escolaridad: client.education_level[0],
                 id_estado_civil: client.marital_status[0],
                 entidad_nacimiento: client.province_of_birth[1],
-                regimen: "",
+                regimen: client.tributary_regime[1] ? client.tributary_regime[1] : "",
                 id_oficina: 1,
                 curp_fisica: 0,
                 datos_personales_diferentes_curp: 0,
-                id_entidad_nacimiento: client.province_of_birth[0],
-                id_nacionalidad: client.nationality[0],
-                id_pais_nacimiento: client.country_of_birth[0],
+                id_entidad_nacimiento: client.province_of_birth ? client.province_of_birth[0] : 5,
+                id_nacionalidad: client.nationality ? client.nationality[0] : 1,
+                id_pais_nacimiento: client.country_of_birth ? client.country_of_birth[0] : 1,
                 es_pep: 0,
                 es_persona_prohibida: 0
             }
@@ -219,9 +218,19 @@ router.post("/approveClient/:id", auth, async(req, res) => {
 
         person.IDENTIFICACIONES = [  
             {
-                id_entidad: 5,
+                id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
                 tipo_identificacion: "CURP",
                 id_numero: client.curp
+            },
+            {
+                id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
+                tipo_identificacion: "IFE",
+                id_numero: "SLLPLS00100107H300" //CLAVE DE ELECTOR ES REQUERIDO
+            },
+            {
+                id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
+                tipo_identificacion: "RFC",
+                id_numero: "SOLL001001S80" //RFC ES REQUERIDO
             }
         ]
 
@@ -233,22 +242,22 @@ router.post("/approveClient/:id", auth, async(req, res) => {
                 (person.DIRECCIONES).push(
                     {
                         tipo:campo.type,
-                        id_pais: campo.country[0] != undefined ? campo.country[0] : 1,
-                        id_estado: campo.province[0] != undefined ? campo.province[0] : 5,
-                        id_municipio: campo.municipality[0] != undefined ? campo.municipality[0] : 946,
-                        id_localidad: campo.city[0] != undefined ? campo.city[0] : 1534,
-                        id_asentamiento: campo.colony[0] != undefined ? campo.colony[0] : 42665,
-                        direccion: campo.address_line1,
-                        numero_exterior: campo.exteriorNum != undefined ? campo.exteriorNum : "SN",
-                        numero_interior: campo.interiorNum != undefined ? campo.interiorNum :"SN",
-                        referencia: campo.reference != undefined ? campo.reference :"FRENTE A ...",
+                        id_pais: campo.country[0] ? campo.country[0] : 1,
+                        id_estado: campo.province[0] ? campo.province[0] : 5,
+                        id_municipio: campo.municipality[0] ? campo.municipality[0] : 946,
+                        id_localidad: campo.city[0] ? campo.city[0] : 1534,
+                        id_asentamiento: campo.colony[0] ? campo.colony[0] : 42665,
+                        direccion: campo.address_line1 ? campo.address_line1 : "CALLE...",
+                        numero_exterior: campo.exteriorNum ? campo.exteriorNum : "SN",
+                        numero_interior: campo.interiorNum ? campo.interiorNum : "SN",
+                        referencia: campo.reference ? campo.reference :"FRENTE A ...",
                         casa_situacion: 0,
-                        tiempo_habitado_inicio: campo.start_date != undefined ? campo.start_date :"2022-06-20",
-                        tiempo_habitado_final: campo.end_date != undefined ? campo.end_date : "2022-06-20",
+                        tiempo_habitado_inicio: campo.start_date ? getDates(campo.start_date) :"2022-06-20",
+                        tiempo_habitado_final: campo.end_date ? getDates(campo.end_date) : "2022-06-20",
                         correo_electronico: client.email,
                         num_interior: 2,
                         num_exterior: 1,
-                        id_vialidad: 1,
+                        id_vialidad: campo.road ? campo.road[0] : 5,//vialidad
                         domicilio_actual: 1
                     }
                 )
@@ -277,16 +286,16 @@ router.post("/approveClient/:id", auth, async(req, res) => {
             )
         });
 
-        const result = await Client.createPersonHF(person)
+        // const result = await Client.createPersonHF(person)
 
-        if(!result){
-            throw new Error('Ocurrió un error al registrar la persona al HF');
-        }
+        // if(!result){
+        //     throw new Error('Ocurrió un error al registrar la persona al HF');
+        // }
 
 
         //crear el cliente
-        const id = result[0][0].id;
-        // const id = 1234;
+        // const id = result[0][0].id;
+        const id = 1234;
         const clientHF = {}
 
         clientHF.PERSONA = [
@@ -314,35 +323,35 @@ router.post("/approveClient/:id", auth, async(req, res) => {
             if(campo.type === 'NEGOCIO'){
                 clientHF.NEGOCIO = [
                     {
-                        nombre: business_data.business_name != undefined ? business_data.business_name : "SIN NOMBRE DE NEGOCIO",
-                        calle: campo.calle != undefined ? campo.calle : "Calle ...",
-                        referencia: campo.referencia != undefined ? campo.referencia : "Frente a ...",
-                        letra_exterior: campo.letra_exterior != undefined ? campo.letra_exterior : "C",
-                        letra_interior: campo.letra_interior != undefined ? campo.letra_interior : "D",
-                        num_exterior: campo.num_exterior != undefined ? campo.num_exterior : 0,
-                        num_interior: campo.num_interior != undefined ? campo.num_interior : 0,
-                        id_pais: campo.country[0] != undefined ? campo.country[0] : 1,
-                        id_estado: campo.province[0] != undefined ? campo.province[0] : 5,
-                        id_municipio: campo.municipality[0] != undefined ? campo.municipality[0] : 946,
-                        id_ciudad: campo.city[0] != undefined ? campo.city[0] : 1534,
-                        id_colonia: campo.colony[0] != undefined ? campo.colony[0] : 42665,
+                        nombre: client.business_name ? business_data.business_name : "SIN NOMBRE DE NEGOCIO",
+                        calle: campo.calle ? campo.calle : "Calle ...",
+                        referencia: campo.referencia ? campo.referencia : "Frente a ...",
+                        letra_exterior: campo.letra_exterior ? campo.letra_exterior : "C",
+                        letra_interior: campo.letra_interior ? campo.letra_interior : "D",
+                        num_exterior: campo.num_exterior ? campo.num_exterior : 0,
+                        num_interior: campo.num_interior ? campo.num_interior : 0,
+                        id_pais: campo.country[0] ? campo.country[0] : 1,
+                        id_estado: campo.province[0] ? campo.province[0] : 5,
+                        id_municipio: campo.municipality[0] ? campo.municipality[0] : 946,
+                        id_ciudad: campo.city[0] ? campo.city[0] : 1534,
+                        id_colonia: campo.colony[0] ? campo.colony[0] : 42665,
                         cp: campo.post_code,
-                        rfc: client.rfc != undefined ? client.rfc : "",
+                        rfc: client.rfc ? client.rfc : "",
                         econ_registro_egresos_ingresos: 0,
                         casa_situacion: 0,
-                        correo_electronico: client.email != undefined ? client.email : "",
+                        correo_electronico: client.email ? client.email : "",
                         id_vialidad: 1,
                         nombre_oficina: "SUR ORIENTE_2",
-                        nombre_puesto: business_data.position != undefined ? business_data.position :"dueño",//PONER SOLO dueño
-                        departamento: business_data.department != undefined ? business_data.department : "cobranza",
-                        numero_empleados: business_data.employees != undefined ? business_data.employees : 10,
+                        nombre_puesto: business_data.position ? business_data.position :"dueño",//PONER SOLO dueño
+                        departamento: business_data.department ? business_data.department : "cobranza",
+                        numero_empleados: business_data.employees ? business_data.employees : 10,
                         registro_egresos: 0,
                         revolvencia: "QUINCENAL",
                         ventas_totales_cantidad: 5000.0,
                         ventas_totales_unidad: 0.0,
-                        id_actividad_economica: business_data.economic_activity[0] != undefined ? business_data.economic_activity[0] : 716,
-                        tiempo_actividad_incio: "2010-03-07",
-                        tiempo_actividad_final: "2021-05-07"
+                        id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 716,
+                        tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "2010-03-07",
+                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "2021-05-07"
                     }
                 ]
             }
@@ -350,14 +359,14 @@ router.post("/approveClient/:id", auth, async(req, res) => {
 
         clientHF.CLIENTE = [ //falta checar
             {
-                id_oficina: 1,
+                id_oficina: 1,//dejarlo en 1 para pruebas
                 id_oficial_credito: 20
             }
         ]
 
         clientHF.INDIVIDUAL = [
             {
-                econ_ocupacion: "EMPLEADO",
+                econ_ocupacion: client.ocupation ? client.ocupation[0].etiqueta : "EMPLEADO",
                 econ_id_actividad_economica: 5,
                 econ_id_destino_credito: 5,
                 econ_id_ubicacion_negocio: 14,
@@ -382,8 +391,8 @@ router.post("/approveClient/:id", auth, async(req, res) => {
                 utiliza_internet: 0,
                 utiliza_redes_sociales: 0,
                 id_actividad_economica: business_data.economic_activity[0] != undefined ? business_data.economic_activity[0] : 5,
-                id_ocupacion: client.ocupation[0].id != undefined ? client.ocupation[0].id : 12,
-                id_profesion: client.education_level[0] != undefined ? client.education_level[0] : 5
+                id_ocupacion: client.ocupation[0].id ? client.ocupation[0].id : 12,
+                id_profesion: client.education_level[0] ? client.education_level[0] : 5
             }
         ]
 
@@ -424,28 +433,28 @@ router.post("/approveClient/:id", auth, async(req, res) => {
             }
         ]
 
-        const response = await Client.createClientHF(clientHF);
+        // const response = await Client.createClientHF(clientHF);
         // console.log(response);
 
-        if(!response){
-            throw new Error('Ocurrió un error al registrar el cliente al HF');
-        }
+        // if(!response){
+        //     throw new Error('Ocurrió un error al registrar el cliente al HF');
+        // }
 
-        const person_idHf = response[0][0].id_persona;
-        const client_idHf = response[0][0].id_cliente;
+        // const person_idHf = response[0][0].id_persona;
+        // const client_idHf = response[0][0].id_cliente;
 
-        await Client.updateOne( {_id}, {$set: {client_idHf, person_idHf}} );
+        // await Client.updateOne( {_id}, {$set: {client_idHf, person_idHf}} );
 
 
-        approve.forEach((valor) => (client[valor] = data[valor]));
-        await client.save();
+        // approve.forEach((valor) => (client[valor] = data[valor]));
+        // await client.save();
         
-        // res.status(201).send({
-        //     person,
-        //     clientHF
-        // })
+        res.status(201).send({
+            person,
+            clientHF
+        })
 
-        res.status(201).send(response);
+        // res.status(201).send(response);
 
 
 
@@ -554,6 +563,11 @@ const validStatus = (status) => {
     const statusValid = ['Pendiente', 'Aprobado', 'Rechazado', 'Eliminado'];
     const result = statusValid.includes(status);
     return result;
+}
+
+const getDates = (fecha) => {
+    const date = moment.utc(fecha).format(formato)
+    return date;
 }
 
 module.exports = router;

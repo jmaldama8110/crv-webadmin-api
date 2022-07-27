@@ -28,6 +28,7 @@ const getDataFromHF = async() => {
     Catalog.updateCatalogFromHF('CATA_TipoVialidad',10000)
     Catalog.updateCatalogFromHF('CATA_Ciudad_Localidad',10000)
     Catalog.updateCatalogFromHF('CATA_destinoCredito',10000)
+    Catalog.updateCatalogFromHF('CATA_ocupacionPLD',10000)
 
 }
 
