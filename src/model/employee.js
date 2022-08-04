@@ -78,48 +78,6 @@ employeeSchema.statics.getAllEmployees = async(id) => {
     }
 };
 
-employeeSchema.statics.getOficialCredito = async(idOffice) => {
-    try {
-        const pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-            .input('id_sucursal', sql.Int, idOffice)
-            .input('id_zona', sql.Int, 0)
-            .input('id_coordinador', sql.Int, 0)
-            .input('codigo', sql.VarChar, 'PROM')
-            .input('operacion', sql.VarChar, 'CLIENTE')
-            .input('id_sesion', sql.Int, 1)
-            .execute('COMM_ObtenerPlantillaPuesto');
-        
-        return result.recordset;
-
-    } catch (err) {
-        throw new Error(err);
-    }
-}
-
-employeeSchema.statics.getAllBranches = async(chunk) => {
-    try{
-        //Checar con el extractor (api movil)
-        const request = new sql.Request();
-
-        try {
-            let pool = await sql.connect(sqlConfig);
-            let result = await pool
-                .request()
-                .execute("MOV_ObtenerCatalogoOficinasFinancieras");
-            return result;
-        } catch (err) {
-            console.log(err)
-            return err;
-        }
-
-
-    } catch(e){
-        console.log(e)
-        return e;
-    }
-}
-
 employeeSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
 

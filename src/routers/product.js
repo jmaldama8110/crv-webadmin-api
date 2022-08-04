@@ -140,14 +140,12 @@ router.get('/products/hf', auth, async(req, res) => {
                 }
             )
         });
-        // console.log(rowData);
 
-        // res.status(200).send(result);
         // console.log(result);
         res.status(200).send(rowData);
 
     } catch (e){
-        // console.log(e + '')
+        console.log(e)
         res.status(400).send(e + '');
     }
 

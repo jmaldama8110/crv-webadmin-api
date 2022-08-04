@@ -150,11 +150,10 @@ router.post("/approveClient/:id", auth, async(req, res) => {
         let official_idHf = 0;
 
         console.log(data);
-
-        //Buscamos el oficial de la sucursal 
-        if(data.branch != undefined && data.branch[0] != undefined){
-            const official = await Branch.getOficialCredito(data.branch[0]);
-            official_idHf = official[0].id_oficial; //Checar a qué oficial le asignamos el cliente porque en una officina hay varios oficiales
+ 
+        if(data.id_oficial != undefined){
+            // const official = await Branch.getOficialCredito(data.branch[0]);
+            official_idHf = data.id_oficial; 
         }
         console.log(official_idHf);
 
@@ -162,7 +161,6 @@ router.post("/approveClient/:id", auth, async(req, res) => {
         if(!client){
             throw new Error("Not able to find the client");
         }
-
 
         if(client.status[1] === "Aprobado"){
             throw new Error("This client is already approved");
@@ -440,7 +438,7 @@ router.post("/approveClient/:id", auth, async(req, res) => {
         ]
 
         const response = await Client.createClientHF(clientHF);
-        // console.log(response);
+        console.log(response);
 
         if(!response){
             throw new Error('Ocurrió un error al registrar el cliente al HF');
@@ -455,6 +453,9 @@ router.post("/approveClient/:id", auth, async(req, res) => {
         
         const clientApproved = await Client.findOne({_id})
         res.status(201).send(clientApproved);
+
+        // console.log(person);
+        // console.log(clientHF);
         
         // res.status(201).send({
         //     person,
