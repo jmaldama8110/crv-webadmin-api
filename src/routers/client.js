@@ -289,17 +289,17 @@ router.post("/approveClient/:id", auth, async(req, res) => {
             )
         });
 
-        // const result = await Client.createPersonHF(person)
-        // console.log(result);
+        const result = await Client.createPersonHF(person)
+        console.log(result);
 
-        // if(!result){
-        //     throw new Error('Ocurrió un error al registrar la persona al HF');
-        // }
+        if(!result){
+            throw new Error('Ocurrió un error al registrar la persona al HF');
+        }
 
 
         // Crear el cliente
-        // const id = result[0][0].id;
-        const id = 1234;
+        const id = result[0][0].id;
+        // const id = 1234;
         const clientHF = {}
 
         clientHF.PERSONA = [
@@ -437,30 +437,30 @@ router.post("/approveClient/:id", auth, async(req, res) => {
             }
         ]
 
-        // const response = await Client.createClientHF(clientHF);
-        // console.log(response);
+        const response = await Client.createClientHF(clientHF);
+        console.log(response);
 
-        // if(!response){
-        //     throw new Error('Ocurrió un error al registrar el cliente al HF');
-        // }
+        if(!response){
+            throw new Error('Ocurrió un error al registrar el cliente al HF');
+        }
 
-        // const person_idHf = response[0][0].id_persona;
-        // const client_idHf = response[0][0].id_cliente;
+        const person_idHf = response[0][0].id_persona;
+        const client_idHf = response[0][0].id_cliente;
 
-        // await Client.updateOne( {_id}, {$set: {client_idHf, person_idHf, official_idHf, status: [2, "Aprobado"]}} );
-        // approve.forEach((valor) => (client[valor] = data[valor]));
-        // await client.save();
+        await Client.updateOne( {_id}, {$set: {client_idHf, person_idHf, official_idHf, status: [2, "Aprobado"]}} );
+        approve.forEach((valor) => (client[valor] = data[valor]));
+        await client.save();
         
-        // const clientApproved = await Client.findOne({_id})
-        // res.status(201).send(clientApproved);
+        const clientApproved = await Client.findOne({_id})
+        res.status(201).send(clientApproved);
 
-        console.log(person);
-        console.log(clientHF);
+        // console.log(person);
+        // console.log(clientHF);
         
-        res.status(201).send({
-            person,
-            clientHF
-        });
+        // res.status(201).send({
+        //     person,
+        //     clientHF
+        // });
 
     } catch(e) {
         console.log(e + ' ')
