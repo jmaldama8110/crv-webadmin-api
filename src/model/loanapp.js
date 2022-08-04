@@ -1,95 +1,121 @@
 const mongoose = require('mongoose')
-const sql = require('mssql')
-const sqlConfig = require("./../db/connSQL");
+const { sqlConfig } = require("../db/connSQL");
+const sql = require("mssql");
 const tbl = require('./../utils/TablesSQL')
 
-    /// modelo para los Loans desde la BD
-const loanSchema = new mongoose.Schema({
-    product_id: {
-        type: Object,
-        required: true
-    },
-    loan_application_date: {
-        type: Date,
-        required: true
-    },
-    loan_application_id: {
-        type: String,
-        required: true
-    },
-    status: [
+const loanappSchema = new mongoose.Schema({
+    // product_id: {
+    //     type: Object,
+    //     required: true
+    // },
+    // loan_application_date: {
+    //     type: Date,
+    //     required: true
+    // },
+    // loan_application_id: {
+    //     type: String,
+    //     required: true
+    // },
+    // status: [],
+    // apply_at: {
+    //     type: Date,
+    //     required: true
+    // },
+    // apply_by: { // quien crea la solicitud
+    //     type: Object,
+    //     required: true
+    // },
+    // approved_at: { //fecha de aprobacion
+    //     type: Date,
+    //     required: false
+    // },
+    // approved_by: { //quien aprobo la solicitud
+    //     type: Object,
+    //     required: false
+    // },
+    // disbursed_at: { // fecha de desembolso
+    //     type: Date,
+    //     required: false
+    // },
+    // apply_amount: { //importe solicitado
+    //     type: String,
+    //     required: false
+    // },
+    // approved_amount: { // importe aprobado
+    //     type: String,
+    //     required: false
+    // },
+    // term: [ // plazo
+    //     //1er valor de plazo
+    //     //ejemplo
+    //     // [6, "M", "Meses"]
+    //     //2do id del tipo de plazo
+    //     //3er etiqueta del plazo
 
-    ],
-    apply_at: {
-        type: Date,
-        required: true
-    },
-    apply_by: { // quien crea la solicitud
-        type: Object,
-        required: true
-    },
-    approved_at: { //fecha de aprobacion
-        type: Date,
-        required: false
-    },
-    approved_by: { //quien aprobo la solicitud
-        type: Object,
-        required: false
-    },
-    disbursed_at: { // fecha de desembolso
-        type: Date,
-        required: false
-    },
-    apply_amount: { //importe solicitado
-        type: String,
-        required: false
-    },
-    approved_amount: { // importe aprobado
-        type: String,
-        required: false
-    },
-    term: [ // plazo
-        //1er valor de plazo
-        //ejemplo
-        // [6, "M", "Meses"]
-        //2do id del tipo de plazo
-        //3er etiqueta del plazo
+    // ],
+    // frequency: [
+    //     // [ "S", "Semana"]
+    // ],
+    // loan_schedule: [{
+    //     number: {
+    //         type: Number,
+    //         required: true
+    //     },
+    //     amount: {
+    //         type: String,
+    //         required: true
+    //     },
+    //     principal: {
+    //         type: String,
+    //         required: true
+    //     },
+    //     interest: {
+    //         type: String,
+    //         required: true
+    //     },
+    //     tax: {
+    //         type: String,
+    //         required: true
+    //     },
+    //     insurance: {
+    //         type: String,
+    //         required: true
+    //     }
+    // }]
 
-    ],
-    frequency: [
-        // [ "S", "Semana"]
-    ],
-    loan_schedule: [{
-        number: {
-            type: Number,
-            required: true
-        },
-        amount: {
-            type: String,
-            required: true
-        },
-        principal: {
-            type: String,
-            required: true
-        },
-        interest: {
-            type: String,
-            required: true
-        },
-        tax: {
-            type: String,
-            required: true
-        },
-        insurance: {
-            type: String,
-            required: true
-        }
-    }]
+    //loanApp
+    product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Products',
+        required: true
+     },
+    loan_app_code: {
+        type: String,
+        required: true  
+    },
+    status: [],
+    apply_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    apply_at: { type: Date, required: true },
+    approved_at: { type: Date, required: false },
+    approved_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false},
+    apply_amount: { type: String,required: true },
+    approved_amount: { type: String,required: false },
+    term: { type: Number, required: true },
+    frequency: [],
+    schedule: [{
+        number: { type: Number, required: true},
+        balance: { type: Number, required: true},
+        principal: { type: Number, required: true},
+        interest: { type: Number, required: true},
+        tax: { type: Number, required: true},
+        insurance: { type: Number, required: true},
+        due_date: { type: Date, required: false}
+    }],
+    loanId_Hf: {type: Number, trim: true}
 
 }, { timestamps: true })
 
-loanSchema.statics.createLoanFromHF = async(data) =>{
-
+loanappSchema.statics.createLoanFromHF = async(data) => {
     try {
         const { idUsuario, idOficina } = data;
 
@@ -107,10 +133,9 @@ loanSchema.statics.createLoanFromHF = async(data) =>{
     } catch (err) {
         throw new Error(err)
     }
-
 }
 
-loanSchema.statics.assignClientLoanFromHF = async(data) => {
+loanappSchema.statics.assignClientLoanFromHF = async(data) => {
     try {
         const {
             id_solicitud_prestamo,
@@ -144,7 +169,7 @@ loanSchema.statics.assignClientLoanFromHF = async(data) => {
     }
 }
 
-loanSchema.statics.assignMontoloanHF = async(data) => {
+loanappSchema.statics.assignMontoloanHF = async(data) => {
     try {
         const pool = await sql.connect(sqlConfig);
 
@@ -194,6 +219,8 @@ loanSchema.statics.assignMontoloanHF = async(data) => {
         //tabla GrupoSolidario (SE MANDA VACIO)
         //tabla Direccion (SE MANDA VACIO)
 
+
+
         tbl.UDT_SolicitudDetalle.rows.add(
             data['CLIENTE'][0].id,
             data['SOLICITUD'][0].id,
@@ -229,19 +256,19 @@ loanSchema.statics.assignMontoloanHF = async(data) => {
             0
         );
 
-        // PARA EL TIPO DE PRESTAMO ESPACIAL ES NECESARIO 1 AVAL Y 2 REFERENCIAS
-        for (const idx in data['REFERENCIA']) {
-            tbl.UDT_CLIE_ReferenciasPersonales.rows.add(
-                data['REFERENCIA'][idx].id, // 0 -> Solicitud nueva, >0 -> solicitud Existente
-                data['REFERENCIA'][idx].id_persona, // id_persona que esta en vwCONT_Personas
-                data['CLIENTE'][0].id,
-                0, // id_empleado
-                data['REFERENCIA'][idx].parentesco, // Ej. AMIGO, PRIMO, ETC.
-                data['REFERENCIA'][idx].tipo_relacion, // AVAL/REFERENCIA/COACREDITADO
-                'PERSONA', // TIPO (SIEMPRE VA COMO PERSONA)
-                data['SEGURO'][0].eliminado // Eliminado
-            );
-        }
+        // PARA EL TIPO DE PRESTAMO ESPECIAL ES NECESARIO 1 AVAL Y 2 REFERENCIAS
+        // for (const idx in data['REFERENCIA']) {
+        //     tbl.UDT_CLIE_ReferenciasPersonales.rows.add(
+        //         data['REFERENCIA'][idx].id, // 0 -> Solicitud nueva, >0 -> solicitud Existente
+        //         data['REFERENCIA'][idx].id_persona, // id_persona que esta en vwCONT_Personas
+        //         data['CLIENTE'][0].id,
+        //         0, // id_empleado
+        //         data['REFERENCIA'][idx].parentesco, // Ej. AMIGO, PRIMO, ETC.
+        //         data['REFERENCIA'][idx].tipo_relacion, // AVAL/REFERENCIA/COACREDITADO
+        //         'PERSONA', // TIPO (SIEMPRE VA COMO PERSONA)
+        //         data['SEGURO'][0].eliminado // Eliminado
+        //     );
+        // }
 
 
         //TABLA GARANTIA PRENDARIA (SE MANDA VACIA PARA CREDITO ESPECIAL)
@@ -275,7 +302,7 @@ loanSchema.statics.assignMontoloanHF = async(data) => {
             tbl.cleanTable(tbl.UDT_CLIE_TuHogarConConservaCoacreditado);
         }
         cleanAllTables();
-        console.log(result.recordsets)
+        // console.log(result.recordsets)
 
         return result.recordsets;
         // .execute('MOV_Prueba')
@@ -285,6 +312,6 @@ loanSchema.statics.assignMontoloanHF = async(data) => {
     }
 }
 
-const Loan = mongoose.model('Loan', loanSchema)
+const Loan = mongoose.model('Loanapp', loanappSchema)
 
 module.exports = Loan
