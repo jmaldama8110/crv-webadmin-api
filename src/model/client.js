@@ -46,6 +46,11 @@ const clientSchema = new mongoose.Schema({
         trim: true,
         required: false,
     },
+    ine_clave: {
+        type: String,
+        trim: true,
+        required: false,
+    },
     dob: {
         type: Date,
         required: false,
@@ -232,14 +237,9 @@ const clientSchema = new mongoose.Schema({
     personal_references: [],
     guarantee: [],
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    person_idHf: {
-        type: Number,
-        trim: true
-    },
-    client_idHf: {
-        type: Number,
-        trim: true
-    },
+    person_idHf: { type: Number, trim: true },
+    client_idHf: { type: Number, trim: true },
+    official_idHf: { type: Number, trim: true },
     status:[]
 }, { timestamps: true });
 

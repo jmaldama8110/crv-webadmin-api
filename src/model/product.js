@@ -151,9 +151,6 @@ productSchema.methods.toJSON = function() {
 productSchema.statics.getAllProducts = async(id) => {
     try {
         let pool = await sql.connect(sqlConfig);
-        // let result = await pool
-        //     .request()
-        //     .execute("MOV_ObtenerInformacionProductos");
         let result = await pool
             .request()
             .execute("MOV_ObtenerInformacionProductos");
