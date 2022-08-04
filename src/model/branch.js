@@ -1,16 +1,19 @@
 const mongoose = require('mongoose');
 const sql = require("mssql");
 const {sqlConfig} = require("../db/connSQL");
-const Employee = require("./employee");
+// const extractor = require("../utils/extractor.js");
 
 const branchSchema = new mongoose.Schema({
     _id: {type: Number, trim : true},
     nombre: {type: String, trim : true},
-    id_zona: {type: Number, trim : true},
-    id_estado: {type: Number, trim : true, ref: 'Province'},
-    codigo: {type: String, trim : true},
-    id_tipo_oficina: {type: Number, trim : true},
-    estatus: {type: String, trim : true}
+    alias: {type: String, trim : true},
+    colonia: [],
+    municipio: [],
+    estado: [],
+    pais: [],
+    direccion: {type: String, trim : true},
+    codigo_postal: {type: String, trim : true},
+    enabled: {type: Boolean, default: false}
 });
 
 branchSchema.methods.toJSON = function(){
@@ -29,33 +32,21 @@ branchSchema.statics.getAllBranches = async(chunk) => {
 
         sql.connect(sqlConfig, (err) => {
             const request = new sql.Request();
-            request.stream = true;//Activarlo al trabajar con varias filas
+            request.stream = true;
 
-            request.query(`select * from CORP_OficinasFinancieras`);
+            request.query(`select * from CORP_OficinasFinancieras WHERE id_tipo_oficina = 1`);
 
             let rowData = [];
-            let rowData2 = [];
 
             request.on('row', async(row) => {
 
                 rowData.push({ ...row, _id: row.id });
                 if (rowData.length >= chunk) {
-                    request.pause(); //Pausar la insercción
-                    
-                    //Guardamos sólo las oficinas que tengan oficiales
-                    for(let i = 0; i < rowData.length; i ++){
-                        const validate = await Employee.getOficialCredito(rowData[i]._id);
-                        
-                        if(validate.length != 0){
-                            rowData2.push(rowData[i])
-                        }
-                    }
-    
-                    Branch.insertMany(rowData2);
-                    rowData = [];
-                    rowData2 = [];
+                    request.pause();
+                    Branch.insertMany(rowData);
 
-                    request.resume();//continuar la insercción
+                    rowData = [];
+                    request.resume();
                 }
 
             })
@@ -65,23 +56,12 @@ branchSchema.statics.getAllBranches = async(chunk) => {
             });
 
             request.on("done", async(result) => {
-                //Guardamos sólo las oficinas que tengan oficiales
-                for(let i = 0; i < rowData.length; i ++){
-                    const validate = await Employee.getOficialCredito(rowData[i]._id);
-                    
-                    if(validate.length != 0){
-                        rowData2.push(rowData[i])
-                    }
-                }
 
-                console.log('insertar', rowData2.length);
-
-                Branch.insertMany(rowData2);
+                Branch.insertMany(rowData);
                 rowData = [];
-                rowData2 = [];
 
-                // request.resume();
-                console.log('Done Branch!!');
+                request.resume();
+                console.log('Done Branch!!', result);
             });
 
         })
@@ -108,6 +88,28 @@ branchSchema.statics.getOficialCredito = async(idOffice) => {
 
     } catch (err) {
         throw new Error(err);
+    }
+}
+
+branchSchema.statics.getAllBranchesHF = async(chunk) => {
+    try{
+        const request = new sql.Request();
+
+        try {
+            let pool = await sql.connect(sqlConfig);
+            let result = await pool
+                .request()
+                .execute("MOV_ObtenerOficinasFinancieras");
+            return result.recordset;
+        } catch (err) {
+            console.log(err)
+            return err;
+        }
+
+
+    } catch(e){
+        console.log(e)
+        return e;
     }
 }
 

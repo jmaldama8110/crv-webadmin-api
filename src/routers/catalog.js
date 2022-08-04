@@ -33,7 +33,6 @@ router.get('/catalogs/sync', auth, async (req,res) => {
         await Municipality.updateFromHF(1000);
         await Province.updateFromHF(1000);
         await Country.updateFromHF(1000);
-        await Branch.getAllBranches(1000);
 
         res.status(201).send('Done!')
     }
