@@ -237,9 +237,18 @@ const clientSchema = new mongoose.Schema({
     personal_references: [],
     guarantee: [],
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    //Datos para interactuar con el HF
     person_idHf: { type: Number, trim: true },
     client_idHf: { type: Number, trim: true },
     official_idHf: { type: Number, trim: true },
+    id_HomeAddressHF: {type: Number, trim: true},
+    id_IfeAddressHF: {type: Number, trim: true},
+    id_RfcAddressHF: {type: Number, trim: true},
+    id_IfeIdentificationHF: {type: Number, trim: true},
+    id_RfcIdentificationHF: {type: Number, trim: true},
+    id_CurpIdentificationHF: {type: Number, trim: true},
+    id_IfeDataHF: {type: Number, trim: true},
+    id_PhonesHF: {type: Number, trim: true},
     status:[]
 }, { timestamps: true });
 
@@ -291,12 +300,15 @@ clientSchema.statics.findClientByCurp = async(curp) => {
 };
 
 //Crear persona Hf
+
 clientSchema.statics.createPersonHF = async(data) => {
     const pool = await sql.connect(sqlConfig);
 
+    // TODO: ENVIAR LOS id´s CUANDO SE TENGA QUE ACTUALIZAR DE LO CONTRARIO ENVIAR 0
+
     for (const idx in data['DIRECCIONES']) {
         tbl.UDT_CONT_DireccionContacto.rows.add(
-            0,
+            data['DIRECCIONES'][idx].id,
             data['DIRECCIONES'][idx].tipo,
             data['DIRECCIONES'][idx].id_pais,
             data['DIRECCIONES'][idx].id_estado, // CATA_Estado
@@ -319,7 +331,7 @@ clientSchema.statics.createPersonHF = async(data) => {
     }
 
     tbl.UDT_CONT_Persona.rows.add(
-        0,
+        data['DATOS_PERSONALES'][0].id,
         data['DATOS_PERSONALES'][0].nombre,
         data['DATOS_PERSONALES'][0].apellido_paterno,
         data['DATOS_PERSONALES'][0].apellido_materno,
@@ -341,17 +353,17 @@ clientSchema.statics.createPersonHF = async(data) => {
 
     for (const idx in data['IDENTIFICACIONES']) {
         tbl.UDT_CONT_Identificaciones.rows.add(
-            0,
-            0,
+            data['IDENTIFICACIONES'][idx].id, // ID
+            data['IDENTIFICACIONES'][idx].id_entidad, //IdPersona
             data['IDENTIFICACIONES'][idx].tipo_identificacion,
             data['IDENTIFICACIONES'][idx].id_numero, // CURP -> Validar desde el Front, debe estar compuesto por 4 letras - 6 números - 6 letras - 1 letra o número - 1 número
             data['IDENTIFICACIONES'][idx].id_direccion,
-            0
+            0//1 -> persona, 2->Empresa
         );
     }
     //Son para CURP Fisica (NO SE USA)
     tbl.UDT_CONT_CURP.rows.add(
-        0,
+        data['IDENTIFICACIONES'].filter(item => item.tipo_identificacion == 'CURP')[0].id_curp,
         0,
         '',
         '',
@@ -360,14 +372,14 @@ clientSchema.statics.createPersonHF = async(data) => {
     );
 
     tbl.UDT_CONT_IFE.rows.add(
-        0,
-        '', // Clave de elector - 18 Caracteres
+        data['DATOS_IFE'][0].id,
+        data['IDENTIFICACIONES'].filter(item => item.tipo_identificacion == 'IFE')[0].id_numero, // Clave de elector - 18 Caracteres TODO: FILTRAR EL NUMERO DEL IFE DE IDENTIFICACIONES
         data['DATOS_IFE'][0].numero_emision,
         data['DATOS_IFE'][0].numero_vertical_ocr
     );
 
     tbl.UDT_CONT_Telefonos.rows.add(
-        0,
+        data['TELEFONOS'][0].id, //
         data['TELEFONOS'][0].idcel_telefono, // número de Telefono
         '', // extension (No se usa)
         data['TELEFONOS'][0].tipo_telefono, // Casa/Móvil/Caseta/Vecinto/Trabajo
