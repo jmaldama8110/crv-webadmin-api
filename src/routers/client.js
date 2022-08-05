@@ -153,7 +153,7 @@ router.post("/approveClient/:id", auth, async(req, res) => {
  
         if(data.id_oficial != undefined){
             // const official = await Branch.getOficialCredito(data.branch[0]);
-            official_idHf = data.id_oficial; 
+            official_idHf = data.id_oficial[0]; 
         }
         console.log(official_idHf);
 
@@ -463,7 +463,7 @@ router.post("/approveClient/:id", auth, async(req, res) => {
         // });
 
     } catch(e) {
-        console.log(e + ' ')
+        console.log(e)
         res.status(400).send(e + ' ');
     }
 

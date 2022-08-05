@@ -144,7 +144,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {
                     fecha_entrega: "2022-07-20",
                     medio_desembolso: "ORP",
                     garantia_liquida: product.liquid_guarantee,
-                    id_oficina: 1,
+                    id_oficina: branch_id != undefined ? branch_id : 1,
                     garantia_liquida_financiable: product.GL_financeable === false ? 0 : 1,
                     id_producto_maestro: product_id,
                     tasa_anual: 18.75 //Checar cómo calcular esto
