@@ -62,11 +62,9 @@ router.post("/products", auth, async(req,res) => {
 
         // console.log(newProduct)
 
-        return product.save().then((response)=>{
-            res.status(201).send(response)
-        }).catch((e) => {
-            res.status(400).send(e + '');
-        })
+        await product.save();
+
+        res.status(201).send(product);
 
     } catch(e){
         console.log(e)

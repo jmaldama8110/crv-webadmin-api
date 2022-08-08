@@ -23,7 +23,7 @@ router.get('/loans', auth, async(req, res) =>{
         for(let i = 0; i < loans.length; i++){
             await loans[i].populate('product', {product_name:1}).execPopulate();
             const applyBy = await loans[i].populate('apply_by', {client_id: 1, name:1, lastname:1, second_lastname:1}).execPopulate();
-            // await applyBy.apply_by.populate('client_id',{name:1, lastname:1, second_lastname:1, _id:0}).execPopulate();
+            await applyBy.apply_by.populate('client_id',{branch: 1, _id: 0}).execPopulate();
         }
 
         res.status(200).send(loans);
@@ -52,7 +52,7 @@ router.get("/statusLoans/:status", auth, async(req, res) =>{
         for(let i = 0; i < loans.length; i++){
             await loans[i].populate('product', {product_name:1}).execPopulate();
             const applyBy = await loans[i].populate('apply_by', {client_id: 1, name:1, lastname:1, second_lastname:1}).execPopulate();
-            // await applyBy.apply_by.populate('client_id',{name:1, lastname:1, second_lastname:1, _id:0}).execPopulate();
+            // await applyBy.apply_by.populate('client_id').execPopulate();
         }
 
         res.status(200).send(loans);
@@ -79,8 +79,6 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {
     try{
         const _id = req.params.id;
         const data = req.body;
-
-        console.log(_id);
         console.log(data);
 
         const loan = await Loan.findOne({_id});
@@ -92,10 +90,10 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {
         }
 
         //Buscamos el usuario que hizo la solicitud
-        const client = await User.findOne({_id: loan.apply_by}).populate('client_id',{branch:1, client_idHf:1, person_idHf:1, official_idHf:1});
-        const client_id = client.client_id.client_idHf;
-        const person_id = client.client_id.person_idHf;
-        const official_id = client.client_id.official_idHf;
+        const client = await User.findOne({_id: loan.apply_by}).populate('client_id',{branch:1, id_cliente:1, id_persona:1});
+        const client_id = client.client_id.id_cliente;
+        const person_id = client.client_id.id_persona;
+        const official_id = data.id_oficial;
         const branch_id = client.client_id.branch[0];
         //Buscamos el producto que solicitó
         const product = await Product.findOne({_id: loan.product});
@@ -171,16 +169,10 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {
             ],
             REFERENCIA: []
         }
-
         const result3 = await await Loan.assignMontoloanHF(data3);
         if(!result3){
             throw new Error('Failed to assign the amount in the HF')
         }
-        // console.log(result3);
-
-        // console.log(data1)
-        // console.log(data2)
-        // console.log(data3)
 
         //Una vez asignado el monto actualizamos campos del crédito
         const resp = await Loan.updateOne({_id},{ 
@@ -189,17 +181,16 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {
                 approved_by: data.id != undefined ? data.id : user._id,
                 approved_amount: data.approved_amount,
                 status : [5, 'ListoparaTramite'],
-                loanId_Hf : id_soli
+                id_loan : id_soli,
+                id_oficial: official_id
             }
         })
 
         const approveLoan = await Loan.findOne({_id});
         res.status(200).send(approveLoan);
 
-        // res.status(200).send({data1, data2, data3});
-
     } catch(err){
-        console.log(err + ' ')
+        console.log(err)
         res.status(400).send(err + '')
     }
 
