@@ -244,7 +244,7 @@ const clientSchema = new mongoose.Schema({
     personal_references: [],
     guarantee: [],
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    //Datos para interactuar con el HF
+    //Datos para actualizar en el el HF
     id_oficial: { type: Number},
     id_HomeAddressHF: {type: Number},
     id_IfeAddressHF: {type: Number},
