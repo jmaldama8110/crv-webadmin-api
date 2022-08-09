@@ -4,86 +4,6 @@ const sql = require("mssql");
 const tbl = require('./../utils/TablesSQL')
 
 const loanappSchema = new mongoose.Schema({
-    // product_id: {
-    //     type: Object,
-    //     required: true
-    // },
-    // loan_application_date: {
-    //     type: Date,
-    //     required: true
-    // },
-    // loan_application_id: {
-    //     type: String,
-    //     required: true
-    // },
-    // status: [],
-    // apply_at: {
-    //     type: Date,
-    //     required: true
-    // },
-    // apply_by: { // quien crea la solicitud
-    //     type: Object,
-    //     required: true
-    // },
-    // approved_at: { //fecha de aprobacion
-    //     type: Date,
-    //     required: false
-    // },
-    // approved_by: { //quien aprobo la solicitud
-    //     type: Object,
-    //     required: false
-    // },
-    // disbursed_at: { // fecha de desembolso
-    //     type: Date,
-    //     required: false
-    // },
-    // apply_amount: { //importe solicitado
-    //     type: String,
-    //     required: false
-    // },
-    // approved_amount: { // importe aprobado
-    //     type: String,
-    //     required: false
-    // },
-    // term: [ // plazo
-    //     //1er valor de plazo
-    //     //ejemplo
-    //     // [6, "M", "Meses"]
-    //     //2do id del tipo de plazo
-    //     //3er etiqueta del plazo
-
-    // ],
-    // frequency: [
-    //     // [ "S", "Semana"]
-    // ],
-    // loan_schedule: [{
-    //     number: {
-    //         type: Number,
-    //         required: true
-    //     },
-    //     amount: {
-    //         type: String,
-    //         required: true
-    //     },
-    //     principal: {
-    //         type: String,
-    //         required: true
-    //     },
-    //     interest: {
-    //         type: String,
-    //         required: true
-    //     },
-    //     tax: {
-    //         type: String,
-    //         required: true
-    //     },
-    //     insurance: {
-    //         type: String,
-    //         required: true
-    //     }
-    // }]
-
-    //loanApp
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Products',
@@ -111,8 +31,8 @@ const loanappSchema = new mongoose.Schema({
         insurance: { type: Number, required: true},
         due_date: { type: Date, required: false}
     }],
-    loanId_Hf: {type: Number, trim: true}
-
+    id_loan: {type: Number},
+    id_oficial : {type: Number}
 }, { timestamps: true })
 
 loanappSchema.statics.createLoanFromHF = async(data) => {

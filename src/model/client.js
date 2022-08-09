@@ -7,6 +7,8 @@ const tbl = require('../utils/TablesSQL');
 
 
 const clientSchema = new mongoose.Schema({
+    id_persona: { type: Number },
+    id_cliente: { type: Number },
     name: {
         type: String,
         trim: true,
@@ -41,15 +43,20 @@ const clientSchema = new mongoose.Schema({
         required: false,
         trim: true,
     },
-    ine_folio: {
-        type: String,
-        trim: true,
-        required: false,
-    },
     ine_clave: {
         type: String,
         trim: true,
-        required: false,
+        required:false
+    },
+    ine_emision: {
+        type: String,
+        trim: true,
+        required:false
+    },
+    ine_vertical_ocr: {
+        type: String,
+        trim: true,
+        required:false
     },
     dob: {
         type: Date,
@@ -237,18 +244,16 @@ const clientSchema = new mongoose.Schema({
     personal_references: [],
     guarantee: [],
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    //Datos para interactuar con el HF
-    person_idHf: { type: Number, trim: true },
-    client_idHf: { type: Number, trim: true },
-    official_idHf: { type: Number, trim: true },
-    id_HomeAddressHF: {type: Number, trim: true},
-    id_IfeAddressHF: {type: Number, trim: true},
-    id_RfcAddressHF: {type: Number, trim: true},
-    id_IfeIdentificationHF: {type: Number, trim: true},
-    id_RfcIdentificationHF: {type: Number, trim: true},
-    id_CurpIdentificationHF: {type: Number, trim: true},
-    id_IfeDataHF: {type: Number, trim: true},
-    id_PhonesHF: {type: Number, trim: true},
+    //Datos para actualizar en el el HF
+    id_oficial: { type: Number},
+    id_HomeAddressHF: {type: Number},
+    id_IfeAddressHF: {type: Number},
+    id_RfcAddressHF: {type: Number},
+    id_IfeIdentificationHF: {type: Number},
+    id_RfcIdentificationHF: {type: Number},
+    id_CurpIdentificationHF: {type: Number},
+    id_IfeDataHF: {type: Number},
+    id_PhonesHF: {type: Number},
     status:[]
 }, { timestamps: true });
 
@@ -301,7 +306,7 @@ clientSchema.statics.findClientByCurp = async(curp) => {
 
 //Crear persona Hf
 
-clientSchema.statics.createPersonHF = async(data) => {
+clientSchema.statics.createPersonHF = async(data, action) => {
     const pool = await sql.connect(sqlConfig);
 
     // TODO: ENVIAR LOS id´s CUANDO SE TENGA QUE ACTUALIZAR DE LO CONTRARIO ENVIAR 0
@@ -394,7 +399,7 @@ clientSchema.statics.createPersonHF = async(data) => {
         .input('DATOSCurp', tbl.UDT_CONT_CURP)
         .input('DATOSIfe', tbl.UDT_CONT_IFE)
         .input('DATOSTelefono', tbl.UDT_CONT_Telefonos)
-        .input('etiqueta_opcion', sql.VarChar(50), 'INSERTAR_PERSONA') // INSERTAR_PERSONA/ACTUALIZAR_PERSONA
+        .input('etiqueta_opcion', sql.VarChar(50), action) // INSERTAR_PERSONA/ACTUALIZAR_PERSONA
         .input('id_session', sql.Int, 0) // Quien manda la informacion
         .execute("MOV_AdministrarInformacionPersona")
 
