@@ -77,12 +77,7 @@ router.get("/statusClients/:status", auth, async(req, res) =>{
    try{
         const status = req.params.status;
 
-        const valid = validStatus(status);
-        if(!valid) {
-            throw new Error("The status does not match any of the accepted statuses");
-        }
-
-        const clients = await Client.find({ status: { $in : [status] } });
+        const clients = await Client.find({ status: { $in : [parseInt(status)] } });
         if(!clients || clients.length === 0){
             throw new Error("No records with this status");
         }
@@ -155,40 +150,40 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             throw new Error("Not able to find the client");
         }
 
-        // if(client.status[1] === "Aprobado"){
-        //     throw new Error("This client is already approved");
-        // }
-
-        if(action === 'ACTUALIZAR_PERSONA'){
-            update.forEach((campo) => (client[campo] = data[campo]))
-            await client.save()
-
-            const user = await User.findOne({ client_id: client._id});
-            update.forEach((valor) => (user[valor] = data[valor]));
-            await user.save();
+        if(client.status[1] === "Aprobado"){
+            throw new Error("This client is already approved");
         }
+
+        // if(action === 'ACTUALIZAR_PERSONA'){
+        //     update.forEach((campo) => (client[campo] = data[campo]))
+        //     await client.save()
+
+        //     const user = await User.findOne({ client_id: client._id});
+        //     update.forEach((valor) => (user[valor] = data[valor]));
+        //     await user.save();
+        // }
         
         // Creamos la persona en el HF
         const person = {};
 
         person.DATOS_PERSONALES = [
             {
-                id: client.id_persona ? client.id_persona : 0,
+                id: 0,
                 nombre: client.name,
-                apellido_paterno: client.lastname,
+                apellido_paterno: client.lastname ? client.lastname : "S/A",
                 apellido_materno: client.second_lastname ? client.second_lastname : "S/A",
-                fecha_nacimiento: client.dob ? getDates(client.dob) : "2000-08-02",
-                id_sexo: client.sex[0],
+                fecha_nacimiento: client.dob ? getDates(client.dob) : "1970-01-01",
+                id_sexo: client.sex[0] ? client.sex : 4,
                 id_escolaridad: client.education_level[0] ? client.education_level[0] : 2,
                 id_estado_civil: client.marital_status[0] ? client.marital_status[0] : 1,
-                entidad_nacimiento: client.province_of_birth[1],
+                entidad_nacimiento: client.province_of_birth[1] ? client.province_of_birth[1] : "Chiapas",
                 regimen: client.tributary_regime[1] ? client.tributary_regime[1] : " ",
                 id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1, //Consultar el catálogo de oficinas
                 curp_fisica: 0,
                 datos_personales_diferentes_curp: 0,
-                id_entidad_nacimiento: client.province_of_birth ? client.province_of_birth[0] : 5,
-                id_nacionalidad: client.nationality ? client.nationality[0] : 1,
-                id_pais_nacimiento: client.country_of_birth ? client.country_of_birth[0] : 1,
+                id_entidad_nacimiento: client.province_of_birth[0] ? client.province_of_birth[0] : 5,
+                id_nacionalidad: client.nationality[0] ? client.nationality[0] : 1,
+                id_pais_nacimiento: client.country_of_birth[0] ? client.country_of_birth[0] : 1,
                 es_pep: 0,
                 es_persona_prohibida: 0
             }
@@ -199,22 +194,22 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         person.IDENTIFICACIONES = [];
         person.IDENTIFICACIONES.push(
             {
-                id: client.id_CurpIdentificationHF ? client.id_CurpIdentificationHF : 0,
+                id: 0,
                 id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
                 tipo_identificacion: "CURP",
                 id_numero: client.curp
             },
             {
-                id: client.id_IfeIdentificationHF ? client.id_IfeIdentificationHF : 0,
+                id: 0,
                 id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
                 tipo_identificacion: "IFE",
-                id_numero: client.ine_clave
+                id_numero: client.ine_clave.slice(0,18)
             },
             {
-                id: client.id_RfcIdentificationHF ? client.id_RfcIdentificationHF : 0,
+                id: 0,
                 id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
                 tipo_identificacion: "RFC",
-                id_numero: client.rfc
+                id_numero: client.rfc ? client.rfc : client.curp.slice(0,10)
             },
         )
 
@@ -228,7 +223,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         
         person.DIRECCIONES.push(
             {
-                id: client.id_HomeAddressHF ? client.id_HomeAddressHF : 0,
+                id: 0,
                 tipo:'DOMICILIO',
                 id_pais: dirDomi[0].country[0] ? dirDomi[0].country[0] : 1,
                 id_estado: dirDomi[0].province[0] ? dirDomi[0].province[0] : 5,
@@ -239,12 +234,12 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 numero_exterior: dirDomi[0].exteriorNum ? dirDomi[0].exteriorNum : "SN",
                 numero_interior: dirDomi[0].interiorNum ? dirDomi[0].interiorNum : "SN",
                 referencia: dirDomi[0].reference ? dirDomi[0].reference :"FRENTE A ...",
-                casa_situacion: 0,
+                casa_situacion: 0, //No se guarda el ownership
                 tiempo_habitado_inicio: dirDomi[0].start_date ? getDates(dirDomi[0].start_date) :"2022-06-22",
                 tiempo_habitado_final: dirDomi[0].end_date ? getDates(dirDomi[0].end_date) : "2022-06-20",
                 correo_electronico: client.email,
-                num_interior: 2,
-                num_exterior: 1,
+                num_interior: 0,
+                num_exterior: 0,
                 id_vialidad: dirDomi[0].road ? dirDomi[0].road[0] : 5,//vialidad
                 domicilio_actual: 1
             }
@@ -253,7 +248,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         //Si no se encuentra una dirección del IFE, se le asignará el mismo del domicilio, solo cambiando el tipo
         person.DIRECCIONES.push(
             {
-                id: client.id_IfeAddressHF ? client.id_IfeAddressHF : 0,
+                id: 0,
                 tipo:'IFE',
                 id_pais: dirIfe.length >= 1 ? dirIfe[0].country[0] ? dirIfe[0].country[0] : (person.DIRECCIONES)[0].id_pais : (person.DIRECCIONES)[0].id_pais,
                 id_estado: dirIfe.length >= 1 ? dirIfe[0].province[0] ? dirIfe[0].province[0] : (person.DIRECCIONES)[0].id_estado :(person.DIRECCIONES)[0].id_estado,
@@ -268,8 +263,8 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 tiempo_habitado_inicio: dirIfe.length >= 1 ? dirIfe[0].start_date ? getDates(dirIfe[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                 tiempo_habitado_final: dirIfe.length >= 1 ? dirIfe[0].end_dat ? getDates(dirIfe[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final : (person.DIRECCIONES)[0].tiempo_habitado_final,
                 correo_electronico: client.email,
-                num_interior: 2,
-                num_exterior: 1,
+                num_interior: 0,
+                num_exterior: 0,
                 id_vialidad: 5,//vialidad
                 domicilio_actual: 1
             }
@@ -278,7 +273,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         //Agregamos la dirección del RFC
         person.DIRECCIONES.push(
             {
-                id: client.id_RfcAddressHF ? client.id_RfcAddressHF : 0,
+                id: 0,
                 tipo:'RFC',
                 id_pais: dirRfc.length >= 1 ? dirRfc[0].country[0] ? dirRfc[0].country[0] : (person.DIRECCIONES)[0].id_pais : (person.DIRECCIONES)[0].id_pais,
                 id_estado: dirRfc.length >= 1 ? dirRfc[0].province[0] ? dirRfc[0].province[0] : (person.DIRECCIONES)[0].id_estado :(person.DIRECCIONES)[0].id_estado,
@@ -293,8 +288,8 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 tiempo_habitado_inicio: dirRfc.length >= 1 ? dirRfc[0].start_date ? getDates(dirRfc[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                 tiempo_habitado_final: dirRfc.length >= 1 ? dirRfc[0].end_dat ? getDates(dirRfc[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final : (person.DIRECCIONES)[0].tiempo_habitado_final,
                 correo_electronico: client.email,
-                num_interior: 2,
-                num_exterior: 1,
+                num_interior: 0,
+                num_exterior: 0,
                 id_vialidad: 5,
                 domicilio_actual: 1
             }
@@ -302,9 +297,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
 
         person.DATOS_IFE = [
             {
-                id: client.id_IfeDataHF ? client.id_IfeDataHF : 0,
-                numero_emision: client.ine_emision ?  client.ine_emision : "00",
-                numero_vertical_ocr: client.ine_vertical_ocr
+                id: 0,
+                numero_emision: client.ine_emision ?  client.ine_emision.slice(0,2) : "00",
+                numero_vertical_ocr: client.ine_vertical_ocr.slice(0,13)
             }
         ]
 
@@ -314,10 +309,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         phones.forEach((phone) => {
             (person.TELEFONOS).push(
                 {
-                    id: client.id_PhonesHF ? client.id_PhonesHF : 0,
-                    idcel_telefono: phone.phone,
+                    id: 0,
+                    idcel_telefono: phone.phone ? phone.phone : '0000000000',
                     extension: "",
-                    tipo_telefono: phone.type,
+                    tipo_telefono: phone.type ? phone.type : "Móvil",
                     compania: phone.company ? phone.company : "Telcel",
                     sms: 0
                 }
@@ -331,7 +326,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             throw new Error('Ocurrió un error al registrar la persona al HF');
         }
 
-        // Crear el cliente
+        // // Crear el cliente
         const id = result[0][0].id;
         // const id = 1234;
         const clientHF = {}
@@ -346,9 +341,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         phones.forEach((phone) => {
             (clientHF.TELEFONO).push(
                 {
-                    idcel_telefono: phone.phone,
+                    idcel_telefono: phone.phone ? phone.phone : '0000000000',
                     extension: "",
-                    tipo_telefono: phone.type,
+                    tipo_telefono: phone.type ? phone.type : "Móvil",
                     compania: phone.company ? phone.company : "Telcel",
                     sms: 0
                 }
@@ -389,7 +384,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         ventas_totales_unidad: 0.0,
                         id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 716,
                         tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "2010-03-07",
-                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "2021-05-07"
+                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "2008-01-01"
                     }
                 ]
             }
@@ -397,7 +392,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
 
         clientHF.CLIENTE = [
             {
-                id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,//dejarlo en 1 para pruebas
+                id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,
                 id_oficial_credito: 0
             }
         ]
@@ -460,28 +455,28 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         ]
 
         const response = await Client.createClientHF(clientHF);
-        console.log(response);
-
         if(!response){
             throw new Error('Ocurrió un error al registrar el cliente al HF');
         }
 
         const id_persona = response[0][0].id_persona;
         const id_cliente = response[0][0].id_cliente;
-        //Id de direcciones person.DIRECCIONES
-        const id_HomeAddressHF = result[0][2].id;
-        const id_IfeAddressHF = result[0][1].id;
-        const id_RfcAddressHF = result[0][5].id;
-        //Id de identificaciones person.IDENTIFICACIONES
-        const id_IfeIdentificationHF = result[0][3].id;
-        const id_RfcIdentificationHF = result[0][6].id;
-        const id_CurpIdentificationHF = result[0][7].id;
-        //Id de datos del ife person.DATOS_IFE
-        const id_IfeDataHF = result[0][4].id;
-        //Id de telefonos person.TELEFONOS
-        const id_PhonesHF = result[0][9].id;
 
-        await Client.updateOne( {_id}, {$set: {id_persona, id_cliente, id_HomeAddressHF,id_IfeAddressHF,id_RfcAddressHF,id_IfeIdentificationHF,id_RfcIdentificationHF,id_CurpIdentificationHF,id_IfeDataHF,id_PhonesHF, status: [2, "Aprobado"]}} );
+        //Creado el cliente agregamos datos del hf
+        const dataHF = await Client.findClientByExternalId(id_cliente);
+        const identificationsHF = addIdentities(dataHF.recordsets[1]);
+        const ife_details = dataHF.recordsets[2];
+        const addressHF = addAddress(dataHF.recordsets[3]);
+        const phonesHF = addPhones(dataHF.recordsets[4]);
+
+        client["id_persona"] = id_persona;
+        client["id_cliente"] = id_cliente;
+        client["phones"] = phonesHF;
+        client["address"] = addressHF;
+        client["identities"] = identificationsHF;
+        client["ife_details"] = ife_details;
+        client["status"] = [2, "Aprobado"];
+        client.save();
 
         res.status(201).send({
             result,
@@ -546,7 +541,13 @@ router.get('/client/hf', auth, async(req, res) => {
 
     const response = await Client.findClientByExternalId(req.query.id);
 
-    res.send(response)
+    const identificationsHF = addIdentities(response.recordsets[1]);
+    const addressHF = addAddress(response.recordsets[3]);
+
+    // console.log(identificationsHF);
+    // console.log(addressHF);
+
+    res.send(response);
 
 });
 
@@ -643,16 +644,73 @@ const comparar = (entrada) => {
     return result;
 }
 
-const validStatus = (status) => {
-
-    const statusValid = ['Pendiente', 'Aprobado', 'Rechazado', 'Eliminado'];
-    const result = statusValid.includes(status);
-    return result;
-}
-
 const getDates = (fecha) => {
     const date = moment.utc(fecha).format(formato)
     return date;
+}
+
+const addIdentities = (body) => {
+    const identities = []
+    for( let i=0; i< body.length; i++){
+        const itemIdentity = body[i];
+        identities.push({
+            _id: itemIdentity.id,
+            id_persona: itemIdentity.id_persona,
+            tipo_id: itemIdentity.tipo_identificacion,
+            numero_id: itemIdentity.id_numero,
+            id_direccion: itemIdentity.id_direccion,
+            status: itemIdentity.estatus_registro
+        })
+
+    }
+
+    return identities;
+}
+
+const addAddress = (body) => {
+    const address = []
+    for (let i = 0; i < body.length; i++) {
+        const add = body[i]
+
+        address.push({
+            _id: add.id,
+            type: add.tipo.trim(),
+
+            country: [add.id_pais, add.nombre_pais],
+
+            province: [add.id_estado, add.nombre_estado],
+            municipality: [add.id_municipio, add.nombre_municipio],
+            city: [add.id_ciudad_localidad, add.nombre_ciudad_localidad],
+            colony: [add.id_asentamiento, add.nombre_asentamiento],
+
+            address_line1: add.direccion,
+            ext_number: add.numero_exterior.trim(),
+            int_number: add.numero_interior.trim(),
+            street_reference: add.referencia,
+            ownership: add.casa_situacion === 'RENTADO' ? true : false,
+            post_code: add.codigo_postal,
+            residence_since: add.tiempo_habitado_inicio,
+            residence_to: add.tiempo_habitado_final
+        })
+    }
+
+    return address;
+}
+
+const addPhones = (body) =>{
+    const phones = []
+    for (let i = 0; i < body.length; i++) {
+        const phone = body[i]
+        phones.push({
+            _id: phone.id,
+            phone: phone.idcel_telefono.trim(),
+            type: phone.tipo_telefono.trim(),
+            company: phone.compania.trim(),
+            validated: false
+        })
+    }
+
+    return phones;
 }
 
 module.exports = router;

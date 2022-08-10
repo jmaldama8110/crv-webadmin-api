@@ -26,12 +26,28 @@ router.get('/branches', auth, async(req, res) => {
             match._id = req.query.id
         }
 
-        const branch = await Branch.find(match);
+        const branch = await Branch.find(match).sort({_id: 1});
         if(!branch || branch.length == 0){
             throw new Error('No records found');
         }
 
         // console.log(branch[0].enabled);
+        
+        res.status(200).send(branch);
+
+    } catch(err){
+        res.status(400).send(err);
+    }
+});
+
+router.get('/activeBranches', auth, async(req, res) => {
+
+    try{
+
+        const branch = await Branch.find({enabled: true}).sort({_id: 1});
+        if(!branch || branch.length == 0){
+            throw new Error('No records found');
+        }
         
         res.status(200).send(branch);
 

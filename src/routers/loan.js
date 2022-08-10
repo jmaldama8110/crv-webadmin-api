@@ -39,12 +39,7 @@ router.get("/statusLoans/:status", auth, async(req, res) =>{
     try{
         const status = req.params.status;
  
-         const valid = validStatus(status);
-         if(!valid) {
-             throw new Error("The status does not match any of the accepted statuses");
-         }
- 
-        const loans = await Loan.find({ status: { $in : [status] } });
+        const loans = await Loan.find({ status: { $in : [parseInt(status)] } });
         if(!loans || loans.length === 0){
             throw new Error("No records with this status");
         }
@@ -228,13 +223,6 @@ router.post('/loans/assign_monto', auth,async(req, res) => {
         res.status(401).send(error.message)
     }
 });
-
-const validStatus = (status) => {
-
-    const statusValid = ['Pendiente', 'Aprobado', 'Rechazado', 'Eliminado','ListoparaTramite'];
-    const result = statusValid.includes(status);
-    return result;
-}
 
 const validateFrecuency = (value) =>{
     if(value === "S"){

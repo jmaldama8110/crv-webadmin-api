@@ -128,6 +128,7 @@ const clientSchema = new mongoose.Schema({
     country_of_birth: [],
     ocupation: [],
     marital_status: [],
+    identities: [],
     identification_type: [], // INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
     guarantor: [{
         name: {
@@ -244,16 +245,8 @@ const clientSchema = new mongoose.Schema({
     personal_references: [],
     guarantee: [],
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    //Datos para actualizar en el el HF
     id_oficial: { type: Number},
-    id_HomeAddressHF: {type: Number},
-    id_IfeAddressHF: {type: Number},
-    id_RfcAddressHF: {type: Number},
-    id_IfeIdentificationHF: {type: Number},
-    id_RfcIdentificationHF: {type: Number},
-    id_CurpIdentificationHF: {type: Number},
-    id_IfeDataHF: {type: Number},
-    id_PhonesHF: {type: Number},
+    ife_details: [],
     status:[]
 }, { timestamps: true });
 
