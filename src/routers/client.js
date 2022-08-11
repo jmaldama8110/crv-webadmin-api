@@ -173,7 +173,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 apellido_paterno: client.lastname ? client.lastname : "S/A",
                 apellido_materno: client.second_lastname ? client.second_lastname : "S/A",
                 fecha_nacimiento: client.dob ? getDates(client.dob) : "1970-01-01",
-                id_sexo: client.sex[0] ? client.sex : 4,
+                id_sexo: client.sex[0] ? client.sex[0] : 4,
                 id_escolaridad: client.education_level[0] ? client.education_level[0] : 2,
                 id_estado_civil: client.marital_status[0] ? client.marital_status[0] : 1,
                 entidad_nacimiento: client.province_of_birth[1] ? client.province_of_birth[1] : "Chiapas",
@@ -465,7 +465,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         //Creado el cliente agregamos datos del hf
         const dataHF = await Client.findClientByExternalId(id_cliente);
         const identificationsHF = addIdentities(dataHF.recordsets[1]);
-        const ife_details = dataHF.recordsets[2];
+        const ife_details = dataHF.recordsets[2][0];
         const addressHF = addAddress(dataHF.recordsets[3]);
         const phonesHF = addPhones(dataHF.recordsets[4]);
 
