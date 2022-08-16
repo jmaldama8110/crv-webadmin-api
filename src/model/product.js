@@ -161,6 +161,30 @@ productSchema.statics.getAllProducts = async(id) => {
     }
 };
 
+productSchema.statics.getProductsByBranchId = async(id) =>{
+    try{
+        let pool = await sql.connect(sqlConfig);
+        const result = pool.request()
+        .input('id_producto', sql.Int, 0)
+        .input('id_fondeador', sql.Int, 0)
+        .input('id_disposicion', sql.Int, 0)
+        .input('id_servicio_financiero', sql.Int, 1)
+        .input('id_tipo_cliente', sql.Int, 0)
+        .input('id_oficina', sql.Int, id)
+        .input('id_periodicidad', sql.Int, 0)
+        .input('id_tipo_contrato', sql.Int, 0)
+        .input('visible', sql.Bit, 1)
+        .input('producto_maestro', sql.Bit, 1)
+        .execute('CATA_ObtenerProducto')
+
+        return result;
+
+    } catch (err) {
+        console.log(err)
+        return err;
+    }
+}
+
 productSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
 const Product = mongoose.model('Products',productSchema)

@@ -137,38 +137,40 @@ router.patch("/clients/:id", auth, async(req, res) =>{
 
 router.post("/approveClient/:action/:id", auth, async(req, res) => {
     
-    try{
+    const _id = req.params.id;
+    const action = req.params.action;
+    let value = 1;
+    const update = Object.keys(req.body);
+    const data = req.body;
 
-        const _id = req.params.id;
-        const action = req.params.action;
-        const update = Object.keys(req.body);
-        const data = req.body;
-        let official_idHf = 0;
+    try{
 
         const client = await Client.findOne({_id});
         if(!client){
             throw new Error("Not able to find the client");
         }
 
-        if(client.status[1] === "Aprobado"){
+        if( action === "INSERTAR_PERSONA" && client.status[1] === "Aprobado"){
             throw new Error("This client is already approved");
         }
 
-        // if(action === 'ACTUALIZAR_PERSONA'){
-        //     update.forEach((campo) => (client[campo] = data[campo]))
-        //     await client.save()
+        if(action === 'ACTUALIZAR_PERSONA'){
+            value = 2;
+            console.log("Actualizar");
+            update.forEach((campo) => (client[campo] = data[campo]))
+            await client.save()
 
-        //     const user = await User.findOne({ client_id: client._id});
-        //     update.forEach((valor) => (user[valor] = data[valor]));
-        //     await user.save();
-        // }
+            const user = await User.findOne({ client_id: client._id});
+            update.forEach((valor) => (user[valor] = data[valor]));
+            await user.save();
+        }
+
         
-        // Creamos la persona en el HF
+        // Creamos/actualizamos la persona en el HF
         const person = {};
-
         person.DATOS_PERSONALES = [
             {
-                id: 0,
+                id: action === 'INSERTAR_PERSONA' ? 0 : client.id_persona,
                 nombre: client.name,
                 apellido_paterno: client.lastname ? client.lastname : "S/A",
                 apellido_materno: client.second_lastname ? client.second_lastname : "S/A",
@@ -194,22 +196,28 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         person.IDENTIFICACIONES = [];
         person.IDENTIFICACIONES.push(
             {
-                id: 0,
-                id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
+                id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[2]._id,
+                id_entidad: client.province_of_birth[0] ? client.province_of_birth[0] : 5,
                 tipo_identificacion: "CURP",
                 id_numero: client.curp
             },
             {
-                id: 0,
-                id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
+                id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[0]._id,
+                id_entidad: client.province_of_birth[0] ? client.province_of_birth[0] : 5,
                 tipo_identificacion: "IFE",
                 id_numero: client.ine_clave.slice(0,18)
             },
             {
-                id: 0,
-                id_entidad: client.province_of_birth ? client.province_of_birth[0] : 5,
+                id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[1]._id,
+                id_entidad: client.province_of_birth[0] ? client.province_of_birth[0] : 5,
                 tipo_identificacion: "RFC",
                 id_numero: client.rfc ? client.rfc : client.curp.slice(0,10)
+            },
+            {
+                id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[3]._id,
+                id_entidad: client.province_of_birth[0] ? client.province_of_birth[0] : 5,
+                tipo_identificacion: "PROSPERA",
+                id_numero: ""
             },
         )
 
@@ -219,11 +227,13 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         const dirDomi = addresses.filter(addresses => addresses.type === 'DOMICILIO');
         const dirIfe = addresses.filter(addresses => addresses.type === 'IFE');
         const dirRfc = addresses.filter(addresses => addresses.type === 'RFC');
+
+        // console.log(dirDomi);
         
         
         person.DIRECCIONES.push(
             {
-                id: 0,
+                id: action === 'INSERTAR_PERSONA' ? 0 : dirDomi[0]._id,
                 tipo:'DOMICILIO',
                 id_pais: dirDomi[0].country[0] ? dirDomi[0].country[0] : 1,
                 id_estado: dirDomi[0].province[0] ? dirDomi[0].province[0] : 5,
@@ -231,10 +241,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 id_localidad: dirDomi[0].city[0] ? dirDomi[0].city[0] : 1534,
                 id_asentamiento: dirDomi[0].colony[0] ? dirDomi[0].colony[0] : 42665,
                 direccion: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : "CALLE...",
-                numero_exterior: dirDomi[0].exteriorNum ? dirDomi[0].exteriorNum : "SN",
-                numero_interior: dirDomi[0].interiorNum ? dirDomi[0].interiorNum : "SN",
-                referencia: dirDomi[0].reference ? dirDomi[0].reference :"FRENTE A ...",
-                casa_situacion: 0, //No se guarda el ownership
+                numero_exterior: dirDomi[0].ext_number ? dirDomi[0].ext_number.toString() : "SN",
+                numero_interior: dirDomi[0].int_number ? dirDomi[0].int_number.toString() : "SN",
+                referencia: dirDomi[0].street_reference ? dirDomi[0].street_reference :"FRENTE A ...",
+                casa_situacion: 0, //No se guarda el ownership 0 => RENTADO / 1- => PROPIO
                 tiempo_habitado_inicio: dirDomi[0].start_date ? getDates(dirDomi[0].start_date) :"2022-06-22",
                 tiempo_habitado_final: dirDomi[0].end_date ? getDates(dirDomi[0].end_date) : "2022-06-20",
                 correo_electronico: client.email,
@@ -248,7 +258,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         //Si no se encuentra una dirección del IFE, se le asignará el mismo del domicilio, solo cambiando el tipo
         person.DIRECCIONES.push(
             {
-                id: 0,
+                id: action === 'INSERTAR_PERSONA' ? 0 : dirIfe[0]._id,
                 tipo:'IFE',
                 id_pais: dirIfe.length >= 1 ? dirIfe[0].country[0] ? dirIfe[0].country[0] : (person.DIRECCIONES)[0].id_pais : (person.DIRECCIONES)[0].id_pais,
                 id_estado: dirIfe.length >= 1 ? dirIfe[0].province[0] ? dirIfe[0].province[0] : (person.DIRECCIONES)[0].id_estado :(person.DIRECCIONES)[0].id_estado,
@@ -256,9 +266,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 id_localidad: dirIfe.length >= 1  ? dirIfe[0].city[0] ? dirIfe[0].city[0] : (person.DIRECCIONES)[0].id_localidad: (person.DIRECCIONES)[0].id_localidad,
                 id_asentamiento: dirIfe.length >= 1 ? dirIfe[0].colony[0] ? dirIfe[0].colony[0] : (person.DIRECCIONES)[0].id_asentamiento : (person.DIRECCIONES)[0].id_asentamiento,
                 direccion: dirIfe.length >= 1 ? dirIfe[0].address_line1 ? dirIfe[0].address_line1 : "Dirección IFE" : "Dirección IFE",
-                numero_exterior: dirIfe.length >= 1 ? dirIfe[0].exteriorNum ? dirIfe[0].exteriorNum  : (person.DIRECCIONES)[0].numero_exterior : (person.DIRECCIONES)[0].numero_exterior,
-                numero_interior: dirIfe.length >= 1 ? dirIfe[0].interiorNum ? dirIfe[0].interiorNum : (person.DIRECCIONES)[0].numero_interior : (person.DIRECCIONES)[0].numero_interior,
-                referencia: dirIfe.length >= 1 ? dirIfe[0].reference ? dirIfe[0].reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
+                numero_exterior: dirIfe.length >= 1 ? dirIfe[0].ext_number ? dirIfe[0].ext_number  : (person.DIRECCIONES)[0].numero_exterior : (person.DIRECCIONES)[0].numero_exterior,
+                numero_interior: dirIfe.length >= 1 ? dirIfe[0].int_number ? dirIfe[0].int_number : (person.DIRECCIONES)[0].numero_interior : (person.DIRECCIONES)[0].numero_interior,
+                referencia: dirIfe.length >= 1 ? dirIfe[0].street_reference ? dirIfe[0].street_reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
                 casa_situacion: 0,
                 tiempo_habitado_inicio: dirIfe.length >= 1 ? dirIfe[0].start_date ? getDates(dirIfe[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                 tiempo_habitado_final: dirIfe.length >= 1 ? dirIfe[0].end_dat ? getDates(dirIfe[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final : (person.DIRECCIONES)[0].tiempo_habitado_final,
@@ -273,7 +283,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         //Agregamos la dirección del RFC
         person.DIRECCIONES.push(
             {
-                id: 0,
+                id: action === 'INSERTAR_PERSONA' ? 0 : dirRfc[0]._id,
                 tipo:'RFC',
                 id_pais: dirRfc.length >= 1 ? dirRfc[0].country[0] ? dirRfc[0].country[0] : (person.DIRECCIONES)[0].id_pais : (person.DIRECCIONES)[0].id_pais,
                 id_estado: dirRfc.length >= 1 ? dirRfc[0].province[0] ? dirRfc[0].province[0] : (person.DIRECCIONES)[0].id_estado :(person.DIRECCIONES)[0].id_estado,
@@ -281,9 +291,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 id_localidad: dirRfc.length >= 1  ? dirRfc[0].city[0] ? dirRfc[0].city[0] : (person.DIRECCIONES)[0].id_localidad: (person.DIRECCIONES)[0].id_localidad,
                 id_asentamiento: dirRfc.length >= 1 ? dirRfc[0].colony[0] ? dirRfc[0].colony[0] : (person.DIRECCIONES)[0].id_asentamiento : (person.DIRECCIONES)[0].id_asentamiento,
                 direccion: dirRfc.length >= 1 ? dirRfc[0].address_line1 ? dirRfc[0].address_line1 : "Dirección RFC": "Dirección RFC",
-                numero_exterior: dirRfc.length >= 1 ? dirRfc[0].exteriorNum ? dirRfc[0].exteriorNum  : (person.DIRECCIONES)[0].numero_exterior : (person.DIRECCIONES)[0].numero_exterior,
-                numero_interior: dirRfc.length >= 1 ? dirRfc[0].interiorNum ? dirRfc[0].interiorNum : (person.DIRECCIONES)[0].numero_interior : (person.DIRECCIONES)[0].numero_interior,
-                referencia: dirRfc.length >= 1 ? dirRfc[0].reference ? dirRfc[0].reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
+                numero_exterior: dirRfc.length >= 1 ? dirRfc[0].ext_number ? dirRfc[0].ext_number  : (person.DIRECCIONES)[0].numero_exterior : (person.DIRECCIONES)[0].numero_exterior,
+                numero_interior: dirRfc.length >= 1 ? dirRfc[0].int_number ? dirRfc[0].int_number : (person.DIRECCIONES)[0].numero_interior : (person.DIRECCIONES)[0].numero_interior,
+                referencia: dirRfc.length >= 1 ? dirRfc[0].street_reference ? dirRfc[0].street_reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
                 casa_situacion: 0,
                 tiempo_habitado_inicio: dirRfc.length >= 1 ? dirRfc[0].start_date ? getDates(dirRfc[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                 tiempo_habitado_final: dirRfc.length >= 1 ? dirRfc[0].end_dat ? getDates(dirRfc[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final : (person.DIRECCIONES)[0].tiempo_habitado_final,
@@ -297,85 +307,86 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
 
         person.DATOS_IFE = [
             {
-                id: 0,
+                id: action === 'INSERTAR_PERSONA' ? 0 : client.ife_details[0].id,
                 numero_emision: client.ine_emision ?  client.ine_emision.slice(0,2) : "00",
-                numero_vertical_ocr: client.ine_vertical_ocr.slice(0,13)
+                numero_vertical_ocr: client.ine_vertical_ocr ? client.ine_vertical_ocr.slice(0,13) : "0000000000000"
             }
         ]
 
         person.TELEFONOS = [];
         const phones = client.phones;
+        const phonePerson = phones[0];
 
-        phones.forEach((phone) => {
-            (person.TELEFONOS).push(
-                {
-                    id: 0,
-                    idcel_telefono: phone.phone ? phone.phone : '0000000000',
-                    extension: "",
-                    tipo_telefono: phone.type ? phone.type : "Móvil",
-                    compania: phone.company ? phone.company : "Telcel",
-                    sms: 0
-                }
-            )
-        });
-
+        (person.TELEFONOS).push(
+            {
+                id: action === 'INSERTAR_PERSONA' ? 0 : phonePerson._id,
+                idcel_telefono: phonePerson ? phonePerson.phone ? phonePerson.phone : "0000000000" :"0000000000",
+                extension: "",
+                tipo_telefono: phonePerson ? phonePerson.type ? phonePerson.type : "Móvil" : "Móvil",
+                compania: phonePerson ? phonePerson.company ? phonePerson.company : "Telcel" : "Telcel",
+                sms: 0
+            }
+        )
+        console.log(person);
         const result = await Client.createPersonHF(person, action);
         console.log(result);
 
         if(!result){
             throw new Error('Ocurrió un error al registrar la persona al HF');
         }
+        // return res.status(200).send(result);
 
-        // // Crear el cliente
+        // Crear/Actualizar el cliente
         const id = result[0][0].id;
         // const id = 1234;
         const clientHF = {}
 
         clientHF.PERSONA = [
             {
-                id
+                id: action === 'INSERTAR_PERSONA' ? id : client.id_persona
             }
         ];
 
         clientHF.TELEFONO = [];
-        phones.forEach((phone) => {
-            (clientHF.TELEFONO).push(
-                {
-                    idcel_telefono: phone.phone ? phone.phone : '0000000000',
-                    extension: "",
-                    tipo_telefono: phone.type ? phone.type : "Móvil",
-                    compania: phone.company ? phone.company : "Telcel",
-                    sms: 0
-                }
-            )
-        });
+        const phoneBusiness = phones[1];
+        (clientHF.TELEFONO).push(
+            {
+                id: action === 'INSERTAR_PERSONA' ? 0 : phoneBusiness._id,
+                idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : "0000000000" : "000000000",
+                extension: "",
+                tipo_telefono: phoneBusiness? phoneBusiness.type ? phoneBusiness.type : " " : " ",
+                compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : " " : " ",
+                sms: 0
+            }
+        )
 
         const business_data = client.business_data;
-
         addresses.forEach((campo) => {
             if(campo.type === 'NEGOCIO'){
                 clientHF.NEGOCIO = [
                     {
-                        nombre: business_data.business_name ? business_data.business_name : "SIN NOMBRE DE NEGOCIO",
+                        id: action === 'INSERTAR_PERSONA' ? 0 : client.data_company[0].id_empresa,
+                        id_dir: action === 'INSERTAR_PERSONA' ? 0 : campo._id, //id de la dirección del negocio
+                        nombre: business_data.business_name ? business_data.business_name : "NEGOCIO",
                         calle: campo.address_line1 ? campo.address_line1 : "Calle ...",
-                        referencia: campo.reference ? campo.referece : "Frente a ...",
-                        letra_exterior: campo.letra_exterior ? campo.letra_exterior : "C",
-                        letra_interior: campo.letra_interior ? campo.letra_interior : "D",
-                        num_exterior: campo.num_exterior ? campo.num_exterior : 0,
-                        num_interior: campo.num_interior ? campo.num_interior : 0,
+                        referencia: campo.street_reference ? campo.street_reference : "Frente a ...",
+                        letra_exterior: campo.ext_number ? campo.ext_number.toString() : "0",
+                        letra_interior: campo.int_number ? campo.int_number.toString() : "0",
+                        num_exterior: campo.ext_number ? parseInt(campo.ext_number) : 0,
+                        num_interior: campo.int_number ? parseInt(campo.int_number) : 0,
                         id_pais: campo.country[0] ? campo.country[0] : 1,
                         id_estado: campo.province[0] ? campo.province[0] : 5,
                         id_municipio: campo.municipality[0] ? campo.municipality[0] : 946,
                         id_ciudad: campo.city[0] ? campo.city[0] : 1534,
                         id_colonia: campo.colony[0] ? campo.colony[0] : 42665,
                         cp: campo.post_code,
-                        rfc: client.rfc ? client.rfc : "",
+                        rfc: client.rfc ? client.rfc : client.curp.slice(0,10),
                         econ_registro_egresos_ingresos: 0,
                         casa_situacion: 0,
                         correo_electronico: client.email ? client.email : "",
                         id_vialidad: 1,
-                        nombre_oficina: client.branch && client.branch[1] ? client.branch[1] : "ORIENTE",
-                        nombre_puesto: business_data.position ? business_data.position :"dueño",//PONER SOLO dueño
+                        nombre_oficina: business_data.business_name ? `Oficina ${business_data.business_name}` : "Oficina...", //Mandar el nombre del negocio concatenar 'Oficina'
+                        nombre_puesto: business_data.position ? business_data.position :"dueño",//PONER SOLO dueño //no actualizar
                         departamento: business_data.department ? business_data.department : "cobranza",
                         numero_empleados: business_data.employees ? business_data.employees : 10,
                         registro_egresos: 0,
@@ -384,22 +395,29 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         ventas_totales_unidad: 0.0,
                         id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 716,
                         tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "2010-03-07",
-                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "2008-01-01"
+                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "2008-01-01",
+                        id_empresa: action === 'INSERTAR_PERSONA' ? 0 : client.data_company[0].id_empresa,
+                        id_oficina_empresa: action === 'INSERTAR_PERSONA' ? 0 : client.data_company[0].id_oficina_empresa
                     }
                 ]
             }
         });
 
+        // console.log('checaa', clientHF.NEGOCIO[0].nombre_oficina)
+
         clientHF.CLIENTE = [
             {
+                id_cliente: action === 'INSERTAR_PERSONA' ? 0 : client.id_cliente,//id del cliente
                 id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,
                 id_oficial_credito: 0
             }
         ]
 
-        clientHF.INDIVIDUAL = [
+        clientHF.INDIVIDUAL = [ //Datos socieconomicos
             {
-                econ_ocupacion: client.ocupation ? client.ocupation[0].etiqueta : "EMPLEADO",
+                id_cliente: action === 'INSERTAR_PERSONA' ? 0 : client.id_cliente,
+                id_persona: action === 'INSERTAR_PERSONA' ? id : client.id_persona,
+                econ_ocupacion: client.ocupation[1] ? client.ocupation[1] : "EMPLEADO",
                 econ_id_actividad_economica: 5,
                 econ_id_destino_credito: 5,
                 econ_id_ubicacion_negocio: 14,
@@ -424,13 +442,14 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 utiliza_internet: 0,
                 utiliza_redes_sociales: 0,
                 id_actividad_economica: business_data.economic_activity[0] != undefined ? business_data.economic_activity[0] : 5,
-                id_ocupacion: client.ocupation[0].id ? client.ocupation[0].id : 12,
-                id_profesion: client.education_level[0] ? client.education_level[0] : 5
+                id_ocupacion: client.ocupation[0] ? client.ocupation[0] : 12,
+                id_profesion: business_data.profession[0] ? business_data.profession[0] : 5
             }
         ]
 
         clientHF.PLD = [
             {
+                id_cliente: action === 'INSERTAR_PERSONA' ? 0 : client.id_cliente,
                 desempenia_funcion_publica: 0,
                 desempenia_funcion_publica_cargo: "",
                 desempenia_funcion_publica_dependencia: "",
@@ -449,23 +468,27 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
 
         clientHF.EFIRMA = [
             {
-                id_firma_electronica: 0,
+                id_firma_electronica: action === 'INSERTAR_PERSONA' ? 0 : client.data_efirma[0].id,
                 fiel: ""
             }
         ]
 
-        const response = await Client.createClientHF(clientHF);
+        // console.log(person);
+        // console.log(clientHF)
+
+        const response = await Client.createClientHF(clientHF, person, value);
         if(!response){
+            console.log('Errorr', response);
             throw new Error('Ocurrió un error al registrar el cliente al HF');
         }
 
         const id_persona = response[0][0].id_persona;
         const id_cliente = response[0][0].id_cliente;
 
-        //Creado el cliente agregamos datos del hf
+        //Creado el cliente agregamos sus datos del hf
         const dataHF = await Client.findClientByExternalId(id_cliente);
         const identificationsHF = addIdentities(dataHF.recordsets[1]);
-        const ife_details = dataHF.recordsets[2][0];
+        const ife_details = dataHF.recordsets[2];
         const addressHF = addAddress(dataHF.recordsets[3]);
         const phonesHF = addPhones(dataHF.recordsets[4]);
 
@@ -475,59 +498,40 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         client["address"] = addressHF;
         client["identities"] = identificationsHF;
         client["ife_details"] = ife_details;
+        client["data_company"] = dataHF.recordsets[8]
+        client["data_efirma"] = dataHF.recordsets[9]
         client["status"] = [2, "Aprobado"];
-        client.save();
+        await client.save();
 
         res.status(201).send({
             result,
-            response
+            response,
+            person,
+            clientHF
         });
-        // res.status(201).send({
-        //     person,
-        //     clientHF
-        // });
 
     } catch(e) {
+        if(action === 'ACTUALIZAR_PERSONA'){
+            console.log('entró al catch al actualizar')
+        }
         console.log(e)
         res.status(400).send(e + ' ');
     }
 
 });
 
-router.post('/updatePersonHF/:action/:id', async (req, res) => {
+router.post('/updateClientHF', async (req, res) => {
     try{
         // const accion = 
         const data = req.body;
-        const update = Object.keys(data);
-        const _id =  req.params.id;
-        const action = req.params.action;
+        // const update = Object.keys(data);
+        // const _id =  req.params.id;
+        // const action = req.params.action;
         
-        console.log(action)
-        // const client = await Client.findOne({_id})
+        // console.log(action)
 
-        // if(action === 'ACTUALIZAR_PERSONA'){
-        //     update.forEach((campo) => (client[campo] = data[campo]))
-        //     await client.save()
-
-        //     const user = await User.findOne({ client_id: client._id});
-        //     update.forEach((valor) => (user[valor] = data[valor]));
-        //     await user.save();
-        // }
-
-        // const person = [];
-
-        // person.push(
-        //     {
-        //         "Datos" : {
-        //             id: client.id_persona ? client.id_persona : 0
-        //         }
-
-        //     }
-        // )
-
-        // console.table([id, action]);
-
-        const result = await Client.createPersonHF(data, action);//Cambiar a ACTUALIZAR_PERSONA
+        const result = await Client.createClientHF(data, 2);
+        console.log(result[0][0].id_cliente);
 
         res.status(200).send(result);
 
@@ -543,6 +547,9 @@ router.get('/client/hf', auth, async(req, res) => {
 
     const identificationsHF = addIdentities(response.recordsets[1]);
     const addressHF = addAddress(response.recordsets[3]);
+    const phonesHF = addPhones(response.recordsets[4]);
+
+    // console.log(phonesHF[1]);
 
     // console.log(identificationsHF);
     // console.log(addressHF);
@@ -577,6 +584,40 @@ router.delete("/clients/:id", auth, async(req, res) =>{
         res.status(200).send({
             client,
             message: 'Client successfully disabled'
+        });
+
+    }catch(e) {
+       res.status(400).send(e + '');
+    }
+
+});
+
+router.delete("/clientsBD/:id", auth, async(req, res) =>{
+
+    try{
+        const _id = req.params.id;
+
+        const client = await Client.findOne({_id});
+        if(!client){
+            throw new Error("Not able to find the client");
+        }
+
+        const user = await User.findOne({client_id: client._id});
+        if(user!= null){
+            const userDeleted = await user.remove();
+            if(!userDeleted){
+                throw new Error("Error deleting user");
+            }
+        }
+
+        const clientDeleted = await client.remove();
+        if(!clientDeleted){
+            throw new Error("Error deleting client");
+        }
+
+        res.status(200).send({
+            client: client.name,
+            message: 'Client removed successfully'
         });
 
     }catch(e) {

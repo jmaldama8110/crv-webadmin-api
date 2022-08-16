@@ -147,7 +147,22 @@ router.get('/products/hf', auth, async(req, res) => {
         res.status(400).send(e + '');
     }
 
-})
+});
+
+router.get('/productByBranch/:id', auth, async(req, res) => {
+    try{
+
+        const id = req.params.id;
+
+        const result = await Product.getProductsByBranchId(id);
+
+        res.status(200).send(result.recordset);
+
+    } catch(e){
+        console.log(e);
+        res.status(400).send(e + '');
+    }
+});
 
 router.patch('/products/:id', auth, async(req, res) => {
 

@@ -97,7 +97,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {
         //Una vez encontrada la solicitud, procedemos a crear la solicitud en HF
         const data1 = {
             idUsuario: 0,
-            idOficina: branch_id != undefined ? branch_id : 1 //Dejar 1 para pruebas, esta debe ser la oficina del cliente
+            idOficina: branch_id != undefined ? branch_id : 1 
         }
 
         const result1 = await Loan.createLoanFromHF(data1)
@@ -173,7 +173,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {
         const resp = await Loan.updateOne({_id},{ 
             $set:{
                 approved_at: new Date(),
-                approved_by: data.id != undefined ? data.id : user._id,
+                approved_by: data.id != undefined ? data.id : req.user._id,
                 approved_amount: data.approved_amount,
                 status : [5, 'ListoparaTramite'],
                 id_loan : id_soli,
@@ -209,7 +209,7 @@ router.post('/loans/assign_client', auth, async(req, res) => { // FUNCIONA
 
         res.status(201).send(result);
     } catch (error) {
-        res.status(401).send(error + '')
+        res.status(400).send(error + '')
     }
 })
 
@@ -220,7 +220,7 @@ router.post('/loans/assign_monto', auth,async(req, res) => {
 
         res.status(201).send(result);
     } catch (error) {
-        res.status(401).send(error.message)
+        res.status(400).send(error.message)
     }
 });
 
