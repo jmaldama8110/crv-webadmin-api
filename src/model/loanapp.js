@@ -107,7 +107,7 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             data['SOLICITUD'][0].id,
             data['CLIENTE'][0].id,
             data['SOLICITUD'][0].id_oficial, // OFICIAL CREDITO debe ser el id de la persona oficial
-            0, // id del producto
+            data['SOLICITUD'][0].id_producto_maestro, // id del producto
             data['SOLICITUD'][0].id_disposicion, // se obtiene del procedimiento asignarDisposicion
             data['SOLICITUD'][0].monto_solicitado, // Ej. 10000.00 (debe estar entre la politicas)
             data['SOLICITUD'][0].monto_autorizado, // Monto_autorizado TODO: MANDAR EN 0 DESDE MÓVIL
@@ -123,7 +123,8 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             data['SOLICITUD'][0].id_oficina, // 1 por defecto
             data['SOLICITUD'][0].garantia_liquida_financiable, // 0/1 False/True
             data['SOLICITUD'][0].id_producto_maestro, // Ej. 4
-            data['SOLICITUD'][0].tasa_anual // Se calcula dependiendo del plazo
+            data['SOLICITUD'][0].tasa_anual, // Se calcula dependiendo del plazo
+            0
         );
 
         tbl.Cliente.rows.add(
@@ -208,6 +209,7 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             .input('tabla_TuHogarConConservaCoacreditado', tbl.UDT_CLIE_TuHogarConConservaCoacreditado)
             .input('idUsuario', sql.Int, 0) // PERSONA QUIEN CREA LA SOLICITUD (EMPLEADO)
             .execute('MOV_registrarActualizarSolicitudCliente');
+            // .execute('MOV_Prueba')
         //.execute('MOV_Prueba');
         const cleanAllTables = () => {
             tbl.cleanTable(tbl.UDT_Solicitud);

@@ -89,14 +89,15 @@ const clientSchema = new mongoose.Schema({
     }],
     phones: [{
         _id: {
-            type: Number },
+            type: Number
+        },
         phone: {
             type: String,
             required: true
         },
         type: {
             type: String,
-            default:'Móvil',
+            default: 'Móvil',
             trim: true,
         },
         company: {
@@ -108,10 +109,10 @@ const clientSchema = new mongoose.Schema({
             default: false,
             required: true
         },
-        validatedAt:{
+        validatedAt: {
             type: Date,
             required: false
-        } 
+        }
     }, ],
     external_id: {
         type: String,
@@ -247,6 +248,8 @@ const clientSchema = new mongoose.Schema({
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     id_oficial: { type: Number},
     ife_details: [],
+    data_company: [],
+    data_efirma: [],
     status:[]
 }, { timestamps: true });
 
@@ -298,7 +301,6 @@ clientSchema.statics.findClientByCurp = async(curp) => {
 };
 
 //Crear persona Hf
-
 clientSchema.statics.createPersonHF = async(data, action) => {
     const pool = await sql.connect(sqlConfig);
 
@@ -407,7 +409,7 @@ clientSchema.statics.createPersonHF = async(data, action) => {
 }
 
 //crear clienteHf
-clientSchema.statics.createClientHF = async(data) => {
+clientSchema.statics.createClientHF = async(data, data2, value) => {
     try {
         const pool = await sql.connect(sqlConfig);
 
@@ -428,7 +430,7 @@ clientSchema.statics.createClientHF = async(data) => {
         }
 
         tbl.UDT_CONT_Empresa.rows.add(
-            0,
+            data["NEGOCIO"][0].id,
             data["NEGOCIO"][0].nombre,
             data["NEGOCIO"][0].rfc,
             '',
@@ -447,13 +449,13 @@ clientSchema.statics.createClientHF = async(data) => {
         );
 
         tbl.UDT_CONT_Direcciones.rows.add(
-            0,
+            data["NEGOCIO"][0].id_dir,
             '',
             data["NEGOCIO"][0].id_pais,
             data["NEGOCIO"][0].id_estado,
             data["NEGOCIO"][0].id_municipio,
-            data["NEGOCIO"][0].id_localidad,
-            data["NEGOCIO"][0].id_asentamiento,
+            data["NEGOCIO"][0].id_ciudad,
+            data["NEGOCIO"][0].id_colonia,
             data["NEGOCIO"][0].calle, //direccion
             data["NEGOCIO"][0].letra_exterior,
             data["NEGOCIO"][0].letra_interior,
@@ -468,9 +470,9 @@ clientSchema.statics.createClientHF = async(data) => {
         );
 
         tbl.UDT_CONT_Oficinas.rows.add(
-            0,
-            0,
-            0,
+            data["NEGOCIO"][0].id_oficina_empresa,//id_oficina
+            data["NEGOCIO"][0].id_empresa, //id_empresa
+            data["NEGOCIO"][0].id_dir, //id_direccion
             0,
             data["NEGOCIO"][0].nombre_oficina,
             '',
@@ -482,7 +484,7 @@ clientSchema.statics.createClientHF = async(data) => {
         );
 
         tbl.UDT_CONT_Telefonos.rows.add(
-            0,
+            data["TELEFONO"][0].id,
             data["TELEFONO"][0].idcel_telefono,
             '',
             data["TELEFONO"][0].tipo_telefono,
@@ -495,14 +497,26 @@ clientSchema.statics.createClientHF = async(data) => {
             .input('tablaDirecciones', tbl.UDT_CONT_Direcciones)
             .input('tablaOficinas', tbl.UDT_CONT_Oficinas)
             .input('tablaTelefonos', tbl.UDT_CONT_Telefonos)
-            .input('id_opcion', sql.Int, 1) // 1-Insertar/2-Actualizar
+            .input('id_opcion', sql.Int, value) // 1-Insertar/2-Actualizar
             .input('id_sesion', sql.Int, 0)
-            .execute('MOV_AdministrarEmpresa')
+            .execute('MOV_AdministrarEmpresa')//Sirve para crear el negocio
         cleanAllTables();
-        const id_empresa = empresa.recordsets[0][0].id_resultado;
-        const id_direccion = empresa.recordsets[0][1].id_resultado;
-        const id_oficina = empresa.recordsets[0][2].id_resultado;
-        const id_telefono = empresa.recordsets[0][3].id_resultado;
+        let id_empresa = 0;
+        let id_direccion = 0;//direccion de empresa/Negocio
+        let id_oficina = 0;
+        let id_telefono = 0;
+
+        if(value === 1){
+            id_empresa = empresa.recordsets[0][0].id_resultado;
+            id_direccion = empresa.recordsets[0][1].id_resultado;//direccion de empresa/Negocio
+            id_oficina = empresa.recordsets[0][2].id_resultado;
+            id_telefono = empresa.recordsets[0][3].id_resultado;
+        }else{ //Si es actualizar llenarlos con valores de mongo
+            id_empresa = data["NEGOCIO"][0].id_empresa;
+            id_direccion = 0;
+            id_oficina = data["NEGOCIO"][0].id_oficina_empresa;
+            id_telefono = 0;
+        }
         // return {
         //     id_empresa,
         //     id_direccion,
@@ -518,16 +532,16 @@ clientSchema.statics.createClientHF = async(data) => {
             null, null, null);
 
         tbl.UDT_CONT_Identificaciones.rows.add( // NO SE USA
-            0,
-            0,
+            data2['IDENTIFICACIONES'][3].id,//id prospera
+            data2['IDENTIFICACIONES'][3].id_entidad,
             'PROSPERA',
-            '',
+            data2['IDENTIFICACIONES'][3].id_numero,
             0,
             1
         );
 
         tbl.UDT_CONT_Telefonos.rows.add(
-            0,
+            data["TELEFONO"][0].id,
             data["TELEFONO"][0].idcel_telefono,
             data["TELEFONO"][0].extension,
             data["TELEFONO"][0].tipo_telefono,
@@ -535,7 +549,8 @@ clientSchema.statics.createClientHF = async(data) => {
             data["TELEFONO"][0].sms
         );
 
-        tbl.UDT_CONT_Negocios.rows.add(0,
+        tbl.UDT_CONT_Negocios.rows.add(
+            data["NEGOCIO"][0].id,
             data["PERSONA"][0].id,
             id_oficina,
             data["NEGOCIO"][0].nombre_oficina,
@@ -552,7 +567,8 @@ clientSchema.statics.createClientHF = async(data) => {
             data["NEGOCIO"][0].tiempo_actividad_final
         );
 
-        tbl.UTD_CLIE_Clientes.rows.add(0,
+        tbl.UTD_CLIE_Clientes.rows.add(
+            data["CLIENTE"][0].id_cliente,
             null,
             null,
             null,
@@ -561,8 +577,9 @@ clientSchema.statics.createClientHF = async(data) => {
             '0000000000', // En desuso
             null);
 
-        tbl.UDT_CLIE_Individual.rows.add(0,
-            0,
+        tbl.UDT_CLIE_Individual.rows.add(
+            data["INDIVIDUAL"][0].id_cliente,//id cliente
+            data["INDIVIDUAL"][0].id_persona,//id persona
             data["INDIVIDUAL"][0].econ_ocupacion, // CATA_ocupacionPLD (enviar la etiqueta ej. EMPLEADA) YA NO SE USA
             data["INDIVIDUAL"][0].econ_id_actividad_economica, // CATA_ActividadEconomica (los que tengan FINAFIM)
             data["INDIVIDUAL"][0].econ_id_destino_credito, // CATA_destinoCredito
@@ -616,7 +633,9 @@ clientSchema.statics.createClientHF = async(data) => {
         //     data["BANCARIO"][0].principal,
         //     data["BANCARIO"][0].activo);
 
-        tbl.UDT_SPLD_DatosCliente.rows.add(0, null,
+        tbl.UDT_SPLD_DatosCliente.rows.add(
+            0, //No mandar nada
+            data["PLD"][0].id_cliente,//id del cliente
             data["PLD"][0].desempenia_funcion_publica,
             data["PLD"][0].desempenia_funcion_publica_cargo,
             data["PLD"][0].desempenia_funcion_publica_dependencia,
@@ -649,6 +668,7 @@ clientSchema.statics.createClientHF = async(data) => {
             .input('id_opcion', sql.Int, 0)
             .input('uid', sql.Int, 0)
             .execute('MOV_insertarInformacionClienteV2')
+            // .execute('MOV_Prueba')
 
         console.log(result.recordsets)
         cleanAllTables();

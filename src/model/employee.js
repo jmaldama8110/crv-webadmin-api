@@ -30,7 +30,7 @@ const employeeSchema = new mongoose.Schema({
         trim: true,
         validate(value){
             if( ! (validador.isEmail(value)) ){
-                throw new Error('Correo electronico no valido..')
+                throw new Error('Correo electronico no válido..')
             }   
         }
     },
@@ -42,6 +42,7 @@ const employeeSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         required: false,
     },
+    permissions: [],
     // hierarchy_id: {},
     workstation: {//No es requerido, sólo sirve al momento de enviar la respuesta
         type: String,

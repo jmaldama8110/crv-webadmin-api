@@ -38,7 +38,7 @@ router.get('/catalogs/sync', auth, async (req,res) => {
     }
     catch(error){
         console.log(error + '');
-        res.status(401).send(error + '')
+        res.status(400).send(error + '')
     }
 })
 
