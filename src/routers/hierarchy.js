@@ -3,7 +3,56 @@ const router = new express.Router;
 const Hierarchy = require('../model/hierarchy')
 const HierarchyHF = require('../model/hierarchyHf');
 const Employee = require("../model/employee");
-const auth = require("../middleware/auth")
+const auth = require("../middleware/auth");
+const mongoose = require("mongoose");
+
+router.post("/hierarchySuperAdmin", async(req, res) => {
+    try{
+        const data = [
+            {
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db550'),
+                "hierarchy_name": "SUPERADMIN",
+                "workstation": "SUPERADMIN",
+                "isroot": true,
+                "parent": "N/A"
+            },
+            {
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db551'),
+                "hierarchy_name": "DIRECTOR COMERCIAL - ORIENTE",
+                "workstation": "DIRECTOR COMERCIAL",
+                "isroot": false,
+                "parent": [
+                  {
+                    "id_Parent":"628d5ddb2eb899da313db550",
+                    "name_Parent":"SUPERADMIN"
+                  }
+                ]
+              },
+              {
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db552'),
+                "hierarchy_name": "SUBDIRECTOR - ORIENTE",
+                "workstation": "SUBDIRECTOR COMERCIAL",
+                "isroot": false,
+                "parent": [
+                  {
+                    "id_Parent":"628d5ddb2eb899da313db551",
+                    "name_Parent":"DIRECTOR COMERCIAL - ORIENTE"
+                  }
+                ]
+              },
+        ];
+
+        await Hierarchy.deleteMany();
+        const hierarchies = await Hierarchy.insertMany(data);
+
+        res.status(201).send(hierarchies);
+
+
+    } catch(e) {
+        console.log(e + '');
+        res.status(400).send(e + '')
+    }
+});
 
 router.post("/hierarchies",auth, async(req, res) => {
     try{

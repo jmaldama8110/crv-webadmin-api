@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 const validador = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-
 const axios = require('axios');
 const url = require('url');
 const mongoose_delete = require('mongoose-delete');
@@ -71,7 +70,7 @@ const userSchema = new mongoose.Schema({
         }
     }],
     client_id: {type: mongoose.Schema.Types.ObjectId, ref: 'Client'},
-    employee_id: {},
+    employee_id: {type: mongoose.Schema.Types.ObjectId, ref: 'Employee'},
     veridoc: { type: mongoose.Schema.Types.ObjectId, ref: 'Identityimg'}
 },
 { timestamps: true } )
@@ -83,6 +82,7 @@ userSchema.methods.generateAuthToken = async function () {
     /// adds 5 hours of token expiration
     const expires_at = new Date();
     expires_at.setHours( expires_at.getHours() + 5);
+    // expires_at.setMinutes( expires_at.getMinutes() + 1);
     ///////////
 
     const jwt_secret_key = process.env.JWT_SECRET_KEY
@@ -139,10 +139,11 @@ userSchema.methods.toJSON = function(){
 
 userSchema.statics.findUserByCredentials = async ( email, password ) => {
     
-    const user = await User.findOne( {email} )
+    // const user = await User.findOne( {email} ).populate('employee_id',{role: 1});
+    const user = await User.findOne({$and : [{email}, {"employee_id" : {$exists: true}}]}).populate('employee_id',{role: 1});
 
     if( !user ){
-        throw new Error('Username does not exist...')
+        throw new Error('The username does not exist in the employee collection...')
     }
 
     const isMatch = await bcrypt.compare( password, user.password )
