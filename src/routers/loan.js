@@ -146,6 +146,23 @@ router.get('/loanDetail', auth, async(req, res) => {
 
 });
 
+router.get('/toAuthorizeLoansHF', auth, async(req, res) =>{
+    try{
+
+        const idOffice = req.query.idOffice;
+        if(!idOffice){
+            throw new Error('idOffice must be provided');
+        }
+
+        const loans = await Loan.getLoanPorAutorizar(idOffice);
+
+        res.status(200).send(loans);
+
+    } catch(err) {
+        res.status(400).send(err + '');
+    }
+});
+
 router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
 
     try{
@@ -190,7 +207,7 @@ router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
             throw new Error('Failed to create loan in HF');
         }
 
-        // Asignamos los datos requeridos  a la solicitud generada
+        // // Asignamos los datos requeridos  a la solicitud generada
         const id_soli = result1[0].idSolicitud;
         // const id_soli = '1234';
 
@@ -206,7 +223,6 @@ router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
         if(!result2) {
             throw new Error('Failed to assign client to loan')
         }
-
         //Una vez asignado el cliente al loan del HF, procedemos a asignar el monto a la solicitud
         const disposition = await Loan.getDisposicionByOffice(branch_id)
         const seguro = await Loan.getSeguroProducto(product_id);
@@ -229,7 +245,8 @@ router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
                     id_producto: action === 1 ? 0 : loan.id_producto,
                     id_producto_maestro: product_id,
                     tasa_anual: 18.75, //Checar cómo calcular esto,
-                    status
+                    status,
+                    creacion: getDates(loan.apply_at)
                 }
             ],
             CLIENTE: [
@@ -253,7 +270,7 @@ router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
             ],
             REFERENCIA: []
         }
-        const result3 = await await Loan.assignMontoloanHF(data3, action);
+        const result3 = await await Loan.assignMontoloanHF(data3);
         if(!result3){
             throw new Error('Failed to assign the amount in the HF')
         }
@@ -304,9 +321,11 @@ router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
 //     }
 // })
 
-router.post('/toAuthorizeLoanHF/:id', auth, async(req, res) => {
+router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {
 
     const _id = req.params.id;
+    const action = parseInt(req.params.action);
+    let status = [];
 
     try{
         
@@ -315,7 +334,14 @@ router.post('/toAuthorizeLoanHF/:id', auth, async(req, res) => {
             throw new Error('Not able to find any loan');
         }
 
+        if(action === 1){
+            status = loanConstants.PorAut;
+        }
+        if(action === 2){
+            status = loanConstants.Autorizado
+        }
         const idLoan = loan.id_loan;
+        console.log(status);
 
         const detail = await Loan.getDetailLoan(idLoan, 1);
         const seguro = await Loan.getStatusGLByLoan(idLoan);
@@ -327,10 +353,10 @@ router.post('/toAuthorizeLoanHF/:id', auth, async(req, res) => {
             throw new Error("No se puede realizar la acción debido a que falta la garantía líquida")
         }
 
-        const result = await Loan.toAuthorizeLoanHF(detail, seguro);
+        const result = await Loan.toAuthorizeLoanHF(detail, seguro, status);
         const detail2 = await Loan.getDetailLoan(idLoan, 1);
 
-        loan["status"] = loanConstants.PorAut;
+        loan["status"] = status;
         loan["id_producto"] = detail2[0][0].id_producto;
         loan["loan_detail"] = detail2[5][0];
         loan["seguro_detail"] = seguro;

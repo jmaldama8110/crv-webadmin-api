@@ -92,18 +92,9 @@ loanappSchema.statics.assignClientLoanFromHF = async(data) => {
     }
 }
 
-loanappSchema.statics.assignMontoloanHF = async(data, action) => {
+loanappSchema.statics.assignMontoloanHF = async(data) => {
     try {
         const pool = await sql.connect(sqlConfig);
-
-        let id_product;
-        let estatus = 'NUEVO TRAMITE';
-        if(action === 2){
-            estatus = 'POR AUTORIZAR';
-        }
-        if(action === 3){
-            estatus = 'AUTORIZADO';
-        }
 
         tbl.UDT_Solicitud.rows.add(
             data['SOLICITUD'][0].id,
@@ -116,12 +107,12 @@ loanappSchema.statics.assignMontoloanHF = async(data, action) => {
             data['SOLICITUD'][0].periodicidad, // Meses/Quincena (Se obtiene de configuracionMaestro)
             data['SOLICITUD'][0].plazo, // 1, 2, 3, 6, 12, 24, etc.
             data['SOLICITUD'][0].status[2].toUpperCase(),// ESTATUS
-            estatus,  // SUB_ESTATUS 
+            'NUEVO TRAMITE',  // SUB_ESTATUS 
             data['SOLICITUD'][0].fecha_primer_pago, // Ej. 2022-07-20
             data['SOLICITUD'][0].fecha_entrega, // Ej. 2022-07-20
             data['SOLICITUD'][0].medio_desembolso, // ORP -> Orden de pago / cheque
             data['SOLICITUD'][0].garantia_liquida, // Ej. 10 Se obtiene de configuracionMaestro
-            '2022-07-07', // FECHA DE CREACION
+            data['SOLICITUD'][0].creacion, // FECHA DE CREACION
             data['SOLICITUD'][0].id_oficina, // 1 por defecto
             data['SOLICITUD'][0].garantia_liquida_financiable, // 0/1 False/True
             data['SOLICITUD'][0].id_producto_maestro, // Ej. 4
@@ -157,12 +148,12 @@ loanappSchema.statics.assignMontoloanHF = async(data, action) => {
             data['SOLICITUD'][0].status[1].toUpperCase(),
             '', // CARGO
             data['SOLICITUD'][0].monto_solicitado,
-            data['SOLICITUD'][0].monto_sugerido, // TODO: Se establece cuando sea POR AUTORIZAR (WEB ADMIN)
+            data['SOLICITUD'][0].monto_autorizado, // TODO: Se establece cuando sea POR AUTORIZAR (WEB ADMIN)
             data['SOLICITUD'][0].monto_autorizado, // 0 -> desde Móvil, >0 desde WEB ADMIN 
             0, // econ_id_actividad_economica // TODO: ver si lo ocupa el procedimiento
             0, // CURP Fisica
             0, // motivo
-            data['SOLICITUD'][0].id_medio_desembolso, //1->CHEQUE, 2->ORDEN DE PAGO, 3->TARJETA DE PAGO
+            data['SOLICITUD'][0].medio_desembolso === "ORP" ? 2 : 1, //1->CHEQUE, 2->ORDEN DE PAGO, 3->TARJETA DE PAGO
             0.00 // monto_garantia_financiable
         );
 
@@ -199,6 +190,13 @@ loanappSchema.statics.assignMontoloanHF = async(data, action) => {
         //TABLA GARANTIA PRENDARIA (SE MANDA VACIA PARA CREDITO ESPECIAL)
         //TABLA TU HOGAR CON CONSERVA (SE MANDA VACIA PARA CREDITO ESPECIAL)
         //TABLA COACREDITADO (SE MANDA VACIA PARA CREDITO ESPECIAL)
+
+        // return {
+        //     solicitud: tbl.UDT_Solicitud.rows,
+        //     cliente : tbl.Cliente.rows,
+        //     soliDetale: tbl.UDT_SolicitudDetalle.rows,
+        //     detalleSeguro: tbl.UDT_CLIE_DetalleSeguro.rows
+        // };
 
         const result = await pool.request()
             .input('tablaSolicitud', tbl.UDT_Solicitud)
@@ -238,32 +236,38 @@ loanappSchema.statics.assignMontoloanHF = async(data, action) => {
     }
 }
 
-loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro) => {
+loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
     try {
         const pool = await sql.connect(sqlConfig);
 
-        const productHF = await pool.request()
-        .input('tasa_anual', sql.Decimal(18, 4), body[0][0].tasa_anual)
-        .input('periodicidad', sql.VarChar(50), body[0][0].periodicidad.toUpperCase())
-        .input('periodos', sql.Int, body[0][0].plazo)
-        .input('id_producto_maestro', sql.Int, body[0][0].id_producto_maestro)
-        .output('id_producto', sql.Int)
-        .execute('MOV_CATA_CrearProducto');
-        console.log('id_productoo: ', productHF.output.id_producto)
+        let id_producto = body[0][0].id_producto;
+
+        if(status[0] === 3){
+            console.log('crear el producto')
+            const productHF = await pool.request()
+            .input('tasa_anual', sql.Decimal(18, 4), body[0][0].tasa_anual)
+            .input('periodicidad', sql.VarChar(50), body[0][0].periodicidad.toUpperCase())
+            .input('periodos', sql.Int, body[0][0].plazo)
+            .input('id_producto_maestro', sql.Int, body[0][0].id_producto_maestro)
+            .output('id_producto', sql.Int)
+            .execute('MOV_CATA_CrearProducto');
+            console.log('id_productoo: ', productHF.output.id_producto)
+
+            id_producto = productHF.output.id_producto
+        }
 
         tbl.UDT_Solicitud.rows.add(
             body[0][0].id,
             body[0][0].id_cliente,
             body[0][0].id_oficial, // OFICIAL CREDITO debe ser el id de la persona oficial
-            // 0,
-            productHF.output.id_producto, // id del producto
+            id_producto,
             body[0][0].id_disposicion, // se obtiene del procedimiento asignarDisposicion
             body[0][0].monto_total_solicitado, // Ej. 10000.00 (debe estar entre la politicas)
             body[0][0].monto_total_autorizado, // Monto_autorizado TODO: MANDAR EN 0 DESDE MÓVIL
             body[0][0].periodicidad, // Meses/Quincena (Se obtiene de configuracionMaestro)
             body[0][0].plazo, // 1, 2, 3, 6, 12, 24, etc.
-            'TRAMITE',// ESTATUS
-            'POR AUTORIZAR',  // SUB_ESTATUS 
+            status[2].toUpperCase(),// ESTATUS
+            status[1].toUpperCase(),  // SUB_ESTATUS 
             body[0][0].fecha_primer_pago, // Ej. 2022-07-20
             body[0][0].fecha_entrega, // Ej. 2022-07-20
             body[0][0].medio_desembolso.trim(), // ORP -> Orden de pago / cheque
@@ -296,8 +300,8 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro) => {
             '', // Nombre
             '', // Apellido paterno
             '', // Apellido Materno
-            'TRAMITE', // ESTATUS
-            'POR AUTORIZAR', // SUB_ESTATUS LISTO PARA TRAMITE
+            status[2].toUpperCase(),// ESTATUS
+            status[1].toUpperCase(),  // SUB_ESTATUS 
             '', // CARGO
             body[0][0].monto_total_solicitado,
             body[0][0].monto_total_autorizado, // TODO: Se establece cuando sea POR AUTORIZAR (WEB ADMIN)
@@ -332,13 +336,6 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro) => {
             body[5][0].activo
         );
 
-        // return {
-        //     solicitud: tbl.UDT_Solicitud.rows,
-        //     cliente : tbl.Cliente.rows,
-        //     soliDetale: tbl.UDT_SolicitudDetalle.rows,
-        //     detalleSeguro: tbl.UDT_CLIE_DetalleSeguro.rows
-        // };
-
         const result = await pool.request()
             .input('tablaSolicitud', tbl.UDT_Solicitud)
             .input('tablaCliente', tbl.Cliente)
@@ -367,6 +364,13 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro) => {
         }
         cleanAllTables();
         // console.log(result.recordsets)
+
+        // return {
+        //     solicitud: tbl.UDT_Solicitud.rows,
+        //     cliente : tbl.Cliente.rows,
+        //     soliDetale: tbl.UDT_SolicitudDetalle.rows,
+        //     detalleSeguro: tbl.UDT_CLIE_DetalleSeguro.rows
+        // };
 
         return result.recordsets;
     } catch (err) {
@@ -516,6 +520,22 @@ loanappSchema.statics.getStatusGLByLoan = async(idLoan) => {
     }
     catch (error) {
         throw new Error(error)
+    }
+}
+
+loanappSchema.statics.getLoanPorAutorizar = async(idOffice) => {
+    try {
+        const pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+            .input('estatus', sql.Int, 8)
+            .input('idOficina', sql.Int, idOffice)
+            .input('idCoordinador', sql.Int, 0)
+            .input('idUsuario', sql.Int,0)
+            .execute('CLIE_getPrestamos');
+
+        return result.recordset
+    } catch (error) {
+        throw new Error(error);
     }
 }
 
