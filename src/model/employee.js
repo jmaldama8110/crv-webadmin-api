@@ -42,8 +42,11 @@ const employeeSchema = new mongoose.Schema({
         type: mongoose.Types.ObjectId,
         required: false,
     },
-    permissions: [],
-    // hierarchy_id: {},
+    role: [],
+    user_id: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User'
+    },
     workstation: {//No es requerido, sólo sirve al momento de enviar la respuesta
         type: String,
         trim: true

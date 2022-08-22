@@ -4,17 +4,51 @@ const User = require("../model/user");
 const Employee = require("../model/employee");
 const Hierarchy = require("../model/hierarchy");
 const auth = require("../middleware/auth");
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+
+router.post("/insertSuperAdmin", async(req, res) =>{
+
+    try{
+        const registro = Object.keys(req.body)
+        const data = {
+            name: "SUPERADMIN",
+            lastname: "SUPERADMIN",
+            second_lastname: "SUPERADMIN",
+            email: "admin@gmail.com",
+            password: "123456",
+            dob: "1980-02-12T00:00:00.000Z",
+            hierarchy_id: "628d5ddb2eb899da313db550",
+            role: [1, "Admin"]
+        };
+
+        const employee = new Employee({...data});
+        await employee.save();
+
+        data.password = await User.passwordHashing(data.password)
+        const user = new User({employee_id: employee._id, ...data});
+        await user.save();
+
+        employee["user_id"] = user._id;
+        await employee.save();
+
+        return res.status(201).send(employee);
+
+    } catch(e){
+        console.log(e)
+        res.status(400).send(e + '')
+    }
+
+});
 
 router.post("/employees", auth, async(req, res) =>{
 
     try{
         const registro = Object.keys(req.body)
+        const data = req.body;
+
         if(!comparar(registro)){
             return res.status(400).send({ error: "Body includes invalid properties..." });
         }
-
-        const data = req.body;
 
         const existEmployee = await Employee.findOne({email: data.email});
         if(existEmployee){
@@ -26,52 +60,23 @@ router.post("/employees", auth, async(req, res) =>{
             throw new Error("The email is already linked to a to a user account")
         }
 
-        if(data.name != undefined){
-            data.name = removeAccents(data.name)
-        }
-        if(data.lastname != undefined){
-            data.lastname = removeAccents(data.lastname)
-        }
-        if(data.second_lastname != undefined){
-            data.second_lastname = removeAccents(data.second_lastname)
-        }
-
-        const employee = new Employee({
-            name: data.name,
-            lastname: data.lastname,
-            second_lastname: data.second_lastname,
-            email: data.email,
-            dob: data.dob,
-            hierarchy_id: data.hierarchy_id
-        });
+        const employee = new Employee({...data});
+        await employee.save();
 
         data.password = await User.passwordHashing(data.password)
-        await employee.save().then( async (response)=>{
-            // console.log('Employee created...');
-            const user = new User({
-                employee_id: response._id,
-                name: response.name,
-                lastname: response.lastname,
-                second_lastname: response.second_lastname,
-                email: response.email,
-                password: data.password
-              });
+        const user = new User({employee_id: employee._id, ...data});
+        await user.save();
 
-              await user.save().then((resp) => {
-                return res.status(201).send(resp);
-              })
-              .catch(async(e) =>{
-                await Employee.findOneAndDelete({ _id: response._id })
-                console.log("EmployeeDeleted");
-                throw new Error(e);
-              })
+        employee["user_id"] = user._id;
+        await employee.save();
 
-        }).catch(async(e) =>{
-            console.log(e + '')
-            res.status(400).send(e + '');
-        });
+        return res.status(201).send(employee);
+        
+        // await Employee.findOneAndDelete({ _id: response._id })
+        // console.log("EmployeeDeleted");
 
     } catch(e){
+        console.log(e)
         res.status(400).send(e + '')
     }
 
@@ -250,7 +255,7 @@ const removeAccents = (str) => {
 }
 
 const comparar = (entrada) =>{
-    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id"];
+    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id", "role"];
     const result = entrada.every(campo => permitido.includes(campo));
     return result;
 }
