@@ -8,6 +8,7 @@ const provinceSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  abreviatura: {type: String},
   pais: { type: Number, ref: 'Country' }
 });
 

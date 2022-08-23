@@ -683,6 +683,39 @@ clientSchema.statics.createClientHF = async(data, data2, value) => {
     }
 }
 
+clientSchema.statics.getHomonimoHF = async(nombre, apellidoPaterno, apellidoMaterno) => {
+    try{
+
+        const pool = await sql.connect(sqlConfig);
+
+        const result = await pool.request()
+            .input('nombre', sql.VarChar, nombre)
+            .input('apellido_paterno', sql.VarChar, apellidoPaterno)
+            .input('apellido_materno', sql.VarChar, apellidoMaterno)
+            .execute('MOV_obtenerHomonimo');
+
+        return result.recordset;
+
+    } catch (error) {
+        return error;
+    }
+}
+
+clientSchema.statics.updateCurpPersonaHF = async(idPerson, curpNueva) => {
+    try {
+        const pool = await sql.connect(sqlConfig);
+
+        const result = await pool.request()
+            .input('idPersona', sql.Int, idPerson)
+            .input('curpNueva', sql.VarChar, curpNueva)
+            .execute('MOV_ActualizarCurpPersona');
+
+        return result.recordset;
+    } catch (err) {
+        return err;
+    }
+}
+
 clientSchema.plugin(mongoose_delete, {
     deletedAt: true,
     deletedBy: true,
