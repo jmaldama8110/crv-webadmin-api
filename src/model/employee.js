@@ -82,6 +82,28 @@ employeeSchema.statics.getAllEmployees = async(id) => {
     }
 };
 
+employeeSchema.statics.getPoderNotarialByOfficeYFondo = async(idLoan, idOffice) => {
+    try {
+        const pool = await sql.connect(sqlConfig);
+
+        const fondo = await pool.request()
+            .input('idPrestamo', sql.Int, idLoan)
+            .execute('DISB_GetFondoByPrestamo');
+
+        const idFondeador = fondo.recordset[0].id;
+
+        const notarial = await pool.request()
+            .input('idOficinaFinanciera', sql.Int, idOffice)
+            .input('idFondeador', sql.Int, idFondeador)
+            .input('idSesion', sql.Int, 0)
+            .execute('OTOR_ObtenerPoderNotarialPorUsuarioOficinaYFondo');
+
+        return notarial.recordset;
+    } catch (err) {
+        return err;
+    }
+}
+
 employeeSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
 

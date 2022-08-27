@@ -5,6 +5,7 @@ const User = require("../model/user");
 const Client = require('../model/client');
 const Identityimg = require('../model/identityimg');
 const Branch = require('../model/branch');
+const Province = require('../model/province');
 const auth = require("../middleware/auth");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
@@ -90,8 +91,6 @@ router.get("/statusClients/:status", auth, async(req, res) =>{
    }
 })
 
-
-
 router.patch("/clients/:id", auth, async(req, res) =>{
 
     
@@ -135,15 +134,123 @@ router.patch("/clients/:id", auth, async(req, res) =>{
 
 });
 
-router.post("/approveClient/:action/:id", auth, async(req, res) => {
-    
-    const _id = req.params.id;
-    const action = req.params.action;
-    let value = 1;
-    const update = Object.keys(req.body);
-    const data = req.body;
-
+router.post('/checkHomonimos', async (req, res) => {
     try{
+        const data = req.body;
+
+        const result = await Client.getHomonimoHF(data.name, data.lastname, data.second_lastname);
+
+        // return res.status(200).send(result);
+
+        if(result.length > 0) {
+            const finalResult = [];
+
+            for(let i=0; i<result.length; i++) {
+                const person = result[i];
+                finalResult.push({
+                    id_persona: person.id,
+                    id_cliente: person.id_cliente ? person.id_cliente : 0,
+                    name: person.nombre,
+                    lastname: person.apellido_paterno,
+                    second_lastname: person.apellido_materno,
+                    curp: person.curp[0].trim(),
+                    dob: person.fecha_nacimiento,
+                    creation_date: person.fecha_registro
+                });
+            }
+
+            return res.status(200).send(finalResult);
+        }
+
+        throw new Error('No se encontraron homónimos para esta persona');
+
+    } catch(e){
+        console.log(e);
+        res.status(400).send(e +'');
+    }
+});
+
+router.patch('/updateCurp/:id', async (req, res) => {
+
+    //VAZR001001HCSLPS01
+    //VAZR001325HCSLPS56
+    // VAZR001001HCSLPS01
+    try{
+        const data = req.body; //id_persona, curp, id_cliente
+        const _id = req.params.id;
+
+        const client = await Client .findOne({_id});
+        if(!client){
+            throw new Error('Could not find client');
+        }
+        const result = await Client.updateCurpPersonaHF(data.id_persona, data.curp);
+        if(!result){
+            throw new Error("Ocurrió un error al actualizar el curp de la persona")
+        }
+
+        const dataHF = await Client.findClientByExternalId(data.id_cliente);
+
+        //Actualizamos todos los datos del cliente respecto al HF 
+        const curp = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "CURP");
+        const ife = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "IFE");
+        const rfc = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "RFC");
+
+        const identificationsHF = addIdentities(dataHF.recordsets[1]);
+        const addressHF = addAddress(dataHF.recordsets[3]);
+        const phonesHF = addPhones(dataHF.recordsets[4]);
+        const personData = {...dataHF.recordsets[0][0]};
+        const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
+        
+        const econPer = {...dataHF.recordsets[7][0]}
+        const business_data = {
+            economic_activity: [econPer.id_actividad_economica, econPer.nombre_actividad_economica],
+            profession: [econPer.id_profesion,econPer.nombre_profesion],
+            business_name: econPer.nombre_negocio,
+            business_start_date: econPer.econ_fecha_inicio_act_productiva
+        }
+
+        client["id_persona"] = personData.id_persona;
+        client["id_cliente"] = personData.id;
+        client["business_data"] = business_data,
+        client["sex"] = [personData.id_gender, personData.gender]; 
+        client["education_level"] = [personData.id_scholarship, personData.scholarship]; 
+        client["ocupation"] = [personData.id_occupation, personData.occupation];
+        client["marital_status"] = [personData.id_marital_status, personData.marital_status];
+        client["curp"] = data.curp;
+        client["ine_clave"] = ife ? ife.id_numero : "";
+        client["ine_emision"] = ife_details ? ife_details.numero_emision : "";
+        client["ine_vertical_ocr"] = ife_details ? ife_details.numero_vertical_ocr.trim() : "";
+        client["rfc"] = rfc ? rfc.id_numero : "";
+        client["dob"] = personData.dob;
+        client["phones"] = phonesHF;
+        client["address"] = addressHF;
+        client["identities"] = identificationsHF;
+        client["ife_details"] = ife_details;
+        client["data_company"] = dataHF.recordsets[8];
+        client["data_efirma"] = dataHF.recordsets[9];
+        client["branch"] = [personData.id_oficina, personData.nombre_oficina]; 
+        client["nationality"] = [personData.id_nationality, personData.nationality];
+        client["province_of_birth"] = [personData.id_province_of_birth, personData.province_of_birth]
+        client["country_of_birth"] = [personData.id_country_of_birth, personData.country_of_birth]
+        client["status"] = [2, "Aprobado"];
+        await client.save();
+
+        res.status(200).send(client);
+
+    } catch(e){
+        console.log(e);
+        res.status(400).send(e +'');
+    }
+});
+
+router.post("/approveClient/:action/:id", auth, async(req, res) => {
+    try{
+
+        const _id = req.params.id;
+        const action = req.params.action;
+        let value = 1;
+        const update = Object.keys(req.body);
+        const data = req.body;
 
         const client = await Client.findOne({_id});
         if(!client){
@@ -165,7 +272,14 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             await user.save();
         }
 
-        
+        const addresses = client.address;
+        const dirDomi = addresses.filter(addresses => addresses.type === 'DOMICILIO');
+        const dirIfe = addresses.filter(addresses => addresses.type === 'IFE');
+        const dirRfc = addresses.filter(addresses => addresses.type === 'RFC');
+
+        const entidad_nac = dirDomi[0].province[0] ? dirDomi[0].province[0] : 5;
+        const province = await Province.findOne({_id: entidad_nac});
+
         // Creamos/actualizamos la persona en el HF
         const person = {};
         person.DATOS_PERSONALES = [
@@ -178,9 +292,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 id_sexo: client.sex[0] ? client.sex[0] : 4,
                 id_escolaridad: client.education_level[0] ? client.education_level[0] : 2,
                 id_estado_civil: client.marital_status[0] ? client.marital_status[0] : 1,
-                entidad_nacimiento: client.province_of_birth[1] ? client.province_of_birth[1] : "Chiapas",
+                // entidad_nacimiento: client.province_of_birth[1] ? client.province_of_birth[1] : "Chiapas-CS",
+                entidad_nacimiento: `${province.etiqueta}-${province.abreviatura}`,
                 regimen: client.tributary_regime[1] ? client.tributary_regime[1] : " ",
-                id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1, //Consultar el catálogo de oficinas
+                id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,
                 curp_fisica: 0,
                 datos_personales_diferentes_curp: 0,
                 id_entidad_nacimiento: client.province_of_birth[0] ? client.province_of_birth[0] : 5,
@@ -221,15 +336,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             },
         )
 
-        person.DIRECCIONES = []
-        const addresses = client.address;
-
-        const dirDomi = addresses.filter(addresses => addresses.type === 'DOMICILIO');
-        const dirIfe = addresses.filter(addresses => addresses.type === 'IFE');
-        const dirRfc = addresses.filter(addresses => addresses.type === 'RFC');
-
-        // console.log(dirDomi);
-        
+        person.DIRECCIONES = []     
         
         person.DIRECCIONES.push(
             {
@@ -327,10 +434,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 sms: 0
             }
         )
-        console.log(person);
-        const result = await Client.createPersonHF(person, action);
-        console.log(result);
+        // return res.status(200).send(person);
 
+        const result = await Client.createPersonHF(person, action);
         if(!result){
             throw new Error('Ocurrió un error al registrar la persona al HF');
         }
@@ -385,7 +491,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         casa_situacion: 0,
                         correo_electronico: client.email ? client.email : "",
                         id_vialidad: 1,
-                        nombre_oficina: business_data.business_name ? `Oficina ${business_data.business_name}` : "Oficina...", //Mandar el nombre del negocio concatenar 'Oficina'
+                        nombre_oficina: business_data.business_name ? `OFICINA ${business_data.business_name}` : "OFICINA...", //Mandar el nombre del negocio concatenar 'Oficina'
                         nombre_puesto: business_data.position ? business_data.position :"dueño",//PONER SOLO dueño //no actualizar
                         departamento: business_data.department ? business_data.department : "cobranza",
                         numero_empleados: business_data.employees ? business_data.employees : 10,
@@ -488,9 +594,11 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         //Creado el cliente agregamos sus datos del hf
         const dataHF = await Client.findClientByExternalId(id_cliente);
         const identificationsHF = addIdentities(dataHF.recordsets[1]);
-        const ife_details = dataHF.recordsets[2];
+        // const ife_details = dataHF.recordsets[2];
+        const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
         const addressHF = addAddress(dataHF.recordsets[3]);
         const phonesHF = addPhones(dataHF.recordsets[4]);
+        const personData = dataHF.recordsets[0][0];
 
         client["id_persona"] = id_persona;
         client["id_cliente"] = id_cliente;
@@ -498,8 +606,13 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         client["address"] = addressHF;
         client["identities"] = identificationsHF;
         client["ife_details"] = ife_details;
-        client["data_company"] = dataHF.recordsets[8]
-        client["data_efirma"] = dataHF.recordsets[9]
+        client["ine_emision"] = ife_details ? ife_details.numero_emision : "";
+        client["data_company"] = dataHF.recordsets[8];
+        client["data_efirma"] = dataHF.recordsets[9];
+        client["branch"] = [personData.id_oficina, personData.nombre_oficina] 
+        client["nationality"] = [personData.id_nationality, personData.nationality];
+        client["province_of_birth"] = [personData.id_province_of_birth, personData.province_of_birth]
+        client["country_of_birth"] = [personData.id_country_of_birth, personData.country_of_birth]
         client["status"] = [2, "Aprobado"];
         await client.save();
 
@@ -520,41 +633,40 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
 
 });
 
-router.post('/updateClientHF', async (req, res) => {
-    try{
-        // const accion = 
-        const data = req.body;
-        // const update = Object.keys(data);
-        // const _id =  req.params.id;
-        // const action = req.params.action;
-        
-        // console.log(action)
-
-        const result = await Client.createClientHF(data, 2);
-        console.log(result[0][0].id_cliente);
-
-        res.status(200).send(result);
-
-    } catch(e){
-        console.log(e);
-        res.status(400).send(e +'');
-    }
-})
-
 router.get('/client/hf', auth, async(req, res) => {
 
-    const response = await Client.findClientByExternalId(req.query.id);
+    const dataHF = await Client.findClientByExternalId(req.query.id);
 
-    const identificationsHF = addIdentities(response.recordsets[1]);
-    const addressHF = addAddress(response.recordsets[3]);
-    const phonesHF = addPhones(response.recordsets[4]);
+        const personData = {...dataHF.recordsets[0][0]};
+    const econPer = {...dataHF.recordsets[7][0]}
+    const business_data = {
+        economic_activity: [econPer.id_actividad_economica, econPer.nombre_actividad_economica],
+        profession: [econPer.id_profesion,econPer.nombre_profesion],
+        business_name: econPer.nombre_negocio,
+        business_start_date: econPer.econ_fecha_inicio_act_productiva
+    }
 
-    // console.log(phonesHF[1]);
+    // console.log(personData);
 
-    // console.log(identificationsHF);
-    // console.log(addressHF);
+    const province_of_birth = [personData.id_province_of_birth, personData.province_of_birth];
+    const country_of_birth = [personData.id_country_of_birth, personData.country_of_birth];
+    const nationality = [personData.id_nationality, personData.nationality];
+    const branch = [personData.id_oficina, personData.nombre_oficina];
 
-    res.send(response);
+    const curp = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "CURP");
+    const ife = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "IFE");
+    const rfc = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "RFC");
+
+    const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
+    const emision= ife_details ? ife_details.numero_emision : "";
+    const vertical = ife_details ? ife_details.numero_vertical_ocr : "";
+    const rfc2 = rfc ? rfc.id_numero : "";
+
+    // console.log(emision);
+    // console.log(vertical);
+    // console.log(rfc2);
+
+    res.status(200).send(dataHF);
 
 });
 

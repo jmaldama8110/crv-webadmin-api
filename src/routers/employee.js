@@ -130,6 +130,25 @@ router.get('/employees/hf', auth, async(req, res) => {
 
 })
 
+router.get('/poderNotarial', auth, async(req, res) =>{
+    try{
+        const idLoan = req.query.idLoan;
+        const idOffice = req.query.idOffice;
+
+        if(!idLoan || !idOffice){
+            throw new Error('It is required to provide the parameters idLoan and idOffice')
+        }
+
+        const result = await Employee.getPoderNotarialByOfficeYFondo(idLoan, idOffice);
+
+        res.status(200).send(result);
+
+    } catch (e){
+        console.log(e);
+        res.status(404).send(e.message);
+    }
+});
+
 router.patch("/employees/:id", auth, async(req, res) => {
 
     
