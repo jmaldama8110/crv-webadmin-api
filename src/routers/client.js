@@ -5,6 +5,7 @@ const User = require("../model/user");
 const Client = require('../model/client');
 const Identityimg = require('../model/identityimg');
 const Branch = require('../model/branch');
+const Province = require('../model/province');
 const auth = require("../middleware/auth");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
@@ -243,14 +244,13 @@ router.patch('/updateCurp/:id', async (req, res) => {
 });
 
 router.post("/approveClient/:action/:id", auth, async(req, res) => {
-    
-    const _id = req.params.id;
-    const action = req.params.action;
-    let value = 1;
-    const update = Object.keys(req.body);
-    const data = req.body;
-
     try{
+
+        const _id = req.params.id;
+        const action = req.params.action;
+        let value = 1;
+        const update = Object.keys(req.body);
+        const data = req.body;
 
         const client = await Client.findOne({_id});
         if(!client){
@@ -272,7 +272,14 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             await user.save();
         }
 
-        
+        const addresses = client.address;
+        const dirDomi = addresses.filter(addresses => addresses.type === 'DOMICILIO');
+        const dirIfe = addresses.filter(addresses => addresses.type === 'IFE');
+        const dirRfc = addresses.filter(addresses => addresses.type === 'RFC');
+
+        const entidad_nac = dirDomi[0].province[0] ? dirDomi[0].province[0] : 5;
+        const province = await Province.findOne({_id: entidad_nac});
+
         // Creamos/actualizamos la persona en el HF
         const person = {};
         person.DATOS_PERSONALES = [
@@ -285,9 +292,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 id_sexo: client.sex[0] ? client.sex[0] : 4,
                 id_escolaridad: client.education_level[0] ? client.education_level[0] : 2,
                 id_estado_civil: client.marital_status[0] ? client.marital_status[0] : 1,
-                entidad_nacimiento: client.province_of_birth[1] ? client.province_of_birth[1] : "Chiapas-CS",
+                // entidad_nacimiento: client.province_of_birth[1] ? client.province_of_birth[1] : "Chiapas-CS",
+                entidad_nacimiento: `${province.etiqueta}-${province.abreviatura}`,
                 regimen: client.tributary_regime[1] ? client.tributary_regime[1] : " ",
-                id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1, //Consultar el catálogo de oficinas
+                id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,
                 curp_fisica: 0,
                 datos_personales_diferentes_curp: 0,
                 id_entidad_nacimiento: client.province_of_birth[0] ? client.province_of_birth[0] : 5,
@@ -328,12 +336,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             },
         )
 
-        person.DIRECCIONES = []
-        const addresses = client.address;
-
-        const dirDomi = addresses.filter(addresses => addresses.type === 'DOMICILIO');
-        const dirIfe = addresses.filter(addresses => addresses.type === 'IFE');
-        const dirRfc = addresses.filter(addresses => addresses.type === 'RFC');        
+        person.DIRECCIONES = []     
         
         person.DIRECCIONES.push(
             {
@@ -431,10 +434,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 sms: 0
             }
         )
-        console.log(person);
-        const result = await Client.createPersonHF(person, action);
-        console.log(result);
+        // return res.status(200).send(person);
 
+        const result = await Client.createPersonHF(person, action);
         if(!result){
             throw new Error('Ocurrió un error al registrar la persona al HF');
         }
@@ -489,7 +491,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         casa_situacion: 0,
                         correo_electronico: client.email ? client.email : "",
                         id_vialidad: 1,
-                        nombre_oficina: business_data.business_name ? `Oficina ${business_data.business_name}` : "Oficina...", //Mandar el nombre del negocio concatenar 'Oficina'
+                        nombre_oficina: business_data.business_name ? `OFICINA ${business_data.business_name}` : "OFICINA...", //Mandar el nombre del negocio concatenar 'Oficina'
                         nombre_puesto: business_data.position ? business_data.position :"dueño",//PONER SOLO dueño //no actualizar
                         departamento: business_data.department ? business_data.department : "cobranza",
                         numero_empleados: business_data.employees ? business_data.employees : 10,
