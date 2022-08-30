@@ -59,7 +59,6 @@ router.get('/activeBranches', auth, async(req, res) => {
 router.get('/branchesHF', auth, async(req, res) => {    
     try{
 
-        await Branch.deleteMany({});
         const branches = await Branch.getAllBranchesHF();
         
         console.log(branches.length);
