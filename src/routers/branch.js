@@ -56,6 +56,20 @@ router.get('/activeBranches', auth, async(req, res) => {
     }
 });
 
+router.get('/branchesHF', auth, async(req, res) => {    
+    try{
+
+        const branches = await Branch.getAllBranchesHF();
+        
+        console.log(branches.length);
+        res.status(200).send(branches);
+
+    } catch(e){
+        console.log(e + '');
+        res.status(400).send(e + '');
+    }
+
+});
 
 //Sincronizamos el cátalogo del HF
 router.get('/branches/hf', auth, async(req, res) => {    

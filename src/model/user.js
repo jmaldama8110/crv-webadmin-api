@@ -71,7 +71,18 @@ const userSchema = new mongoose.Schema({
     }],
     client_id: {type: mongoose.Schema.Types.ObjectId, ref: 'Client'},
     employee_id: {type: mongoose.Schema.Types.ObjectId, ref: 'Employee'},
-    veridoc: { type: mongoose.Schema.Types.ObjectId, ref: 'Identityimg'}
+    veridoc: { type: mongoose.Schema.Types.ObjectId, ref: 'Identityimg'},
+    veridoc_result: {},
+    checklist: [
+      {
+        action: { type: String, required: true },
+        mobile_path: { type: String, required: true },
+        priority: { type: Number, required: true, default: 1 },
+        checked: { type: Boolean, required: true, default: false },
+        message: { type: String, required: true },
+        item_text: { type: String, required: true },
+      },
+    ],
 },
 { timestamps: true } )
 

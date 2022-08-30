@@ -211,7 +211,7 @@ router.patch('/updateCurp/:id', async (req, res) => {
 
         client["id_persona"] = personData.id_persona;
         client["id_cliente"] = personData.id;
-        client["business_data"] = business_data,
+        client["business_data"] = business_data;
         client["sex"] = [personData.id_gender, personData.gender]; 
         client["education_level"] = [personData.id_scholarship, personData.scholarship]; 
         client["ocupation"] = [personData.id_occupation, personData.occupation];
@@ -785,7 +785,53 @@ router.post("/clients/restore/:id", auth,async(req,res) =>{
        res.status(400).send(e + '');
     }
 
-})
+});
+
+//------------Crear persona en HF
+router.post('/createPersonHF', auth, async(req, res) => {
+    try {
+        const result = await Client.createPersonHF(req.body,'INSERTAR_PERSONA')
+
+        res.status(201).send(result);
+    } catch (error) {
+        res.status(401).send(error.message)
+    }
+});
+
+// ------------------- Crear  cliente idividual en HF
+router.post('/clients/hf/create', auth, async(req, res) => { // FUNCIONA
+    try {
+        const result = await Client.createClientHF(req.body);
+
+        const data2 = {
+            "IDENTIFICACIONES": [
+                {
+                    id: 0,
+                    id_entidad: 5,
+                    tipo_identificacion: "CURP",
+                    id_numero: "JSUS001001HCSLPSA3"
+                },
+                {
+                    id: 0,
+                    id_entidad: 5,
+                    tipo_identificacion: "IFE",
+                    id_numero: "JSUSLS00100107H508"
+                },
+                {
+                    id: 0,
+                    id_entidad: 5,
+                    tipo_identificacion: "RFC",
+                    id_numero: "JSUS001002"
+                }
+            ],
+        }
+
+        res.status(201).send(result, data2, 1);
+
+    } catch (error) {
+        res.status(401).send(error.message)
+    }
+});
 
 const removeAccents = (str) => {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
