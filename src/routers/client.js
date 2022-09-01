@@ -218,8 +218,8 @@ router.patch('/updateCurp/:id', async (req, res) => {
         client["marital_status"] = [personData.id_marital_status, personData.marital_status];
         client["curp"] = data.curp;
         client["ine_clave"] = ife ? ife.id_numero : "";
-        client["ine_emision"] = ife_details ? ife_details.numero_emision : "";
-        client["ine_vertical_ocr"] = ife_details ? ife_details.numero_vertical_ocr.trim() : "";
+        client["ine_duplicates"] = ife_details ? ife_details.numero_emision : "";
+        client["ine_doc_number"] = ife_details ? ife_details.numero_vertical_ocr.trim() : "";
         client["rfc"] = rfc ? rfc.id_numero : "";
         client["dob"] = personData.dob;
         client["phones"] = phonesHF;
@@ -415,8 +415,8 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         person.DATOS_IFE = [
             {
                 id: action === 'INSERTAR_PERSONA' ? 0 : client.ife_details[0].id,
-                numero_emision: client.ine_emision ?  client.ine_emision.slice(0,2) : "00",
-                numero_vertical_ocr: client.ine_vertical_ocr ? client.ine_vertical_ocr.slice(0,13) : "0000000000000"
+                numero_emision: client.ine_duplicates ?  client.ine_duplicates.slice(0,2) : "00",
+                numero_vertical_ocr: client.ine_doc_number ? client.ine_doc_number.slice(0,13) : "0000000000000"
             }
         ]
 
@@ -606,7 +606,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         client["address"] = addressHF;
         client["identities"] = identificationsHF;
         client["ife_details"] = ife_details;
-        client["ine_emision"] = ife_details ? ife_details.numero_emision : "";
+        client["ine_duplicates"] = ife_details ? ife_details.numero_emision : "00";
         client["data_company"] = dataHF.recordsets[8];
         client["data_efirma"] = dataHF.recordsets[9];
         client["branch"] = [personData.id_oficina, personData.nombre_oficina] 
@@ -728,7 +728,7 @@ router.delete("/clientsBD/:id", auth, async(req, res) =>{
         }
 
         res.status(200).send({
-            client: client.name,
+            client: `${client.name} ${client.lastname} ${client.second_lastname}`,
             message: 'Client removed successfully'
         });
 

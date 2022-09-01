@@ -13,6 +13,7 @@ const catalogRouter = require('./routers/catalog');
 const branchRouter = require('./routers/branch');
 const neighborhoodRouter = require('./routers/neighborhood');
 const loanRouter = require('./routers/loan');
+const notificationRouter = require('./routers/notification');
 
 const app = express()
 app.use(express.json({limit: '1mb'}))
@@ -26,6 +27,7 @@ app.use(catalogRouter)
 app.use(branchRouter)
 app.use(neighborhoodRouter)
 app.use(loanRouter)
+app.use(notificationRouter)
 
 
 module.exports = app
