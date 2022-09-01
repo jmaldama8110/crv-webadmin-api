@@ -51,6 +51,7 @@ const employeeSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    branch: []
 }, { timestamps: true })
 
 employeeSchema.methods.toJSON = function(){

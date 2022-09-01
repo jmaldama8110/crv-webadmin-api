@@ -48,12 +48,22 @@ const clientSchema = new mongoose.Schema({
         trim: true,
         required:false
     },
-    ine_emision: {
+    // ine_emision: {
+    //     type: String,
+    //     trim: true,
+    //     required:false
+    // },
+    // ine_vertical_ocr: {
+    //     type: String,
+    //     trim: true,
+    //     required:false
+    // },
+    ine_duplicates: {
         type: String,
         trim: true,
         required:false
     },
-    ine_vertical_ocr: {
+    ine_doc_number: {
         type: String,
         trim: true,
         required:false
