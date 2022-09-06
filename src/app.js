@@ -14,6 +14,7 @@ const branchRouter = require('./routers/branch');
 const neighborhoodRouter = require('./routers/neighborhood');
 const loanRouter = require('./routers/loan');
 const notificationRouter = require('./routers/notification');
+const paymentIntermediareRouter = require('./routers/paymentIntermediarie');
 
 const app = express()
 app.use(express.json({limit: '1mb'}))
@@ -28,6 +29,7 @@ app.use(branchRouter)
 app.use(neighborhoodRouter)
 app.use(loanRouter)
 app.use(notificationRouter)
+app.use(paymentIntermediareRouter)
 
 
 module.exports = app

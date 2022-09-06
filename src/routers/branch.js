@@ -75,7 +75,7 @@ router.get('/branchesHF', auth, async(req, res) => {
 router.get('/branches/hf', auth, async(req, res) => {    
     try{
 
-        await Branch.deleteMany({});
+        await Branch.deleteMany();
         const branches = await Branch.getAllBranchesHF();
         const finalResult = [];
 
@@ -93,7 +93,7 @@ router.get('/branches/hf', auth, async(req, res) => {
         }
 
         await Branch.insertMany(finalResult);
-        res.status(200).send('Sincronización éxitosa');
+        res.status(200).send('Done!!');
 
     } catch(e){
         console.log(e + '');
