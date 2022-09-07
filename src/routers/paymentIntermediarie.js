@@ -7,10 +7,13 @@ const PaymentIntermediare = require('../model/paymentIntermediarie'); //
 router.get('/paymentIntermediareHF',auth, async(req, res) => {
     try{
         const result = await PaymentIntermediare.getIntermediarios();
+        if(!result || result.length === 0){
+            throw new Error('Could not get results');
+        }
         res.status(200).send(result)
 
     } catch(e){
-        res.status(400).send(e)
+        res.status(400).send(e.message)
     }
 });
 
@@ -41,7 +44,7 @@ router.get('/syncPaymentIntermediareHF',auth, async(req, res) => {
         res.status(200).send('Done!!');
 
     } catch(e){
-        res.status(400).send(e)
+        res.status(400).send(e.message)
     }
 });
 
@@ -75,7 +78,7 @@ router.get('/paymentIntermediare',auth, async(req, res) => {
         res.status(200).send(result)
 
     } catch(e){
-        res.status(400).send(e)
+        res.status(400).send(e.message)
     }
 });
 
@@ -93,7 +96,7 @@ router.patch('/paymentIntermediaries/:id', auth, async(req, res) => {
 
     } catch(err){
         console.log(e)
-        res.status(400).send(e + '')
+        res.status(400).send(e.message)
     }
 });
 

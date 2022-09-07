@@ -240,11 +240,13 @@ router.post('/pruebaNotification/:id', async(req, res) => {
 });
 
 router.post("/approveClient/:action/:id", auth, async(req, res) => {
+
+    const _id = req.params.id;
+    const action = req.params.action;
+    let value = 1;
+
     try{
 
-        const _id = req.params.id;
-        const action = req.params.action;
-        let value = 1;
         const update = Object.keys(req.body);
         const data = req.body;
 
@@ -288,7 +290,6 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 id_sexo: client.sex[0] ? client.sex[0] : 4,
                 id_escolaridad: client.education_level[0] ? client.education_level[0] : 2,
                 id_estado_civil: client.marital_status[0] ? client.marital_status[0] : 1,
-                // entidad_nacimiento: client.province_of_birth[1] ? client.province_of_birth[1] : "Chiapas-CS",
                 entidad_nacimiento: `${province.etiqueta}-${province.abreviatura}`,
                 regimen: client.tributary_regime[1] ? client.tributary_regime[1] : " ",
                 id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,
@@ -301,8 +302,6 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 es_persona_prohibida: 0
             }
         ]
-
-        const identification = client.identification_type;
 
         person.IDENTIFICACIONES = [];
         person.IDENTIFICACIONES.push(
@@ -347,7 +346,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 numero_exterior: dirDomi[0].ext_number ? dirDomi[0].ext_number.toString() : "SN",
                 numero_interior: dirDomi[0].int_number ? dirDomi[0].int_number.toString() : "SN",
                 referencia: dirDomi[0].street_reference ? dirDomi[0].street_reference :"FRENTE A ...",
-                casa_situacion: 0, //No se guarda el ownership 0 => RENTADO / 1- => PROPIO
+                casa_situacion: dirDomi[0].ownership ? dirDomi[0].ownership === true ? 1 : 0 : 0, //No se guarda el ownership 0 => RENTADO / 1- => PROPIO
                 tiempo_habitado_inicio: dirDomi[0].start_date ? getDates(dirDomi[0].start_date) :"2022-06-22",
                 tiempo_habitado_final: dirDomi[0].end_date ? getDates(dirDomi[0].end_date) : "2022-06-20",
                 correo_electronico: client.email,
@@ -372,7 +371,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 numero_exterior: dirIfe.length >= 1 ? dirIfe[0].ext_number ? dirIfe[0].ext_number  : (person.DIRECCIONES)[0].numero_exterior : (person.DIRECCIONES)[0].numero_exterior,
                 numero_interior: dirIfe.length >= 1 ? dirIfe[0].int_number ? dirIfe[0].int_number : (person.DIRECCIONES)[0].numero_interior : (person.DIRECCIONES)[0].numero_interior,
                 referencia: dirIfe.length >= 1 ? dirIfe[0].street_reference ? dirIfe[0].street_reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
-                casa_situacion: 0,
+                casa_situacion: dirIfe.length >= 1 ? dirIfe[0].ownership ? dirIfe[0].ownership === true ? 1 : 0 : 0 : (person.DIRECCIONES)[0].casa_situacion,
                 tiempo_habitado_inicio: dirIfe.length >= 1 ? dirIfe[0].start_date ? getDates(dirIfe[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                 tiempo_habitado_final: dirIfe.length >= 1 ? dirIfe[0].end_dat ? getDates(dirIfe[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final : (person.DIRECCIONES)[0].tiempo_habitado_final,
                 correo_electronico: client.email,
@@ -397,7 +396,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 numero_exterior: dirRfc.length >= 1 ? dirRfc[0].ext_number ? dirRfc[0].ext_number  : (person.DIRECCIONES)[0].numero_exterior : (person.DIRECCIONES)[0].numero_exterior,
                 numero_interior: dirRfc.length >= 1 ? dirRfc[0].int_number ? dirRfc[0].int_number : (person.DIRECCIONES)[0].numero_interior : (person.DIRECCIONES)[0].numero_interior,
                 referencia: dirRfc.length >= 1 ? dirRfc[0].street_reference ? dirRfc[0].street_reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
-                casa_situacion: 0,
+                casa_situacion: dirRfc.length >= 1 ? dirRfc[0].ownership ? dirRfc[0].ownership === true ? 1 : 0 : 0 : (person.DIRECCIONES)[0].casa_situacion,
                 tiempo_habitado_inicio: dirRfc.length >= 1 ? dirRfc[0].start_date ? getDates(dirRfc[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                 tiempo_habitado_final: dirRfc.length >= 1 ? dirRfc[0].end_dat ? getDates(dirRfc[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final : (person.DIRECCIONES)[0].tiempo_habitado_final,
                 correo_electronico: client.email,
@@ -437,9 +436,8 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             throw new Error('Ocurrió un error al registrar la persona al HF');
         }
         console.log(result);
-        // return res.status(200).send(result);
 
-        // Crear/Actualizar el cliente
+        // // Crear/Actualizar el cliente
         const id = result[0][0].id;
         // const id = 1234;
         const clientHF = {}
@@ -485,7 +483,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         cp: campo.post_code,
                         rfc: client.rfc ? client.rfc : client.curp.slice(0,10),
                         econ_registro_egresos_ingresos: 0,
-                        casa_situacion: 0,
+                        casa_situacion: campo.ownership ? campo.ownership === true ? 1 :0 : 0,
                         correo_electronico: client.email ? client.email : "",
                         id_vialidad: 1,
                         nombre_oficina: business_data.business_name ? `OFICINA ${business_data.business_name}` : "OFICINA...", //Mandar el nombre del negocio concatenar 'Oficina'
@@ -505,8 +503,6 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 ]
             }
         });
-
-        // console.log('checaa', clientHF.NEGOCIO[0].nombre_oficina)
 
         clientHF.CLIENTE = [
             {
