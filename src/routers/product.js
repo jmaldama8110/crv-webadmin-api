@@ -105,7 +105,7 @@ router.get('/products/hf', auth, async(req, res) => {
         
         // const result = products.recordsets[0];
         const result = (products.recordsets[0]).filter(configuracion => configuracion.configuracion === "MONTOS_OTORGADOS");
-        console.log(result);
+        // console.log(result);
 
         const rowData = [];
 

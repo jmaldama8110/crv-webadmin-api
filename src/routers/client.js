@@ -5,6 +5,7 @@ const User = require("../model/user");
 const Client = require('../model/client');
 const Identityimg = require('../model/identityimg');
 const Branch = require('../model/branch');
+const notificationPush = require('../model/notificationPush');
 const Province = require('../model/province');
 const auth = require("../middleware/auth");
 const moment = require("moment");
@@ -165,81 +166,76 @@ router.post('/checkHomonimos', async (req, res) => {
         throw new Error('No se encontraron homónimos para esta persona');
 
     } catch(e){
-        console.log(e);
+        // console.log(e);
         res.status(400).send(e +'');
     }
 });
 
 router.patch('/updateCurp/:id', async (req, res) => {
 
-    //VAZR001001HCSLPS01
-    //VAZR001325HCSLPS56
-    // VAZR001001HCSLPS01
     try{
         const data = req.body; //id_persona, curp, id_cliente
         const _id = req.params.id;
 
-        const client = await Client .findOne({_id});
+        const client = await Client.findOne({_id});
         if(!client){
             throw new Error('Could not find client');
         }
+
         const result = await Client.updateCurpPersonaHF(data.id_persona, data.curp);
         if(!result){
             throw new Error("Ocurrió un error al actualizar el curp de la persona")
         }
 
-        const dataHF = await Client.findClientByExternalId(data.id_cliente);
-
-        //Actualizamos todos los datos del cliente respecto al HF 
-        const curp = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "CURP");
-        const ife = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "IFE");
-        const rfc = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "RFC");
-
-        const identificationsHF = addIdentities(dataHF.recordsets[1]);
-        const addressHF = addAddress(dataHF.recordsets[3]);
-        const phonesHF = addPhones(dataHF.recordsets[4]);
-        const personData = {...dataHF.recordsets[0][0]};
-        const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
-        
-        const econPer = {...dataHF.recordsets[7][0]}
-        const business_data = {
-            economic_activity: [econPer.id_actividad_economica, econPer.nombre_actividad_economica],
-            profession: [econPer.id_profesion,econPer.nombre_profesion],
-            business_name: econPer.nombre_negocio,
-            business_start_date: econPer.econ_fecha_inicio_act_productiva
+        //Enviamos la notificación al cliente, mandandole su id_cliente y curp
+        const notification = {
+            title: 'CONSERVA',
+            notification: `Hemos detectado una inconsistencia de datos, por favor registrate como cliente ingresando tu curp y tu id de cliente: ${data.id_cliente}`
         }
+        const notiPush = new notificationPush({ user_id: client.user_id, ...notification}) 
+        await notiPush.save();
 
-        client["id_persona"] = personData.id_persona;
-        client["id_cliente"] = personData.id;
-        client["business_data"] = business_data;
-        client["sex"] = [personData.id_gender, personData.gender]; 
-        client["education_level"] = [personData.id_scholarship, personData.scholarship]; 
-        client["ocupation"] = [personData.id_occupation, personData.occupation];
-        client["marital_status"] = [personData.id_marital_status, personData.marital_status];
-        client["curp"] = data.curp;
-        client["ine_clave"] = ife ? ife.id_numero : "";
-        client["ine_duplicates"] = ife_details ? ife_details.numero_emision : "";
-        client["ine_doc_number"] = ife_details ? ife_details.numero_vertical_ocr.trim() : "";
-        client["rfc"] = rfc ? rfc.id_numero : "";
-        client["dob"] = personData.dob;
-        client["phones"] = phonesHF;
-        client["address"] = addressHF;
-        client["identities"] = identificationsHF;
-        client["ife_details"] = ife_details;
-        client["data_company"] = dataHF.recordsets[8];
-        client["data_efirma"] = dataHF.recordsets[9];
-        client["branch"] = [personData.id_oficina, personData.nombre_oficina]; 
-        client["nationality"] = [personData.id_nationality, personData.nationality];
-        client["province_of_birth"] = [personData.id_province_of_birth, personData.province_of_birth]
-        client["country_of_birth"] = [personData.id_country_of_birth, personData.country_of_birth]
-        client["status"] = [2, "Aprobado"];
-        await client.save();
+        //Eliminamos los datos del cliente para que se vuelva a registrar.
+        const user = await User.findOne({_id: client.user_id});
+        user.client_id = undefined;
+        await user.save();
+        await client.remove();
 
-        res.status(200).send(client);
+        res.status(200).send({message: "La curp se ha corregido satisfactoriamente, notificación enviada..."});
 
     } catch(e){
         console.log(e);
-        res.status(400).send(e +'');
+        res.status(400).send(e.message);
+    }
+});
+
+router.post('/pruebaNotification/:id', async(req, res) => {
+    try{
+
+        const _id = req.params.id;
+        const id_cliente = 5568974;
+
+        const client = await Client.findOne({_id});
+        if(!client){
+            throw new Error('Could not find client');
+        }
+
+        const notification = {
+            title: 'CONSERVA',
+            notification: `Hemos detectado una inconsistencia de datos, por favor registrate como cliente ingresando tu curp y tu id de cliente: ${id_cliente}`
+        }
+
+        const notiPush = new notificationPush({ user_id: client.user_id, ...notification}) 
+        await notiPush.save();
+
+        const user = await User.findOne({_id: client.user_id});
+        // user.client_id = undefined;
+        // await user.save();
+
+        res.status(200).send(user);
+
+    } catch(e){
+        res.status(400).send(e.message)
     }
 });
 
@@ -440,6 +436,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         if(!result){
             throw new Error('Ocurrió un error al registrar la persona al HF');
         }
+        console.log(result);
         // return res.status(200).send(result);
 
         // Crear/Actualizar el cliente
@@ -838,7 +835,7 @@ const removeAccents = (str) => {
 };
 
 const comparar = (entrada) => {
-    const permitido = ["name","lastname","second_lastname","email","password","curp","ine_folio","dob","segmento","loan_cicle","client_type","branch","is_new","bussiness_data","gender","scolarship","address","phones","credit_circuit_data","external_id", "status"];
+    const permitido = ["name","lastname","second_lastname","email","password","curp","ine_clave", "ine_duplicates", "ine_doc_number","dob","segmento","loan_cicle","client_type","branch","is_new","bussiness_data","gender","scolarship","address","phones","credit_circuit_data","external_id", "status"];
     const result = entrada.every(campo => permitido.includes(campo));
     return result;
 }
