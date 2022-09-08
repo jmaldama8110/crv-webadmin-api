@@ -10,7 +10,9 @@ const paymentIntermediareSchema = new mongoose.Schema({
     barcode_length: {type: Number},
     associates: [],
     external_id: { type: Number },
-    enabled: {type: Boolean, default:false}
+    enabled: {type: Boolean, default:false},
+    description: { type: String },
+    short_description: { type:String },
 }, { timestamps: true});
 
 paymentIntermediareSchema.statics.getIntermediarios = async() =>{
