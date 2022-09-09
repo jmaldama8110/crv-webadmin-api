@@ -167,8 +167,9 @@ router.get('/productByBranch/:id', auth, async(req, res) => {
 router.patch('/products/:id', auth, async(req, res) => {
 
     try {
-        // console.log(req.body.data)
         const data = req.body;
+        // console.log(data);
+        // return res.send(data);
         const _id = req.params.id;
         const actualizaciones = Object.keys(data);
         

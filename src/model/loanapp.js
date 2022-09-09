@@ -106,7 +106,7 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             data['SOLICITUD'][0].monto_autorizado, // Monto_autorizado TODO: MANDAR EN 0 DESDE MÓVIL
             data['SOLICITUD'][0].periodicidad, // Meses/Quincena (Se obtiene de configuracionMaestro)
             data['SOLICITUD'][0].plazo, // 1, 2, 3, 6, 12, 24, etc.
-            data['SOLICITUD'][0].status[2].toUpperCase(),// ESTATUS
+            'TRAMITE',// ESTATUS
             'NUEVO TRAMITE',  // SUB_ESTATUS 
             data['SOLICITUD'][0].fecha_primer_pago, // Ej. 2022-07-20
             data['SOLICITUD'][0].fecha_entrega, // Ej. 2022-07-20
@@ -116,8 +116,8 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             data['SOLICITUD'][0].id_oficina, // 1 por defecto
             data['SOLICITUD'][0].garantia_liquida_financiable, // 0/1 False/True
             data['SOLICITUD'][0].id_producto_maestro, // Ej. 4
-            data['SOLICITUD'][0].tasa_anual // Se calcula dependiendo del plazo
-            // 0
+            data['SOLICITUD'][0].tasa_anual, // Se calcula dependiendo del plazo
+            0
         );
 
         tbl.Cliente.rows.add(
@@ -142,10 +142,8 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             '', // Nombre
             '', // Apellido paterno
             '', // Apellido Materno
-            // 'TRAMITE', // ESTATUS
-            // 'LISTO PARA TRAMITE', // SUB_ESTATUS LISTO PARA TRAMITE
-            data['SOLICITUD'][0].status[2].toUpperCase(),
-            data['SOLICITUD'][0].status[1].toUpperCase(),
+            'TRAMITE', // ESTATUS
+            'LISTO PARA TRAMITE', // SUB_ESTATUS LISTO PARA TRAMITE
             '', // CARGO
             data['SOLICITUD'][0].monto_solicitado,
             data['SOLICITUD'][0].monto_autorizado, // TODO: Se establece cuando sea POR AUTORIZAR (WEB ADMIN)
@@ -241,8 +239,10 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
         const pool = await sql.connect(sqlConfig);
 
         let id_producto = body[0][0].id_producto;
+        let statusHF = 'ACEPTADO';
 
         if(status[0] === 3){
+            statusHF = 'TRAMITE';
             console.log('crear el producto')
             const productHF = await pool.request()
             .input('tasa_anual', sql.Decimal(18, 4), body[0][0].tasa_anual)
@@ -266,7 +266,7 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
             body[0][0].monto_total_autorizado, // Monto_autorizado TODO: MANDAR EN 0 DESDE MÓVIL
             body[0][0].periodicidad, // Meses/Quincena (Se obtiene de configuracionMaestro)
             body[0][0].plazo, // 1, 2, 3, 6, 12, 24, etc.
-            status[2].toUpperCase(),// ESTATUS
+            statusHF,// ESTATUS
             status[1].toUpperCase(),  // SUB_ESTATUS 
             body[0][0].fecha_primer_pago, // Ej. 2022-07-20
             body[0][0].fecha_entrega, // Ej. 2022-07-20
@@ -276,8 +276,8 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
             body[0][0].id_oficina, // 1 por defecto
             body[0][0].garantia_liquida_financiable, // 0/1 False/True
             body[0][0].id_producto_maestro, // Ej. 4
-            body[0][0].tasa_anual // Se calcula dependiendo del plazo
-            // 0
+            body[0][0].tasa_anual, // Se calcula dependiendo del plazo
+            0
         );
 
         // return tbl.UDT_Solicitud.rows;
@@ -300,7 +300,7 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
             '', // Nombre
             '', // Apellido paterno
             '', // Apellido Materno
-            status[2].toUpperCase(),// ESTATUS
+            statusHF,// ESTATUS
             status[1].toUpperCase(),  // SUB_ESTATUS 
             '', // CARGO
             body[0][0].monto_total_solicitado,

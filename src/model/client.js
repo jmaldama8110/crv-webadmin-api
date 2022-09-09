@@ -114,10 +114,6 @@ const clientSchema = new mongoose.Schema({
             required: false
         }
     }, ],
-    external_id: {
-        type: String,
-        trim: true,
-    },
     //TODO:Campos nuevos
     tributary_regime: [],
     rfc: {
@@ -247,9 +243,9 @@ const clientSchema = new mongoose.Schema({
     guarantee: [],
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     id_oficial: { type: Number},
-    ife_details: [],
-    data_company: [],
-    data_efirma: [],
+    ife_details: [], //data.recordsets[2] 
+    data_company: [], //data.recordsets[8];
+    data_efirma: [], //data.recordsets[9];
     status:[]
 }, { timestamps: true });
 
@@ -409,7 +405,7 @@ clientSchema.statics.createPersonHF = async(data, action) => {
 }
 
 //crear clienteHf
-clientSchema.statics.createClientHF = async(data, data2, value) => {
+clientSchema.statics.createClientHF = async(data, value) => {
     try {
         const pool = await sql.connect(sqlConfig);
 
@@ -532,10 +528,10 @@ clientSchema.statics.createClientHF = async(data, data2, value) => {
             null, null, null);
 
         tbl.UDT_CONT_Identificaciones.rows.add( // NO SE USA
-            data2['IDENTIFICACIONES'][3].id,//id prospera
-            data2['IDENTIFICACIONES'][3].id_entidad,
+            data['IDENTIFICACIONES'][0].id,//id prospera
+            data['IDENTIFICACIONES'][0].id_entidad,
             'PROSPERA',
-            data2['IDENTIFICACIONES'][3].id_numero,
+            data['IDENTIFICACIONES'][0].id_numero,
             0,
             1
         );

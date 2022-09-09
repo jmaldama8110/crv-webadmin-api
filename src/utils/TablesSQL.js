@@ -227,7 +227,7 @@ UDT_Solicitud.columns.add('id_oficina', SQL.Int, { nullable: true });
 UDT_Solicitud.columns.add('garantia_liquida_financiable', SQL.Bit, { nullable: true });
 UDT_Solicitud.columns.add('id_producto_maestro', SQL.Int, { nullable: true });
 UDT_Solicitud.columns.add('tasa_anual', SQL.Decimal(18, 2), { nullable: true });
-// UDT_Solicitud.columns.add('seguro_cuotas', SQL.Bit, { nullable: true });
+UDT_Solicitud.columns.add('seguro_financiado', SQL.Bit, { nullable: true });
 //#endregion
 
 //#region Cliente

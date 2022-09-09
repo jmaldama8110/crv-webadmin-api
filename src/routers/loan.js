@@ -12,7 +12,7 @@ const cron = require('node-cron');
 
 cron.schedule('*/3 * * * *', async() => {
     try{
-
+        
         const loans = await Loan.find();
         const loan = loans.filter(loan => loan.status[0] === 2);
         for(let i=0; i<loan.length; i++) {
@@ -163,21 +163,13 @@ router.get('/toAuthorizeLoansHF', auth, async(req, res) =>{
     }
 });
 
-router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
+router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para tramite
 
     try{
         const _id = req.params.id;
         const data = req.body;
         const action = parseInt(req.params.action);
-        let status = [2,"Listo para tramite", "Tramite"];
-        
-        if(action === 2){ //Por autorizar
-            status = loanConstants.PorAut;
-        }
-        if(action === 3){ //Autorizado
-            status = loanConstants.Autorizado;
-        }
-        
+        let status = loanConstants.ListoPT;
 
         const loan = await Loan.findOne({_id});
         if(!loan){
@@ -245,7 +237,6 @@ router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
                     id_producto: action === 1 ? 0 : loan.id_producto,
                     id_producto_maestro: product_id,
                     tasa_anual: 18.75, //Checar cómo calcular esto,
-                    status,
                     creacion: getDates(loan.apply_at)
                 }
             ],
@@ -321,7 +312,7 @@ router.post('/sendLoantoHF/:id/:action', auth, async(req, res) => {
 //     }
 // })
 
-router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {
+router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar a por autorizar y Autorizado
 
     const _id = req.params.id;
     const action = parseInt(req.params.action);
