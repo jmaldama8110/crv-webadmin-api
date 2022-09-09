@@ -107,28 +107,23 @@ const productSchema = new mongoose.Schema({
         trim: true
     },
     default_mobile_product: {
-        type: Boolean,
-        default: false
+        type: Boolean
     },
     enabled:{
-        type: Boolean,
-        default: true
+        type: Boolean
     },
     external_id: {
-        type: Number,
-        trim: true
+        type: Number
     },
     requires_insurance: {
-        type: Boolean,
-        trim: true
+        type: Boolean
     },
     liquid_guarantee: {
         type: String,
         trim: true
     },
     GL_financeable: {
-        type: Boolean,
-        trim: true
+        type: Boolean
     },
     tax: {
         type: String,
