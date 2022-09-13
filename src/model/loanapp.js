@@ -117,7 +117,7 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             data['SOLICITUD'][0].garantia_liquida_financiable, // 0/1 False/True
             data['SOLICITUD'][0].id_producto_maestro, // Ej. 4
             data['SOLICITUD'][0].tasa_anual, // Se calcula dependiendo del plazo
-            0
+            // 0
         );
 
         tbl.Cliente.rows.add(
@@ -277,7 +277,7 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
             body[0][0].garantia_liquida_financiable, // 0/1 False/True
             body[0][0].id_producto_maestro, // Ej. 4
             body[0][0].tasa_anual, // Se calcula dependiendo del plazo
-            0
+            // 0
         );
 
         // return tbl.UDT_Solicitud.rows;
