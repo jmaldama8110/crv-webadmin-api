@@ -166,8 +166,10 @@ router.get('/toAuthorizeLoansHF', auth, async(req, res) =>{
 router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para tramite
 
     try{
+
         const _id = req.params.id;
         const data = req.body;
+        // return res.status(200).send(data);
         const action = parseInt(req.params.action);
         let status = loanConstants.ListoPT;
 

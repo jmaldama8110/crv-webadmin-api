@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
             }   
         }
     },
+    phone: {
+        type: String,
+        required: false,
+        trim: true,
+    },
     password:{
         type: String,
         trim: true,

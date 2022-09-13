@@ -137,6 +137,14 @@ UDT_CLIE_Individual.columns.add('utiliza_redes_sociales', SQL.Bit, { nullable: t
 UDT_CLIE_Individual.columns.add('id_actividad_economica', SQL.Int, { nullable: true });
 UDT_CLIE_Individual.columns.add('id_ocupacion', SQL.Int, { nullable: true });
 UDT_CLIE_Individual.columns.add('id_profesion', SQL.Int, { nullable: true });
+UDT_CLIE_Individual.columns.add('id_tipo_red_social', SQL.Int, { nullable: true });
+UDT_CLIE_Individual.columns.add('usuario_red_social', SQL.VarChar(30), { nullable: true });
+UDT_CLIE_Individual.columns.add('econ_renta', SQL.Money, { nullable: true });
+UDT_CLIE_Individual.columns.add('vivienda_piso', SQL.Bit, { nullable: true });
+UDT_CLIE_Individual.columns.add('vivienda_techo_losa', SQL.Bit, { nullable: true });
+UDT_CLIE_Individual.columns.add('vivienda_bano', SQL.Bit, { nullable: true });
+UDT_CLIE_Individual.columns.add('vivienda_letrina', SQL.Bit, { nullable: true });
+UDT_CLIE_Individual.columns.add('vivienda_block', SQL.Bit, { nullable: true });
 //#endregion
 
 //#region UDT_CLIE_Solicitud
