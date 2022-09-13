@@ -817,30 +817,7 @@ router.post('/clients/hf/create', auth, async(req, res) => { // FUNCIONA
     try {
         const result = await Client.createClientHF(req.body);
 
-        const data2 = {
-            "IDENTIFICACIONES": [
-                {
-                    id: 0,
-                    id_entidad: 5,
-                    tipo_identificacion: "CURP",
-                    id_numero: "JSUS001001HCSLPSA3"
-                },
-                {
-                    id: 0,
-                    id_entidad: 5,
-                    tipo_identificacion: "IFE",
-                    id_numero: "JSUSLS00100107H508"
-                },
-                {
-                    id: 0,
-                    id_entidad: 5,
-                    tipo_identificacion: "RFC",
-                    id_numero: "JSUS001002"
-                }
-            ],
-        }
-
-        res.status(201).send(result, data2, 1);
+        res.status(201).send(result, 1);
 
     } catch (error) {
         res.status(401).send(error.message)

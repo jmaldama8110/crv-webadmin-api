@@ -75,6 +75,7 @@ router.post("/users/create/:signup_code", async (req, res) => {
       name: signup.name,
       lastname: signup.lastname,
       second_lastname: signup.second_lastname,
+      phone: signup.phone,
       email: signup.email,
       password: signup.password
     });

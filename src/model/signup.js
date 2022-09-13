@@ -8,14 +8,6 @@ const signupSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    client_id: {
-        type: String,
-        required: false,
-    },
-    employee_id: {
-        type: String,
-        required: false,
-    },
     email: {
         type: String,
         unique: true,
@@ -45,19 +37,20 @@ const signupSchema = new mongoose.Schema({
         trim:true,
         uppercase: true
     },
-    password:{
+    phone: {
         type: String,
         required: true,
+        trim: true
+    },
+    password:{
+        type: String,
         trim: true,
         validate(pass){
             if( ! (validador.isLength( pass, { min:6 } ) )  ){
                 throw new Error('Longitud minimo 6 ')
             }
+
         }
-    },
-    dob: {
-        type: Date,
-        required: true,
     }
 
 

@@ -602,7 +602,15 @@ clientSchema.statics.createClientHF = async(data, value) => {
             data["INDIVIDUAL"][0].utiliza_redes_sociales, // 0/1 (NO/SI)
             data["INDIVIDUAL"][0].id_actividad_economica, // 0/1 (NO/SI)
             data["INDIVIDUAL"][0].id_ocupacion, // CATA_ocupacionPLD
-            data["INDIVIDUAL"][0].id_profesion
+            data["INDIVIDUAL"][0].id_profesion,
+            1,
+            '',
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
         );
 
         tbl.UDT_CLIE_Solicitud.rows.add(0, null, null, null, null, null, null);
