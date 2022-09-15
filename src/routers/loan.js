@@ -9,6 +9,7 @@ const loanConstants = require('../constants/loanConstants');
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
 const cron = require('node-cron');
+const { response } = require('../app');
 
 cron.schedule('*/3 * * * *', async() => {
     try{
@@ -193,7 +194,12 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         const product = await Product.findOne({_id: loan.product});
         const product_id = product.external_id;
 
-        //Una vez encontrada la solicitud, procedemos a crear la solicitud en HF
+        const dataHF = await Client.findClientByExternalId(client_id); // Validamos si el cliente esta registardo en el hf o no
+        if(dataHF.recordsets[0].length === 0) {
+            throw new Error('The client is not registered in the HF system');
+        }
+
+        //Una vez encontrado el cliente, procedemos a crear la solicitud en HF
         const data1 = {
             idUsuario: 0,
             idOficina: branch_id != undefined ? branch_id : 1 

@@ -649,38 +649,19 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
 
 router.get('/client/hf', auth, async(req, res) => {
 
-    const dataHF = await Client.findClientByExternalId(req.query.id);
+    try{
 
-        const personData = {...dataHF.recordsets[0][0]};
-    const econPer = {...dataHF.recordsets[7][0]}
-    const business_data = {
-        economic_activity: [econPer.id_actividad_economica, econPer.nombre_actividad_economica],
-        profession: [econPer.id_profesion,econPer.nombre_profesion],
-        business_name: econPer.nombre_negocio,
-        business_start_date: econPer.econ_fecha_inicio_act_productiva
+        if(!req.query.id){
+            throw new Error('Some query parameters area mising...')
+        }
+
+        const dataHF = await Client.findClientByExternalId(req.query.id);
+
+        res.status(200).send(dataHF);
+
+    } catch(e) {
+        res.status(400).send(e.message);
     }
-
-    // console.log(personData);
-
-    const province_of_birth = [personData.id_province_of_birth, personData.province_of_birth];
-    const country_of_birth = [personData.id_country_of_birth, personData.country_of_birth];
-    const nationality = [personData.id_nationality, personData.nationality];
-    const branch = [personData.id_oficina, personData.nombre_oficina];
-
-    const curp = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "CURP");
-    const ife = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "IFE");
-    const rfc = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "RFC");
-
-    const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
-    const emision= ife_details ? ife_details.numero_emision : "";
-    const vertical = ife_details ? ife_details.numero_vertical_ocr : "";
-    const rfc2 = rfc ? rfc.id_numero : "";
-
-    // console.log(emision);
-    // console.log(vertical);
-    // console.log(rfc2);
-
-    res.status(200).send(dataHF);
 
 });
 
