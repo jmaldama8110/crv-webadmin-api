@@ -8,8 +8,6 @@ const auth = require("../middleware/auth");
 const moment = require("moment");
 const multer = require("multer"); // parar cargar imagenes
 const sharp = require("sharp");
-
-
 const axios = require("axios");
 
 const {
@@ -23,7 +21,7 @@ const passwordGenerator = require("../utils/codegenerator");
 
 
 router.post("/users/signup", async (req, res) => {
-  const code = passwordGenerator(10);
+  const code = passwordGenerator(6);
 
   try {
 
@@ -193,7 +191,6 @@ router.delete("/users/me", auth, async (req, res) => {
   }
 });
 
-
 router.post("/users/login", async (req, res) => {
   // Enviar peticion Login, generar un nuevo token
 
@@ -245,7 +242,7 @@ router.post("/users/logoutall", auth, async (req, res) => {
 router.post("/users/recoverpassword", async(req, res) => {
   //recibir el email
   const email = req.body.email;
-  const code = passwordGenerator(10);
+  const code = passwordGenerator(6);
 
   try{
     const user = await User.findOne( {email} );

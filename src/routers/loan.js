@@ -12,7 +12,7 @@ const cron = require('node-cron');
 
 cron.schedule('*/3 * * * *', async() => {
     try{
-        
+
         const loans = await Loan.find();
         const loan = loans.filter(loan => loan.status[0] === 2);
         for(let i=0; i<loan.length; i++) {
@@ -46,9 +46,9 @@ router.get('/loans', auth, async(req, res) =>{
 
         for(let i = 0; i < loans.length; i++){
             await loans[i].populate('product', {product_name:1}).execPopulate();
-            const applyBy = await loans[i].populate('apply_by', {client_id: 1, name:1, lastname:1, second_lastname:1}).execPopulate();
-            if(applyBy.apply_by != null){
-                await applyBy.apply_by.populate('client_id',{branch: 1, id_cliente: 1, _id: 0}).execPopulate();
+            const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
+            if(applyBy.client_id !== undefined || applyBy.client_id !== null){
+                await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
             }
         }
 
@@ -72,8 +72,10 @@ router.get('/statusLoans/:status', auth, async(req, res) =>{
 
         for(let i = 0; i < loans.length; i++){
             await loans[i].populate('product', {product_name:1}).execPopulate();
-            const applyBy = await loans[i].populate('apply_by', {client_id: 1, name:1, lastname:1, second_lastname:1}).execPopulate();
-            // await applyBy.apply_by.populate('client_id').execPopulate();
+            const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
+            if(applyBy.client_id !== undefined || applyBy.client_id !== null){
+                await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
+            }
         }
 
         res.status(200).send(loans);

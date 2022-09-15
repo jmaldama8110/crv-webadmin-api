@@ -171,6 +171,19 @@ userSchema.statics.findUserByCredentials = async ( email, password ) => {
     return user
 }
 
+userSchema.methods.resetChecklist = function(){
+    const user = this;
+    user.checklist = [
+      { action: 'phone_validation', mobile_path: '/phonevalidation', priority: 1, checked: false, message: 'Confirma tu numero de celular', item_text: 'Verificar'  },
+      { action: 'scan_identity', mobile_path: '/identity-validation', priority: 2, checked: false, message: 'Escanea tu INE, como se se indica para poder validar tu identidad', item_text: 'Iniciar Proceso' },
+      { action: 'identity_checkup', mobile_path: '/identity-validation', priority: 3, checked: false, message: 'Estamos verificando tu identidad, verifica aqui.. el estato del proceso', item_text: 'Ver Estado' },
+      { action: 'client_completion', mobile_path: '/iwanttobeclient', priority: 4, checked: false, message: 'Completa tu informacion como cliente. Por que nos importa mucho conocerte, por favor completa todos tus datos', item_text: 'Completar Mis Datos' },
+      { action: 'new_loan_application', mobile_path: '/loans/add', priority: 5, checked: false, message: 'Solicita tu tu credito, es muy facil!', item_text: 'Registrar Solicitud' },
+      { action: 'contract_signature', mobile_path: '/dashboard', priority: 6, checked: false, message: 'Tienes un credito aprobado, deber completar el proceso ingresando tu firma electronica. Es muy sencillo', item_text: 'Acepto Condiciones'},
+      { action: 'guarantee_deposit', mobile_path: '/wheretopay', priority: 7, checked: false, message: 'Debes realizar el deposito de tu garantia liquida, ver la seccion aqui..', item_text: 'Medios de Pago' },
+    ]
+}
+
 userSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
 const User = mongoose.model('User',userSchema )
