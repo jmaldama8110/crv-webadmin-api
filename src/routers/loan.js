@@ -291,7 +291,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         loan["seguro_detail"] = seguro2;
         await loan.save();
 
-        const body = `${client.name} el crédito '${product.product_name}' que solicitaste por la cantidad de $${loan.apply_amount}.00 pesos se ha enviado a trámite. \nRealizaremos las validaciones faltantes antes de autorizarlo, manténte al tanto.`;
+        const body = `Hola ${client.name} el crédito '${product.product_name}' que solicitaste por la cantidad de $${loan.apply_amount}.00 pesos se ha enviado a trámite. \nRealizaremos las validaciones faltantes antes de autorizarlo, manténte al tanto.`;
         sendSms(`+52${client.phone}`, body)
 
         res.status(200).send(result3);
@@ -349,7 +349,7 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
         await loan.save();
 
         if(action === 2){
-            const body = `${user.name} nos es grato comunicarte que el crédito '${product.product_name}' que solicitaste por la cantidad de $${loan.apply_amount}.00 pesos ha sido autorizado. \n\nContáctate con tu asesor para recibir más indicaciones.`;
+            const body = `Hola ${user.name} nos es grato comunicarte que el crédito '${product.product_name}' que solicitaste por la cantidad de $${loan.apply_amount}.00 pesos ha sido autorizado. \n\nContáctate con tu asesor para recibir más indicaciones.`;
             sendSms(`+52${user.phone}`, body)
         }
 
