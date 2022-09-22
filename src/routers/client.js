@@ -95,7 +95,6 @@ router.get("/statusClients/:status", auth, async(req, res) =>{
 
 router.patch("/clients/:id", auth, async(req, res) =>{
 
-    
     try{
         // const update = req.body;
         // if(!comparar(update)){
