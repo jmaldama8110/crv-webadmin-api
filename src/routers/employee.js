@@ -130,6 +130,20 @@ router.get('/employees/hf', auth, async(req, res) => {
 
 })
 
+router.get('/allOfficialHF', auth, async(req, res) => {
+
+    try{
+
+        const officers = await Employee.getAllOfficial();
+
+        res.status(200).send(officers);
+
+    }catch(e){
+        res.status(400).send(e.message);
+    }
+
+});
+
 router.get('/poderNotarial', auth, async(req, res) =>{
     try{
         const idLoan = req.query.idLoan;
@@ -274,7 +288,7 @@ const removeAccents = (str) => {
 }
 
 const comparar = (entrada) =>{
-    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id", "role"];
+    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id", "role", "branch"];
     const result = entrada.every(campo => permitido.includes(campo));
     return result;
 }

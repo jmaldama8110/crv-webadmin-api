@@ -10,36 +10,36 @@ router.post("/hierarchySuperAdmin", async(req, res) => {
     try{
         const data = [
             {
-                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db550'),
-                "hierarchy_name": "SUPERADMIN",
-                "workstation": "SUPERADMIN",
+                _id: ObjectId('628d5ddb2eb899da313db550'),
+                "hierarchy_name": "DIRECCION GENERAL",//CONSERVA
+                "workstation": "DIRECTOR GENERAL",
                 "isroot": true,
-                "parent": "N/A"
+                "parent": "NA"
             },
             {
-                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db551'),
-                "hierarchy_name": "DIRECTOR COMERCIAL - ORIENTE",
+                _id: ObjectId('628d5ddb2eb899da313db551'),
+                "hierarchy_name": "DIRECCION COMERCIAL",
                 "workstation": "DIRECTOR COMERCIAL",
                 "isroot": false,
                 "parent": [
-                  {
-                    "id_Parent":"628d5ddb2eb899da313db550",
-                    "name_Parent":"SUPERADMIN"
-                  }
+                    {
+                        "id_Parent":"628d5ddb2eb899da313db550",
+                        "name_Parent":"DIRECCION GENERAL"
+                    }
                 ]
-              },
-              {
-                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db552'),
-                "hierarchy_name": "SUBDIRECTOR - ORIENTE",
+            },
+            {
+                _id: ObjectId('628d5ddb2eb899da313db552'),
+                "hierarchy_name": "SUBDIRECCION COMERCIAL",
                 "workstation": "SUBDIRECTOR COMERCIAL",
                 "isroot": false,
                 "parent": [
-                  {
-                    "id_Parent":"628d5ddb2eb899da313db551",
-                    "name_Parent":"DIRECTOR COMERCIAL - ORIENTE"
-                  }
+                    {
+                        "id_Parent":"628d5ddb2eb899da313db551",
+                        "name_Parent":"DIRECCION COMERCIAL"
+                }
                 ]
-              },
+            }
         ];
 
         await Hierarchy.deleteMany();
@@ -112,6 +112,36 @@ router.get("/hierarchies",auth,async(req,res) => {
     }
 });
 
+router.get("/newHierarchies",auth,async(req,res) => {
+
+    const match = {}
+
+    try{
+
+        const hierarchy = await Hierarchy.find(match);
+        if (!hierarchy || hierarchy.length === 0) {
+            throw new Error("Nothing found");
+        }
+
+        const puestos = JSON.parse(JSON.stringify(hierarchy))
+
+        for(let i = 0; i < puestos.length; i++) {
+            const p = puestos[i];
+            const employee = await Employee.find({ hierarchy_id: p._id});
+            // console.log(employee);
+            p.employee = [];
+            p.employee.push(employee);
+            // p.nuevo = "jajjajjajajja"
+        }
+        
+        res.status(200).send(puestos);
+
+    } catch(e){
+        console.log(e + '')
+        res.status(400).send(e + '');
+
+    }
+});
 
 router.get('/hierarchies/hf', auth, async(req, res) => {
 
@@ -130,7 +160,6 @@ router.get('/hierarchies/hf', auth, async(req, res) => {
     }
 
 })
-
 
 router.get('/createHierarchies/hf', auth, async(req, res) => {
 
@@ -289,7 +318,6 @@ router.delete("/hierarchies/:id", async(req, res)=> {
        res.status(400).send(e + '');
     }
 });
-
 
 router.post("/hierarchies/restore/:id", auth,async(req,res) =>{
     

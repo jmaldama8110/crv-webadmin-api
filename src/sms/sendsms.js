@@ -1,22 +1,17 @@
+const accountSid = process.env.TWILIO_ACCOUNT_SID
+const authToken = process.env.TWILIO_AUTH_TOKEN
 
-// const accountSid = process.env.TWILIO_ACCOUNT_SID
-// const authToken = process.env.TWILIO_AUTH_TOKEN
+const client  = require('twilio')(accountSid , authToken )
 
-// const client  = require('twilio')(accountSid , authToken )
+const sendSMS = ( to, body )=> {
 
-
-// const sendWelcomeSMS = ( to, body )=> {
-
-//     const from = process.env.TWILIO_PHONE_NUMBER_FROM // Numero comprado en Twilio
+    const from = process.env.TWILIO_PHONE_NUMBER_FROM
     
-//         client.messages.create({
-//             to,
-//             from,
-//             body
+    client.messages.create({
+        to,
+        from,
+        body
+    });
+}
 
-//         })
-    
-
-// }
-
-// module.exports = sendWelcomeSMS
+module.exports = sendSMS

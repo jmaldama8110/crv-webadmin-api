@@ -105,6 +105,27 @@ employeeSchema.statics.getPoderNotarialByOfficeYFondo = async(idLoan, idOffice) 
     }
 }
 
+employeeSchema.statics.getAllOfficial = async(chunk) => {
+    try{
+
+        try {
+            let pool = await sql.connect(sqlConfig);
+            let result = await pool
+                .request()
+                .execute("MOV_ObtenerTodosOficialesFinancieros");
+            return result.recordset;
+        } catch (err) {
+            console.log(err)
+            return err;
+        }
+
+
+    } catch(e){
+        console.log(e)
+        return e;
+    }
+}
+
 employeeSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
 

@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
-
-const attachedFileSchema = new mongoose.Model({
+const attachedFileSchema = new mongoose.Schema({
     file: {type: String, trim: true},
-    name: { type: String, trim: true},
+    file_name: { type: String, trim: true},
     alias: { type: String, trim: true},
     description: { type: String, trim: true},
-    id_cliente: {type: mongoose.Schema.Types.ObjectId, ref: 'Client'}
+    client_id: {type: mongoose.Schema.Types.ObjectId, ref: 'Client'},
+    loan_id: {type: mongoose.Schema.Types.ObjectId, ref: 'Loanapp'}
 }, { timestamps: true});
 
 const attachedFile = mongoose.model('attachedFile', attachedFileSchema);

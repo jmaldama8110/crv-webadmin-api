@@ -10,6 +10,7 @@ const Province = require('../model/province');
 const auth = require("../middleware/auth");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
+const sendSms = require("../sms/sendsms");
 
 
 router.post("/clients", auth, async(req, res) =>{
@@ -72,7 +73,7 @@ router.get("/clients", auth, async(req, res) =>{
         //    console.log(e)
         res.status(400).send(e + '');
     }
-})
+});
 
 router.get("/statusClients/:status", auth, async(req, res) =>{
 
@@ -90,11 +91,10 @@ router.get("/statusClients/:status", auth, async(req, res) =>{
     //    console.log(e)
        res.status(400).send(e + '');
    }
-})
+});
 
 router.patch("/clients/:id", auth, async(req, res) =>{
 
-    
     try{
         // const update = req.body;
         // if(!comparar(update)){
@@ -190,15 +190,20 @@ router.patch('/updateCurp/:id', async (req, res) => {
         //Enviamos la notificación al cliente, mandandole su id_cliente y curp
         const notification = {
             title: 'CONSERVA',
-            notification: `Hemos detectado una inconsistencia de datos, por favor registrate como cliente ingresando tu curp y tu id de cliente: ${data.id_cliente}`
+            notification: `Hemos detectado una inconsistencia al momento de validar tus datos. Por favor vuelve a completar tu registro ingresando tu CURP y tu número de cliente: ${data.id_cliente}`
         }
         const notiPush = new notificationPush({ user_id: client.user_id, ...notification}) 
         await notiPush.save();
 
-        //Eliminamos los datos del cliente para que se vuelva a registrar.
         const user = await User.findOne({_id: client.user_id});
+        const body = `Hola ${user.name} hemos detectado una inconsistencia al momento de validar tus datos. \n\nPor favor vuelve a completar tu registro ingresando tu CURP y tu número de cliente: ${data.id_cliente}`
+        sendSms(`+52${user.phone}`, body);
+
+        // Reseteamos el completado de datos
+        user.restartCheckList('client_completion');
         user.client_id = undefined;
         await user.save();
+        //Eliminamos los datos del cliente para que se vuelva a registrar.
         await client.remove();
 
         res.status(200).send({message: "La curp se ha corregido satisfactoriamente, notificación enviada..."});
@@ -257,8 +262,6 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         const update = Object.keys(req.body);
         const data = req.body;
 
-        // return res.send(data);
-
         client = await Client.findOne({_id});
         if(!client){
             throw new Error("Not able to find the client");
@@ -270,7 +273,6 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         }
 
         if(action === 'ACTUALIZAR_PERSONA' || action === 'ACTUALIZAR_CLIENTE'){
-            // value = 2;
             action === 'ACTUALIZAR_CLIENTE' ? value = 2 : value;
             console.log(action);
             console.log(value);
@@ -336,7 +338,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[1]._id,
                     id_entidad: action === 'INSERTAR_PERSONA' ? 0 : client.id_persona,
                     tipo_identificacion: "RFC",
-                    id_numero: client.rfc ? client.rfc : client.curp.slice(0,10)
+                    id_numero: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,10)
                 }
             )
     
@@ -626,6 +628,12 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         client["status"] = [2, "Aprobado"];
         await client.save();
 
+        if(action === 'INSERTAR_PERSONA'){
+            const user = await User.findOne({client_id: _id})
+            const body = `Bienvenido ${user.name}, tus datos han sido verificados, ahora ya eres cliente de Conserva. \nYa puedes solicitar cualquiera de nuestros créditos disponibles para ti. Siempre estaremos aquí cerca para ayudarte en lo que necesites.`;
+            sendSms(`+52${user.phone}`,body)
+        }
+
         res.status(201).send({
             result,
             response,
@@ -647,40 +655,35 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
 
 });
 
+router.post('/sendsms', async (req, res) => {
+    try{
+
+        const data = req.body;
+        // console.log(typeof data.message)
+
+        sendSms('+529191207777', `${data.message}`);
+        res.send('ok');
+
+    } catch(e){
+        res.status(404).send(e.message);
+    }
+})
+
 router.get('/client/hf', auth, async(req, res) => {
 
-    const dataHF = await Client.findClientByExternalId(req.query.id);
+    try{
 
-        const personData = {...dataHF.recordsets[0][0]};
-    const econPer = {...dataHF.recordsets[7][0]}
-    const business_data = {
-        economic_activity: [econPer.id_actividad_economica, econPer.nombre_actividad_economica],
-        profession: [econPer.id_profesion,econPer.nombre_profesion],
-        business_name: econPer.nombre_negocio,
-        business_start_date: econPer.econ_fecha_inicio_act_productiva
+        if(!req.query.id){
+            throw new Error('Some query parameters area mising...')
+        }
+
+        const dataHF = await Client.findClientByExternalId(req.query.id);
+
+        res.status(200).send(dataHF);
+
+    } catch(e) {
+        res.status(400).send(e.message);
     }
-
-    // console.log(personData);
-
-    const province_of_birth = [personData.id_province_of_birth, personData.province_of_birth];
-    const country_of_birth = [personData.id_country_of_birth, personData.country_of_birth];
-    const nationality = [personData.id_nationality, personData.nationality];
-    const branch = [personData.id_oficina, personData.nombre_oficina];
-
-    const curp = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "CURP");
-    const ife = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "IFE");
-    const rfc = dataHF.recordsets[1].find((i) => i.tipo_identificacion === "RFC");
-
-    const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
-    const emision= ife_details ? ife_details.numero_emision : "";
-    const vertical = ife_details ? ife_details.numero_vertical_ocr : "";
-    const rfc2 = rfc ? rfc.id_numero : "";
-
-    // console.log(emision);
-    // console.log(vertical);
-    // console.log(rfc2);
-
-    res.status(200).send(dataHF);
 
 });
 
