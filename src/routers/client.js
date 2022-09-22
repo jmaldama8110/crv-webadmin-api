@@ -10,6 +10,7 @@ const Province = require('../model/province');
 const auth = require("../middleware/auth");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
+const sendSms = require("../sms/sendsms");
 
 
 router.post("/clients", auth, async(req, res) =>{
@@ -72,7 +73,7 @@ router.get("/clients", auth, async(req, res) =>{
         //    console.log(e)
         res.status(400).send(e + '');
     }
-})
+});
 
 router.get("/statusClients/:status", auth, async(req, res) =>{
 
@@ -90,7 +91,7 @@ router.get("/statusClients/:status", auth, async(req, res) =>{
     //    console.log(e)
        res.status(400).send(e + '');
    }
-})
+});
 
 router.patch("/clients/:id", auth, async(req, res) =>{
 
@@ -190,15 +191,20 @@ router.patch('/updateCurp/:id', async (req, res) => {
         //Enviamos la notificación al cliente, mandandole su id_cliente y curp
         const notification = {
             title: 'CONSERVA',
-            notification: `Hemos detectado una inconsistencia de datos, por favor registrate como cliente ingresando tu curp y tu id de cliente: ${data.id_cliente}`
+            notification: `Hemos detectado una inconsistencia al momento de validar tus datos. Por favor vuelve a completar tu registro ingresando tu CURP y tu número de cliente: ${data.id_cliente}`
         }
         const notiPush = new notificationPush({ user_id: client.user_id, ...notification}) 
         await notiPush.save();
 
-        //Eliminamos los datos del cliente para que se vuelva a registrar.
         const user = await User.findOne({_id: client.user_id});
+        const body = `Hola ${user.name} hemos detectado una inconsistencia al momento de validar tus datos. \n\nPor favor vuelve a completar tu registro ingresando tu CURP y tu número de cliente: ${data.id_cliente}`
+        sendSms(`+52${user.phone}`, body);
+
+        // Reseteamos el completado de datos
+        user.restartCheckList('client_completion');
         user.client_id = undefined;
         await user.save();
+        //Eliminamos los datos del cliente para que se vuelva a registrar.
         await client.remove();
 
         res.status(200).send({message: "La curp se ha corregido satisfactoriamente, notificación enviada..."});
@@ -257,8 +263,6 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         const update = Object.keys(req.body);
         const data = req.body;
 
-        // return res.send(data);
-
         client = await Client.findOne({_id});
         if(!client){
             throw new Error("Not able to find the client");
@@ -270,7 +274,6 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         }
 
         if(action === 'ACTUALIZAR_PERSONA' || action === 'ACTUALIZAR_CLIENTE'){
-            // value = 2;
             action === 'ACTUALIZAR_CLIENTE' ? value = 2 : value;
             console.log(action);
             console.log(value);
@@ -626,6 +629,12 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         client["status"] = [2, "Aprobado"];
         await client.save();
 
+        if(action === 'INSERTAR_PERSONA'){
+            const user = await User.findOne({client_id: _id})
+            const body = `Bienvenido ${user.name}, tus datos han sido verificados, ahora ya eres cliente de Conserva. \nYa puedes solicitar cualquiera de nuestros créditos disponibles para ti. Siempre estaremos aquí cerca para ayudarte en lo que necesites.`;
+            sendSms(`+52${user.phone}`,body)
+        }
+
         res.status(201).send({
             result,
             response,
@@ -646,6 +655,20 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
     }
 
 });
+
+router.post('/sendsms', async (req, res) => {
+    try{
+
+        const data = req.body;
+        // console.log(typeof data.message)
+
+        sendSms('+529191207777', `${data.message}`);
+        res.send('ok');
+
+    } catch(e){
+        res.status(404).send(e.message);
+    }
+})
 
 router.get('/client/hf', auth, async(req, res) => {
 

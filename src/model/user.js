@@ -184,6 +184,30 @@ userSchema.methods.resetChecklist = function(){
     ]
 }
 
+userSchema.methods.restartCheckList = function (action_id) {
+    const user = this;
+    user.checklist = user.checklist.map( (chk) =>
+    chk.action === action_id
+      ? {
+          action: chk.action,
+          mobile_path: chk.mobile_path,
+          message: chk.message,
+          item_text: chk.item_text,
+          priority: chk.priority,
+          checked: false,
+        }
+      : {
+          action: chk.action,
+          mobile_path: chk.mobile_path,
+          message: chk.message,
+          item_text: chk.item_text,
+          priority: chk.priority,
+          checked: chk.checked,
+        }
+    );
+    
+  }
+
 userSchema.plugin(mongoose_delete, { deletedAt: true, deletedBy : true, overrideMethods: 'all'});
 
 const User = mongoose.model('User',userSchema )

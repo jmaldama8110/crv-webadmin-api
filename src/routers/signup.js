@@ -43,7 +43,7 @@ router.post("/signups/:signup_code", auth, async (req, res) => {
         await user.save();
 
         sendWelcomeEmail(user.email, user.name);
-        // await Signup.findOneAndDelete({email: signup.email})
+        await Signup.findOneAndDelete({email: signup.email})
     
     
         res.status(201).send({ user});
@@ -68,7 +68,7 @@ router.get('/signups', auth, async(req, res) => {
         res.status(200).send(signups);
 
     } catch(e) {
-        res.status(400).sebd(e.message)
+        res.status(400).send(e.message)
     }
 });
 

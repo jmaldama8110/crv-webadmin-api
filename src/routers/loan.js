@@ -9,7 +9,7 @@ const loanConstants = require('../constants/loanConstants');
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
 const cron = require('node-cron');
-const { response } = require('../app');
+const sendSms = require('../sms/sendsms');
 
 cron.schedule('*/3 * * * *', async() => {
     try{
@@ -204,8 +204,8 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
             idUsuario: 0,
             idOficina: branch_id != undefined ? branch_id : 1 
         }
-        const result1 = await Loan.createLoanFromHF(data1)
-        if(!result1[0].idSolicitud){
+        const result1 = await Loan.createLoanFromHF(data1);
+        if(!result1 || !result1[0].idSolicitud){
             throw new Error('Failed to create loan in HF');
         }
 
@@ -291,36 +291,17 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         loan["seguro_detail"] = seguro2;
         await loan.save();
 
+        const body = `${client.name} el crédito '${product.product_name}' que solicitaste por la cantidad de $${loan.apply_amount}.00 pesos se ha enviado a trámite. \nRealizaremos las validaciones faltantes antes de autorizarlo, manténte al tanto.`;
+        sendSms(`+52${client.phone}`, body)
+
         res.status(200).send(result3);
-        // console.log(data1)
-        // console.log(data2)
-        // console.log(data3)
-        // res.status(200).send({data1, data2, data3});
 
     } catch(err){
-        console.log(err)
-        res.status(400).send(err + '')
+        // console.log(err)
+        res.status(400).send(err.message)
     }
 
 });
-
-// router.get('/cronUpdateLoans', auth, async (req, res) => {
-//     try{
-
-//         const loans = await Loan.find();
-//         const loan = loans.filter(loan => loan.status[0] === 2);
-//         for(let i=0; i<loan.length; i++) {
-//             console.log('entra')
-//             const id_loan = loan[i]._id;
-//             console.log(id_loan);
-//         }
-
-//         res.send('updated');
-
-//     } catch(err) {
-//         res.status(400).send(err + '');
-//     }
-// })
 
 router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar a por autorizar y Autorizado
 
@@ -334,6 +315,10 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
         if(!loan){
             throw new Error('Not able to find any loan');
         }
+        const user = await User.findOne({_id: loan.apply_by});
+        const product = await Product.findOne({_id: loan.product});
+        
+        // return res.send({user, product});
 
         if(action === 1){
             status = loanConstants.PorAut;
@@ -362,6 +347,11 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
         loan["loan_detail"] = detail2[5][0];
         loan["seguro_detail"] = seguro;
         await loan.save();
+
+        if(action === 2){
+            const body = `${user.name} nos es grato comunicarte que el crédito '${product.product_name}' que solicitaste por la cantidad de $${loan.apply_amount}.00 pesos ha sido autorizado. \n\nContáctate con tu asesor para recibir más indicaciones.`;
+            sendSms(`+52${user.phone}`, body)
+        }
 
         res.status(200).send(result);
 
@@ -393,8 +383,12 @@ router.get('/loanSeguroDetailHF', async(req, res)=> {
 //Endpoints for HF
 router.post('/loans/create', auth, async(req, res) => { //FUNCIONA
     try {
-        const result = await Loan.createLoanFromHF(req.body)
+        const result = await Loan.createLoanFromHF(req.body);
 
+        if(!result || !result[0].idSolicitud){
+            throw new Error('Failed to create loan in HF');
+        }
+        
         res.status(201).send(result)
     } catch (error) {
         console.log(error);
