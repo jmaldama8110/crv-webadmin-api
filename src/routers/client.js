@@ -338,7 +338,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[1]._id,
                     id_entidad: action === 'INSERTAR_PERSONA' ? 0 : client.id_persona,
                     tipo_identificacion: "RFC",
-                    id_numero: client.rfc ? client.rfc : client.curp.slice(0,10)
+                    id_numero: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,10)
                 }
             )
     
