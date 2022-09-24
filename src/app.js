@@ -17,6 +17,7 @@ const notificationRouter = require('./routers/notification');
 const paymentIntermediareRouter = require('./routers/paymentIntermediarie');
 const attachedFileRouter = require('./routers/attachedFile');
 const signUpRouter =  require('./routers/signup');
+const contractRouter = require('./routers/contract');
 
 const app = express()
 app.use(express.json({limit: '1mb'}))
@@ -34,6 +35,7 @@ app.use(notificationRouter)
 app.use(paymentIntermediareRouter)
 app.use(attachedFileRouter)
 app.use(signUpRouter)
+app.use(contractRouter)
 
 
 module.exports = app
