@@ -3,14 +3,13 @@ const express = require("express");
 const router = new express.Router();
 const User = require("../model/user");
 const Client = require('../model/client');
-const Identityimg = require('../model/identityimg');
-const Branch = require('../model/branch');
 const notificationPush = require('../model/notificationPush');
 const Province = require('../model/province');
 const auth = require("../middleware/auth");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
 const sendSms = require("../sms/sendsms");
+const formatLocalCurrency = require('../utils/numberFormatter')
 
 
 router.post("/clients", auth, async(req, res) =>{
@@ -659,9 +658,11 @@ router.post('/sendsms', async (req, res) => {
     try{
 
         const data = req.body;
+        const cantidad = formatLocalCurrency(30000)
         // console.log(typeof data.message)
+        const body = `La cantidad solicitada es de  ${cantidad} pesos`
 
-        sendSms('+529191207777', `${data.message}`);
+        sendSms('+529191207777', body);
         res.send('ok');
 
     } catch(e){

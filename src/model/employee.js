@@ -83,46 +83,18 @@ employeeSchema.statics.getAllEmployees = async(id) => {
     }
 };
 
-employeeSchema.statics.getPoderNotarialByOfficeYFondo = async(idLoan, idOffice) => {
-    try {
-        const pool = await sql.connect(sqlConfig);
-
-        const fondo = await pool.request()
-            .input('idPrestamo', sql.Int, idLoan)
-            .execute('DISB_GetFondoByPrestamo');
-
-        const idFondeador = fondo.recordset[0].id;
-
-        const notarial = await pool.request()
-            .input('idOficinaFinanciera', sql.Int, idOffice)
-            .input('idFondeador', sql.Int, idFondeador)
-            .input('idSesion', sql.Int, 0)
-            .execute('OTOR_ObtenerPoderNotarialPorUsuarioOficinaYFondo');
-
-        return notarial.recordset;
-    } catch (err) {
-        return err;
-    }
-}
-
 employeeSchema.statics.getAllOfficial = async(chunk) => {
-    try{
+    try {
 
-        try {
-            let pool = await sql.connect(sqlConfig);
-            let result = await pool
-                .request()
-                .execute("MOV_ObtenerTodosOficialesFinancieros");
-            return result.recordset;
-        } catch (err) {
-            console.log(err)
-            return err;
-        }
+        let pool = await sql.connect(sqlConfig);
+        let result = await pool
+            .request()
+            .execute("MOV_ObtenerTodosOficialesFinancieros");
+        return result.recordset;
 
-
-    } catch(e){
-        console.log(e)
-        return e;
+    } catch (err) {
+        console.log(err)
+        return err;
     }
 }
 

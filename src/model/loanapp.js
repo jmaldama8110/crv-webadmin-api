@@ -34,6 +34,7 @@ const loanappSchema = new mongoose.Schema({
     id_loan: {type: Number},
     id_oficial : {type: Number},
     id_producto: {type: Number},
+    id_contract: {type: Number},
     loan_detail: [],
     seguro_detail: []
 }, { timestamps: true })

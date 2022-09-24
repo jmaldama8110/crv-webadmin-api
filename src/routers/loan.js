@@ -10,6 +10,7 @@ const moment = require("moment");
 const formato = 'YYYY-MM-DD';
 const cron = require('node-cron');
 const sendSms = require('../sms/sendsms');
+const formatLocalCurrency = require('../utils/numberFormatter')
 
 cron.schedule('*/3 * * * *', async() => {
     try{
@@ -49,7 +50,7 @@ router.get('/loans', auth, async(req, res) =>{
             await loans[i].populate('product', {product_name:1}).execPopulate();
             const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
             if(applyBy.client_id !== undefined || applyBy.client_id !== null){
-                await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
+                await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1,email:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
             }
         }
 
@@ -75,7 +76,7 @@ router.get('/statusLoans/:status', auth, async(req, res) =>{
             await loans[i].populate('product', {product_name:1}).execPopulate();
             const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
             if(applyBy.client_id !== undefined || applyBy.client_id !== null){
-                await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
+                await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1,email:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
             }
         }
 
@@ -291,7 +292,8 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         loan["seguro_detail"] = seguro2;
         await loan.save();
 
-        const body = `Hola ${client.name} el crédito '${product.product_name}' que solicitaste por la cantidad de $${loan.apply_amount}.00 pesos se ha enviado a trámite. \nRealizaremos las validaciones faltantes antes de autorizarlo, manténte al tanto.`;
+        const cant = formatLocalCurrency(loan.apply_amount);
+        const body = `Hola ${client.name} el crédito '${product.product_name}' que solicitaste por la cantidad de ${cant} pesos se ha enviado a trámite. \nRealizaremos las validaciones faltantes antes de autorizarlo, manténte al tanto.`;
         sendSms(`+52${client.phone}`, body)
 
         res.status(200).send(result3);
@@ -349,7 +351,8 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
         await loan.save();
 
         if(action === 2){
-            const body = `Hola ${user.name} nos es grato comunicarte que el crédito '${product.product_name}' que solicitaste por la cantidad de $${loan.apply_amount}.00 pesos ha sido autorizado. \n\nContáctate con tu asesor para recibir más indicaciones.`;
+            const cant = formatLocalCurrency(loan.apply_amount);
+            const body = `Hola ${user.name} nos es grato comunicarte que el crédito '${product.product_name}' que solicitaste por la cantidad de ${cant} pesos ha sido autorizado. \n\nContáctate con tu asesor para recibir más indicaciones.`;
             sendSms(`+52${user.phone}`, body)
         }
 
