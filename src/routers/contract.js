@@ -15,7 +15,7 @@ apiClient.setOAuthBasePath('account-d.docusign.com');
 const dsUserID = process.env.DOCUSIGN_USER_ID;
 const dsClientId = process.env.DOCUSIGN_INTEGRATION_KEY;
 
-const rsaKey = fs.readFileSync('./privateKey.txt');
+const rsaKey = fs.readFileSync('./config/privateKey.txt');
 const jwtLifeSec = 10 * 60;
 
 apiClient.requestJWTUserToken(dsClientId, dsUserID, 'signature', rsaKey, jwtLifeSec)
