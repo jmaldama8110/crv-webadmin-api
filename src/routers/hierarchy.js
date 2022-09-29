@@ -112,7 +112,7 @@ router.get("/hierarchies",auth,async(req,res) => {
     }
 });
 
-router.get("/newHierarchies",auth,async(req,res) => {
+router.get("/newhierarchies",auth,async(req,res) => {
 
     const match = {}
 

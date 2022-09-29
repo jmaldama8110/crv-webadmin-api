@@ -50,6 +50,7 @@ router.get('/loans', auth, async(req, res) =>{
             await loans[i].populate('product', {product_name:1}).execPopulate();
             const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
             if(applyBy.client_id !== undefined || applyBy.client_id !== null){
+                // console.log('Esteee',applyBy)
                 await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1,email:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
             }
         }
@@ -226,6 +227,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         if(!result2) {
             throw new Error('Failed to assign client to loan')
         }
+
         //Una vez asignado el cliente al loan del HF, procedemos a asignar el monto a la solicitud
         const disposition = await Loan.getDisposicionByOffice(branch_id)
         const seguro = await Loan.getSeguroProducto(product_id);
@@ -247,7 +249,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
                     garantia_liquida_financiable: product.GL_financeable === false ? 0 : 1,
                     id_producto: action === 1 ? 0 : loan.id_producto,
                     id_producto_maestro: product_id,
-                    tasa_anual: 18.75, //Checar cómo calcular esto,
+                    tasa_anual: product.rate ? product.rate : 0, //Checar cómo calcular esto, preguntar de que depende la tasa anual de cada loan
                     creacion: getDates(loan.apply_at)
                 }
             ],
@@ -363,7 +365,6 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
         res.status(400).send(err + '')
     }
 });
-
 
 router.get('/loanSeguroDetailHF', async(req, res)=> {
     try{

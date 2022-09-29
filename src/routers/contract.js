@@ -39,8 +39,8 @@ apiClient.requestJWTUserToken(dsClientId, dsUserID, 'signature', rsaKey, jwtLife
 router.post('/contracts', auth, async(req, res) => {
     try{
 
-        // const data = req.body;
-        const { users, documents, client_id } = req.body;
+        const data = req.body;
+        const { users, documents, client_id, loan_id } = data;
 
         let envelopeApi = new docusign.EnvelopesApi(apiClient);
 
@@ -60,7 +60,6 @@ router.post('/contracts', auth, async(req, res) => {
             recipients: {
                 signers: 
                 users.map((user, idx) => {
-                    console.log(idx)
                     const userObj = {
                         email: user.email,
                         name: user.name,
@@ -155,7 +154,8 @@ router.post('/contracts', auth, async(req, res) => {
                     documents,
                     docusign_uri: result.uri,
                     status: result.status,
-                    client_id
+                    client_id,
+                    loan_id
                 }
         
                 const contract = new Contract({...data});
@@ -164,7 +164,6 @@ router.post('/contracts', auth, async(req, res) => {
                 res.status(201).send(contract);
                 
             }).catch((err) => {
-                console.log('entro al catch')
                 console.log(err)
                 res.status(400).send(err)
             })
@@ -174,41 +173,28 @@ router.post('/contracts', auth, async(req, res) => {
     }
 });
 
-// router.post('/contracts', auth, async(req, res) => {
-//     try{
-
-//         // const data = req.body;
-//         const { users, documents, client_id } = req.body;
-
-//         const result = {
-//             "envelopeId": "2d0309ae-08f0-4b76-be43-9c7a399de308",
-//             "status": "sent",
-//             "statusDateTime": "2022-09-24T07:40:52.2200000Z",
-//             "uri": "/envelopes/2d0309ae-08f0-4b76-be43-9c7a399de308"
-//         }
-
-//         const data = {
-//             data_representative: users[0],
-//             data_client : users[1],
-//             documents,
-//             docusign_uri: result.uri,
-//             status: result.status,
-//             client_id
-//         }
-
-//         const contract = new Contract({...data});
-//         await contract.save();
-
-//         res.status(201).send(contract);
-        
-
-//     } catch(err){
-//         res.send(err.message);
-//     }
-// });
-
-router.get('/contracts/:id', auth, async(req, res) => {
+router.get('/contracts', auth, async(req, res) => {
     try{
+        const match = {};
+
+        if(req.query.id){
+            match._id = req.query.id
+        }
+
+        const contract = await Contract.find(match);
+        if(!contract){
+            return res.status(204).send('Not records found');
+        }
+
+        for(let i = 0; i < contract.length; i++){
+            const c = contract[i];
+
+            await c.populate('client_id', {name:1, lastname:1, second_lastname:1}).execPopulate();
+            await c.populate('loan_id', {product:1, apply_amount:1, id_loan:1, id_contract:1}).execPopulate();
+            await c.loan_id.populate('product', {product_name:1}).execPopulate();
+        }
+
+        res.status(200).send(contract);
 
     } catch(err){
         res.send(err.message);
@@ -232,7 +218,7 @@ router.get('/idContractHF', auth, async(req, res) => {
         }
 
         if(result && loan) {
-            console.log('Tiene loan y contrato');
+            // console.log('Tiene loan y contrato');
             loan['id_contract'] = result[0].id;
             await loan.save();
         }

@@ -120,6 +120,7 @@ const clientSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
+    rcc_last_query: {},
     nationality: [],
     province_of_birth: [],
     country_of_birth: [],

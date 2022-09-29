@@ -17,11 +17,22 @@ router.get('/users', auth, async(req, res) =>{
         }
 
         const users = await User.find(match)
-                                .populate('veridoc',{frontImage: 1, backImage:1, faceImage: 1});
+                                // .populate('veridoc',{frontImage: 1, backImage:1, faceImage: 1});
         if(!users || users.length == 0){
             throw new Error('Not able to find the user(s)');
         }
 
+        for(let i = 0; i < users.length; i++) {
+            // console.log(users.length)
+            const dataUser = users[i];
+
+            if(dataUser.client_id != undefined && dataUser.veridoc != undefined){
+                // console.log('es cliente')
+                await dataUser.populate('veridoc',{frontImage: 1, backImage:1, faceImage: 1, _id:1}).execPopulate();
+            }
+            
+        }
+        console.log(users)
         res.status(200).send(users);
 
     } catch(e){
