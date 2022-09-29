@@ -88,6 +88,7 @@ const userSchema = new mongoose.Schema({
         item_text: { type: String, required: true },
       },
     ],
+    doc_verification: {}
 },
 { timestamps: true } )
 

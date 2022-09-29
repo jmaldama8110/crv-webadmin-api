@@ -8,8 +8,9 @@ const constractSchema = new mongoose.Schema({
     documents: [],
     docusign_uri: { type: String, trim: true },
     status: { type: String, trim: true },
-    client_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Client'}
-});
+    client_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Client'},
+    loan_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Loanapp' }
+}, { timestamps: true });
 
 constractSchema.statics.getIdContrato = async(id_loan) => {
     try{
