@@ -1,7 +1,8 @@
 const mongoose = require('mongoose')
 const { sqlConfig } = require("../db/connSQL");
 const sql = require("mssql");
-const tbl = require('./../utils/TablesSQL')
+const tbl = require('./../utils/TablesSQL');
+const User = require('./user');
 
 const loanappSchema = new mongoose.Schema({
     product: {
@@ -36,8 +37,85 @@ const loanappSchema = new mongoose.Schema({
     id_producto: {type: Number},
     id_contract: {type: Number},
     loan_detail: [],
-    seguro_detail: []
-}, { timestamps: true })
+    seguro_detail: [],
+    general_checklist: [
+        {
+            order: {type: Number, required: true},
+            title: {type: String, required: true},
+            checked: {type: Boolean, default: false },
+            checked_by: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+            checked_at: {type: Date}
+        }
+    ],
+    committee_checklist: [
+        {
+            order: {type: Number, required: true},
+            title: {type: String, required: true},
+            checked: []
+        }
+    ]
+}, { timestamps: true });
+
+loanappSchema.methods.createGenerallChecklist = function () {
+    const loan = this;
+
+    loan.general_checklist = [
+        {order:1, title: 'Autorización de consulta en Sociedad de Información Crediticia', checked: false},
+        {order:2, title: 'Reporte de SIC y Score', checked: false},
+        {order:3, title: 'Copias cotejadas, legibles y sin tachaduras de:  a. Identificación Oficial b. CURP c. Comprobante Domiciliario d. Cédula fiscal', checked: false},
+        {order:4, title: 'Diagnóstico de necesidades y situación de la vivienda', checked: false},
+        {order:5, title: 'Simulador de costos del proyecto de mejora', checked: false},
+        {order:6, title: 'Formato de Evaluación Socio Económica', checked: false},
+        {order:7, title: 'Formato de Relación Patrimonial', checked: false},
+        {order:8, title: 'Formato de avalúo de garantías prendarias Facturas o documentos de propiedad de maquinaria y equipos, vehículos o documentos de bien inmueble', checked: false},
+        {order:9, title: 'Formatos de Aval', checked: false},
+        {order:10, title: 'Geo coordenadas: Titular: de Domicilio y Negocio', checked: false},
+        {order:11, title: 'Formato de Verificación Ocular', checked: false},
+        {order:12, title: 'Archivo Fotográfico', checked: false},
+        {order:13, title: 'Formato de Acta Comité de crédito', checked: false}
+    ]
+}
+
+loanappSchema.methods.activateItemGeneralChecklist = function(title, checked_by, checked_at){
+    const loan = this;
+
+    loan.general_checklist = loan.general_checklist.map((item) => 
+        item.title === title
+        ? {
+            order: item.order,
+            title: item.title,
+            checked: true,
+            checked_by,
+            checked_at
+          }
+        : {
+            order: item.order,
+            title: item.title,
+            checked: item.checked
+          }   
+    );
+    
+}
+
+loanappSchema.methods.createCommitteeChecklist = function () {
+    const loan = this;
+
+    loan.committee_checklist = [
+        {order:1, title: 'Autorización de consulta en Sociedad de Información Crediticia', checked: []},
+        {order:2, title: 'Reporte de SIC y Score', checked: []},
+        {order:3, title: 'Copias cotejadas, legibles y sin tachaduras de:  a. Identificación Oficial b. CURP c. Comprobante Domiciliario d. Cédula fiscal', checked: []},
+        {order:4, title: 'Diagnóstico de necesidades y situación de la vivienda', checked: []},
+        {order:5, title: 'Simulador de costos del proyecto de mejora', checked: []},
+        {order:6, title: 'Formato de Evaluación Socio Económica', checked: []},
+        {order:7, title: 'Formato de Relación Patrimonial', checked: []},
+        {order:8, title: 'Formato de avalúo de garantías prendarias Facturas o documentos de propiedad de maquinaria y equipos, vehículos o documentos de bien inmueble', checkedcomittee: []},
+        {order:9, title: 'Formatos de Aval', checked: []},
+        {order:10, title: 'Geo coordenadas: Titular: de Domicilio y Negocio', checked: []},
+        {order:11, title: 'Formato de Verificación Ocular', checked: []},
+        {order:12, title: 'Archivo Fotográfico', checked: []},
+        {order:13, title: 'Formato de Acta Comité de crédito', checked: []}
+    ]
+}
 
 loanappSchema.statics.createLoanFromHF = async(data) => {
     try {

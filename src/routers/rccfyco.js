@@ -117,10 +117,10 @@ router.get('/rccfyco/:client_id', auth, async(req, res) => {
     }
 
     const rcc = await RccFyco.find({client_id});
-    if(!rcc){
+    if(!rcc || rcc.length === 0){
       return res.status(204).send('No records found');
     }
-
+    
     res.status(200).send(rcc[rcc.length - 1]);//Le devolvemos la consulta mas actual ya que el cliente puede tener mas de un rcc
 
   } catch(err){

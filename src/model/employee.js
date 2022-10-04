@@ -51,6 +51,7 @@ const employeeSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    isComittee : {type: Boolean},
     branch: []
 }, { timestamps: true })
 

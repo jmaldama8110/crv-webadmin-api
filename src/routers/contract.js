@@ -3,6 +3,7 @@ const router =  new express.Router();
 const auth = require('../middleware/auth');
 const Contract = require('../model/contract');
 const Loan = require('../model/loanapp');
+const User = require('../model/user');
 
 const docusign = require('docusign-esign');
 const fs = require('fs');
@@ -10,12 +11,17 @@ const axios = require('axios');
 const dsConfig = require('../utils/dsConfig').config;
 const apiClient = new docusign.ApiClient();
 
+
 apiClient.setBasePath('https://demo.docusign.net/restapi');
 apiClient.setOAuthBasePath('account-d.docusign.com');
 const dsUserID = process.env.DOCUSIGN_USER_ID;
 const dsClientId = process.env.DOCUSIGN_INTEGRATION_KEY;
 
-const rsaKey = fs.readFileSync('./privateKey.txt');
+// const rsaKey = fs.readFileSync('./privateKey.txt');
+const keySecret = process.env.DOCUSIGN_PRIVATE_KEY.replace(/\\n/g, '\n');
+const rsaKey = Buffer.from(keySecret);
+// const rsaKey = sig2;
+
 const jwtLifeSec = 10 * 60;
 
 apiClient.requestJWTUserToken(dsClientId, dsUserID, 'signature', rsaKey, jwtLifeSec)
@@ -72,7 +78,7 @@ router.post('/contracts', auth, async(req, res) => {
                                             documentId: "1",
                                             name: "RECIPIENT 1 SIGN 1",
                                             // optional: "false",
-                                            pageNumber: "13",
+                                            pageNumber: "10",
                                             recipientId: "1",
                                             scaleValue: 1,
                                             tabLabel: "signer1_doc2",
@@ -107,7 +113,7 @@ router.post('/contracts', auth, async(req, res) => {
                                         {
                                             documentId: "1",
                                             name: "RECIPIENT 2 SIGN 1",
-                                            pageNumber: "13",
+                                            pageNumber: "10",
                                             recipientId: "2",
                                             scaleValue: 1,
                                             tabLabel: "signer1_doc2",
@@ -210,6 +216,11 @@ router.get('/idContractHF', auth, async(req, res) => {
         }
 
         const loan = await Loan.findOne({id_loan});
+        if(!loan){
+            throw new Error('Not able to find any loan');
+        }
+
+        const user = await User.findOne({_id: loan.apply_by});
 
         const result = await Contract.getIdContrato(id_loan);
 
@@ -220,6 +231,8 @@ router.get('/idContractHF', auth, async(req, res) => {
         if(result && loan) {
             // console.log('Tiene loan y contrato');
             loan['id_contract'] = result[0].id;
+            user.updateCheckList('contract_signature');
+            await user.save();
             await loan.save();
         }
 

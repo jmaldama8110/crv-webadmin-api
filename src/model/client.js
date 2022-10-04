@@ -121,6 +121,7 @@ const clientSchema = new mongoose.Schema({
         trim: true,
     },
     rcc_last_query: {},
+    criminal_record_query: {},
     nationality: [],
     province_of_birth: [],
     country_of_birth: [],
