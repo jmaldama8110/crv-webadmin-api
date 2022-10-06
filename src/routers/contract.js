@@ -17,10 +17,8 @@ apiClient.setOAuthBasePath('account-d.docusign.com');
 const dsUserID = process.env.DOCUSIGN_USER_ID;
 const dsClientId = process.env.DOCUSIGN_INTEGRATION_KEY;
 
-// const rsaKey = fs.readFileSync('./privateKey.txt');
 const keySecret = process.env.DOCUSIGN_PRIVATE_KEY.replace(/\\n/g, '\n');
 const rsaKey = Buffer.from(keySecret);
-// const rsaKey = sig2;
 
 const jwtLifeSec = 10 * 60;
 

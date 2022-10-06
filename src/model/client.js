@@ -242,7 +242,7 @@ const clientSchema = new mongoose.Schema({
         address: [],
     }, ],
     personal_references: [],
-    guarantee: [],
+    guarantee: [{ type: mongoose.Schema.Types.ObjectId, ref: "Guarantee" }],
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     id_oficial: { type: Number},
     ife_details: [], //data.recordsets[2] 

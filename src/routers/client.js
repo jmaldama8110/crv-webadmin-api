@@ -5,6 +5,8 @@ const User = require("../model/user");
 const Client = require('../model/client');
 const notificationPush = require('../model/notificationPush');
 const Province = require('../model/province');
+const Guarantee = require('../model/guarantees');
+
 const auth = require("../middleware/auth");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
@@ -58,10 +60,15 @@ router.get("/clients", auth, async(req, res) =>{
             }
 
             for(let i = 0; i < client.length; i++) {
+                const data =client[i];
 
-                if(client[i].user_id != undefined){
-                    const c1 = await client[i].populate('user_id',{veridoc:1}).execPopulate();
+                if(data.user_id != undefined){
+                    const c1 = await data.populate('user_id',{veridoc:1}).execPopulate();
                     await c1.user_id.populate('veridoc', {frontImage: 1, backImage:1, faceImage: 1, _id:0}).execPopulate()
+                }
+
+                if(data.guarantee != undefined || data.guarantee.length != 0){
+                    await data.populate('guarantee').execPopulate();
                 }
 
             }
@@ -352,10 +359,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id_municipio: dirDomi[0].municipality[0] ? dirDomi[0].municipality[0] : 946,
                     id_localidad: dirDomi[0].city[0] ? dirDomi[0].city[0] : 1534,
                     id_asentamiento: dirDomi[0].colony[0] ? dirDomi[0].colony[0] : 42665,
-                    direccion: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : "CALLE...",
+                    direccion: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : "",
                     numero_exterior: "SN",
                     numero_interior: "SN",
-                    referencia: dirDomi[0].street_reference ? dirDomi[0].street_reference :"FRENTE A ...",
+                    referencia: dirDomi[0].street_reference ? dirDomi[0].street_reference :"",
                     casa_situacion: dirDomi[0].ownership ? dirDomi[0].ownership === true ? 1 : 0 : 0, //No se guarda el ownership 0 => RENTADO / 1- => PROPIO
                     tiempo_habitado_inicio: dirDomi[0].start_date ? getDates(dirDomi[0].start_date) :"2022-06-22",
                     tiempo_habitado_final: dirDomi[0].end_date ? getDates(dirDomi[0].end_date) : "2022-06-20",
@@ -377,7 +384,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id_municipio: dirIfe.length >= 1  ? dirIfe[0].municipality[0] ? dirIfe[0].municipality[0] : (person.DIRECCIONES)[0].id_municipio : (person.DIRECCIONES)[0].id_municipio,
                     id_localidad: dirIfe.length >= 1  ? dirIfe[0].city[0] ? dirIfe[0].city[0] : (person.DIRECCIONES)[0].id_localidad: (person.DIRECCIONES)[0].id_localidad,
                     id_asentamiento: dirIfe.length >= 1 ? dirIfe[0].colony[0] ? dirIfe[0].colony[0] : (person.DIRECCIONES)[0].id_asentamiento : (person.DIRECCIONES)[0].id_asentamiento,
-                    direccion: dirIfe.length >= 1 ? dirIfe[0].address_line1 ? dirIfe[0].address_line1 : "Dirección IFE" : "Dirección IFE",
+                    direccion: dirIfe.length >= 1 ? dirIfe[0].address_line1 ? dirIfe[0].address_line1 : "" : "",
                     numero_exterior: "SN",
                     numero_interior: "SN",
                     referencia: dirIfe.length >= 1 ? dirIfe[0].street_reference ? dirIfe[0].street_reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
@@ -402,7 +409,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id_municipio: dirRfc.length >= 1  ? dirRfc[0].municipality[0] ? dirRfc[0].municipality[0] : (person.DIRECCIONES)[0].id_municipio : (person.DIRECCIONES)[0].id_municipio,
                     id_localidad: dirRfc.length >= 1  ? dirRfc[0].city[0] ? dirRfc[0].city[0] : (person.DIRECCIONES)[0].id_localidad: (person.DIRECCIONES)[0].id_localidad,
                     id_asentamiento: dirRfc.length >= 1 ? dirRfc[0].colony[0] ? dirRfc[0].colony[0] : (person.DIRECCIONES)[0].id_asentamiento : (person.DIRECCIONES)[0].id_asentamiento,
-                    direccion: dirRfc.length >= 1 ? dirRfc[0].address_line1 ? dirRfc[0].address_line1 : "Dirección RFC": "Dirección RFC",
+                    direccion: dirRfc.length >= 1 ? dirRfc[0].address_line1 ? dirRfc[0].address_line1 : "": "",
                     numero_exterior: "SN",
                     numero_interior: "SN",
                     referencia: dirRfc.length >= 1 ? dirRfc[0].street_reference ? dirRfc[0].street_reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
@@ -465,7 +472,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         (clientHF.TELEFONO).push(
             {
                 id: action === 'INSERTAR_PERSONA' ? 0 : phoneBusiness._id,
-                idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : "0000000000" : "000000000",
+                idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
                 extension: "",
                 tipo_telefono: phoneBusiness? phoneBusiness.type ? phoneBusiness.type : " " : " ",
                 compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : " " : " ",
@@ -507,8 +514,8 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         ventas_totales_cantidad: 5000.0,
                         ventas_totales_unidad: 0.0,
                         id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 716,
-                        tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "2010-03-07",
-                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "2008-01-01",
+                        tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "1970-01-01",
+                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "1970-01-01",
                         id_empresa: action === 'INSERTAR_PERSONA' ? 0 : client.data_company[0].id_empresa,
                         id_oficina_empresa: action === 'INSERTAR_PERSONA' ? 0 : client.data_company[0].id_oficina_empresa
                     }
@@ -722,35 +729,42 @@ router.delete("/clients/:id", auth, async(req, res) =>{
 
 });
 
-router.delete("/clientsBD/:id", auth, async(req, res) =>{
+router.delete("/clientsBD", auth, async(req, res) =>{
 
     try{
-        const _id = req.params.id;
 
-        const client = await Client.findOne({_id});
-        if(!client){
-            throw new Error("Not able to find the client");
+        const match = {};
+
+        if(req.query.id){
+            match._id = req.query.id;
         }
 
-        const user = await User.findOne({client_id: client._id});
-        if(user!= null){
-            const userDeleted = await user.remove();
-            if(!userDeleted){
-                throw new Error("Error deleting user");
+        const client = await Client.find(match);
+        if(!client || client.length === 0){
+            throw new Error("Not found any record");
+        }
+
+        for(let i = 0; i < client.length; i++){
+            const dataClient = client[i];
+            // console.log(dataClient._id)
+            const user = await User.findOne({client_id: dataClient._id});
+            if(user!= null){
+                const userDeleted = await user.remove();
+                if(!userDeleted){
+                    throw new Error("Error deleting user");
+                }
+            }
+
+            const clientDeleted = await dataClient.remove();
+            if(!clientDeleted){
+                throw new Error("Error deleting client");
             }
         }
 
-        const clientDeleted = await client.remove();
-        if(!clientDeleted){
-            throw new Error("Error deleting client");
-        }
-
-        res.status(200).send({
-            client: `${client.name} ${client.lastname} ${client.second_lastname}`,
-            message: 'Client removed successfully'
-        });
+        res.status(200).send('Done!')
 
     }catch(e) {
+        console.log(e)
        res.status(400).send(e + '');
     }
 

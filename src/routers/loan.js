@@ -272,7 +272,7 @@ router.post('/resetGeneralChecklist/:id', auth, async(req, res) => {
         loan.createGenerallChecklist();
         await loan.save();
 
-        res.status(200).send(loan);
+        res.status(200).send('Done!');
 
     } catch(err) {
         res.status(400).send(err.message)

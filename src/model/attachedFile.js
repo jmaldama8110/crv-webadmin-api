@@ -9,5 +9,5 @@ const attachedFileSchema = new mongoose.Schema({
     loan_id: {type: mongoose.Schema.Types.ObjectId, ref: 'Loanapp'}
 }, { timestamps: true});
 
-const attachedFile = mongoose.model('attachedFile', attachedFileSchema);
-module.exports = attachedFile;
+const AttachedFile = mongoose.model('AttachedFile', attachedFileSchema);
+module.exports = AttachedFile;

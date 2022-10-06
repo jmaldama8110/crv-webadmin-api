@@ -44,7 +44,8 @@ const loanappSchema = new mongoose.Schema({
             title: {type: String, required: true},
             checked: {type: Boolean, default: false },
             checked_by: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-            checked_at: {type: Date}
+            checked_at: {type: Date},
+            id_file: {type: mongoose.Schema.Types.ObjectId, ref: 'AttachedFile'},
         }
     ],
     committee_checklist: [

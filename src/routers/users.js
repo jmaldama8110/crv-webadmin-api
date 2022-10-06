@@ -32,7 +32,7 @@ router.get('/users', auth, async(req, res) =>{
             }
             
         }
-        console.log(users)
+        
         res.status(200).send(users);
 
     } catch(e){
