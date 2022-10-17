@@ -4,6 +4,8 @@ const RccFyco = require('../model/rccfyco');
 const Client= require('../model/client');
 const auth =  require('../middleware/auth');
 const axios = require("axios");
+const rsign = require("jsrsasign");
+const rsutil = require("jsrsasign-util");
 
 
 router.post('/rccfyco/:client_id', auth, async(req, res) => {
@@ -105,7 +107,44 @@ router.post('/rccfyco/:client_id', auth, async(req, res) => {
         res.status(400).send(error);
       }
 
-})
+});
+
+router.get("/securitytest", async (req, res) => {
+  try {
+    console.log('llega')
+    const customerKey = process.env.CC_CUSTOMER_KEY;
+    const url = "/v1/securitytest";
+
+    const prvPEM = process.env.CC_PRIV_KEY;
+    var prvK = rsign.KEYUTIL.getKey(prvPEM);
+    
+    const signature = new rsign.KJUR.crypto.Signature({alg: 'SHA256withECDSA',provider: "cryptojs/jsrsa"})
+    signature.init(prvK);
+
+    const bodyData = JSON.stringify(req.body);
+    signature.updateString( bodyData );
+    console.log('pasa')
+
+    const api = axios.create({
+      method: "post",
+      url,
+      baseURL: process.env.CC_API_HOST,
+      headers: {
+        "x-api-key": `${customerKey}`,
+        "x-signature": `${signature.sign()}`,
+        "Content-Type": "application/json",
+        "Connection": "keep-alive"
+      },
+    });
+    
+    const secApiResponse = await api.post(url, req.body  );
+    res.send(secApiResponse.data);
+
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error);
+  }
+});
 
 router.get('/rccfyco/:client_id', auth, async(req, res) => {
   
@@ -117,10 +156,10 @@ router.get('/rccfyco/:client_id', auth, async(req, res) => {
     }
 
     const rcc = await RccFyco.find({client_id});
-    if(!rcc){
+    if(!rcc || rcc.length === 0){
       return res.status(204).send('No records found');
     }
-
+    
     res.status(200).send(rcc[rcc.length - 1]);//Le devolvemos la consulta mas actual ya que el cliente puede tener mas de un rcc
 
   } catch(err){

@@ -5,6 +5,7 @@ const Loan = require('../model/loanapp');
 const User = require('../model/user');
 const Client = require('../model/client');
 const Product = require('../model/product');
+const Employee = require('../model/employee');
 const loanConstants = require('../constants/loanConstants');
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
@@ -47,12 +48,26 @@ router.get('/loans', auth, async(req, res) =>{
         }
 
         for(let i = 0; i < loans.length; i++){
+
+            if(loans[i].general_checklist.length === 0 || loans[i].general_checklist === undefined){
+                // console.log('crear el general')
+                loans[i].createGenerallChecklist();
+            }
+
+            if(loans[i].committee_checklist.length === 0 || loans[i].committee_checklist === undefined){
+                // console.log('crear el comite')
+                loans[i].createCommitteeChecklist();
+            }
+
             await loans[i].populate('product', {product_name:1}).execPopulate();
             const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
             if(applyBy.client_id !== undefined || applyBy.client_id !== null){
                 // console.log('Esteee',applyBy)
                 await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1,email:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
             }
+
+            await loans[i].save();
+
         }
 
         res.status(200).send(loans);
@@ -151,6 +166,24 @@ router.get('/loanDetail', auth, async(req, res) => {
 
 });
 
+router.get('/statusGLByLoan', async(req, res)=> {
+    try{
+        const idLoan = req.query.idLoan;
+        if(!idLoan){
+            throw new Error('Is required to provide the idLoan')
+        }
+
+        const seguro = await Loan.getStatusGLByLoan(idLoan);
+
+        res.status(200).send(seguro);
+
+    }
+    catch(e){
+        console.log(e);
+        res.send(e + '');
+    }
+});
+
 router.get('/toAuthorizeLoansHF', auth, async(req, res) =>{
     try{
 
@@ -165,6 +198,121 @@ router.get('/toAuthorizeLoansHF', auth, async(req, res) =>{
 
     } catch(err) {
         res.status(400).send(err + '');
+    }
+});
+
+router.patch('/updateGeneralChecklist/:id', auth, async(req, res) => {
+    try{
+        const _id = req.params.id;
+        const title = req.query.title;
+        const checked_by = req.user._id;
+        const checked_at = new Date();
+
+        if(!title){
+            throw new Error('The title parameter is required');
+        }
+
+        const loan = await Loan.findById({_id});
+        if(!loan) {
+            return res.status(204).send('Not records found');
+        }
+        
+        loan.activateItemGeneralChecklist(title, checked_by, checked_at);
+        await loan.save();
+
+        res.status(200).send(loan);
+
+    } catch(err) {
+        res.status(400).send(err.message)
+    }
+});
+
+router.patch('/updateComitteeChecklist/:id', auth, async(req, res) => {
+    
+    try{
+
+        const _id = req.params.id;
+        const title = req.query.title;
+        const checked_by = req.user._id;
+        const checked_at = new Date();
+
+        if(!title){
+            throw new Error('The title parameter is required');
+        }
+
+        const loan = await Loan.findById({_id});
+        if(!loan) {
+            return res.status(204).send('Not records found');
+        }
+
+        const employee = await Employee.findById(req.user.employee_id);
+        // console.log(employee);
+
+        if(employee && !employee.is_committee){
+            throw new Error('Permission denied to check');
+        }
+
+        const committee_checklist = loan.committee_checklist;
+
+        for(let i = 0; i < committee_checklist.length; i++) {
+            const check = committee_checklist[i];
+            const newCheck = {
+                checked_by,
+                checked_at,
+                status: true
+            }
+            
+            if(check.title === title){
+                const c = check.checked;
+                c.push(newCheck);
+                check.checked = c;
+            }
+        }
+        
+        await loan.save();
+
+        res.status(200).send(loan);
+
+    } catch(err) {
+        res.status(400).send(err.message);
+    }
+});
+
+router.post('/resetGeneralChecklist/:id', auth, async(req, res) => {
+    try{
+        const _id = req.params.id;
+
+        const loan = await Loan.findById({_id});
+        if(!loan) {
+            return res.status(204).send('Not records found');
+        }
+        
+        loan.createGenerallChecklist();
+        await loan.save();
+
+        res.status(200).send('Done!');
+
+    } catch(err) {
+        res.status(400).send(err.message)
+    }
+});
+
+router.post('/resetComitteeChecklist/:id', auth, async(req, res) => {
+    try{
+        const _id = req.params.id;
+
+        const loan = await Loan.findById({_id});
+        if(!loan) {
+            return res.status(204).send('Not records found');
+        }
+        
+        loan.createCommitteeChecklist();
+        await loan.save();
+
+        res.status(200).send(loan);
+
+    } catch(err) {
+        res.status(400).send(err.message)
     }
 });
 
@@ -280,7 +428,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         }
 
         const detail = await Loan.getDetailLoan(id_soli, 1);
-        const seguro2 = await Loan.getStatusGLByLoan(id_soli);
+        const statusGL = await Loan.getStatusGLByLoan(id_soli);
 
         // // Una vez asignado el monto actualizamos campos del crédito
         loan["approved_at"] = new Date();
@@ -291,7 +439,11 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         loan["id_oficial"] = official_id;
         loan["id_producto"] = detail[0][0].id_producto;
         loan["loan_detail"] = detail[5][0];
-        loan["seguro_detail"] = seguro2;
+        loan["seguro_detail"] = statusGL;
+        // loan.createGenerallChecklist();
+        // loan.createCommitteeChecklist();
+        client.updateCheckList('new_loan_application');
+        await client.save();
         await loan.save();
 
         const cant = formatLocalCurrency(loan.apply_amount);
@@ -301,7 +453,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         res.status(200).send(result3);
 
     } catch(err){
-        // console.log(err)
+        console.log(err)
         res.status(400).send(err.message)
     }
 
@@ -339,11 +491,11 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
         detail[0][0].fecha_entrega = getDates(detail[0][0].fecha_entrega);
         detail[0][0].fecha_creacion = getDates(detail[0][0].fecha_creacion);
 
-        if(seguro.estatus === "FALTA G.L."){
+        if(action === 1 && seguro.estatus === "FALTA G.L."){
             throw new Error("No se puede realizar la acción debido a que falta la garantía líquida")
         }
 
-        const result = await Loan.toAuthorizeLoanHF(detail, seguro, status);
+        const result = await Loan.updateLoanDataHF(detail, seguro, status);
         const detail2 = await Loan.getDetailLoan(idLoan, 1);
 
         loan["status"] = status;
@@ -366,21 +518,46 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
     }
 });
 
-router.get('/loanSeguroDetailHF', async(req, res)=> {
+router.post('/declineCancelLoanHF/:action/:id', auth, async(req, res) => {//Cancelar o rechazar un loan
+
+    const _id = req.params.id;
+    const action = parseInt(req.params.action);
+    let status = [];
+
     try{
-        const idLoan = req.query.idLoan;
-        if(!idLoan){
-            throw new Error('Is required to provide the idLoan')
+        
+        const loan = await Loan.findOne({_id});
+        if(!loan){
+            throw new Error('Not able to find any loan');
         }
+        const user = await User.findOne({_id: loan.apply_by});
+        const product = await Product.findOne({_id: loan.product});
 
+        if(action === 1){
+            status = loanConstants.Rechazado;
+        }
+        if(action === 2){
+            status = loanConstants.Cancelado
+        }
+        const idLoan = loan.id_loan;
+        console.log(status);
+
+        const detail = await Loan.getDetailLoan(idLoan, 1);
         const seguro = await Loan.getStatusGLByLoan(idLoan);
+        detail[0][0].fecha_primer_pago = getDates(detail[0][0].fecha_primer_pago);
+        detail[0][0].fecha_entrega = getDates(detail[0][0].fecha_entrega);
+        detail[0][0].fecha_creacion = getDates(detail[0][0].fecha_creacion);
 
-        res.status(200).send(seguro);
+        const result = await Loan.updateLoanDataHF(detail, seguro, status);
+
+        loan["status"] = status;
+        await loan.save();
+
+        res.status(200).send(result);
 
     }
-    catch(e){
-        console.log(e);
-        res.send(e + '');
+    catch(err){
+        res.status(400).send(err.message)
     }
 });
 

@@ -5,6 +5,11 @@ const User = require("../model/user");
 const Client = require('../model/client');
 const notificationPush = require('../model/notificationPush');
 const Province = require('../model/province');
+const Guarantee = require('../model/guarantees');
+const Guarantor = require('../model/guarantor');
+const References = require('../model/references');
+const BacnkAcc = require('../model/bankacc');
+
 const auth = require("../middleware/auth");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
@@ -58,18 +63,24 @@ router.get("/clients", auth, async(req, res) =>{
             }
 
             for(let i = 0; i < client.length; i++) {
+                const data = client[i];
 
-                if(client[i].user_id != undefined){
-                    const c1 = await client[i].populate('user_id',{veridoc:1}).execPopulate();
+                if(data.user_id != undefined){
+                    const c1 = await data.populate('user_id',{veridoc:1}).execPopulate();
                     await c1.user_id.populate('veridoc', {frontImage: 1, backImage:1, faceImage: 1, _id:0}).execPopulate()
                 }
 
+                await data.populate('guarantee').execPopulate();
+                await data.populate('guarantors').execPopulate();
+                await data.populate('references').execPopulate();
+                await data.populate('beneficiaries').execPopulate();
+                await data.populate('bankacc').execPopulate();
             }
 
             res.status(200).send(client);
 
     } catch(e) {
-        //    console.log(e)
+           console.log(e)
         res.status(400).send(e + '');
     }
 });
@@ -302,7 +313,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     nombre: client.name,
                     apellido_paterno: client.lastname ? client.lastname : "S/A",
                     apellido_materno: client.second_lastname ? client.second_lastname : "S/A",
-                    fecha_nacimiento: client.dob ? getDates(client.dob) : "1970-01-01",
+                    fecha_nacimiento: client.dob ? getDates(client.dob) : "1990-01-01",
                     id_sexo: client.sex[0] ? client.sex[0] : 4,
                     id_escolaridad: client.education_level[0] ? client.education_level[0] : 2,
                     id_estado_civil: client.marital_status[0] ? client.marital_status[0] : 1,
@@ -337,7 +348,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[1]._id,
                     id_entidad: action === 'INSERTAR_PERSONA' ? 0 : client.id_persona,
                     tipo_identificacion: "RFC",
-                    id_numero: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,10)
+                    id_numero: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,13)
                 }
             )
     
@@ -352,10 +363,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id_municipio: dirDomi[0].municipality[0] ? dirDomi[0].municipality[0] : 946,
                     id_localidad: dirDomi[0].city[0] ? dirDomi[0].city[0] : 1534,
                     id_asentamiento: dirDomi[0].colony[0] ? dirDomi[0].colony[0] : 42665,
-                    direccion: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : "CALLE...",
+                    direccion: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : " ",
                     numero_exterior: "SN",
                     numero_interior: "SN",
-                    referencia: dirDomi[0].street_reference ? dirDomi[0].street_reference :"FRENTE A ...",
+                    referencia: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : " ",
                     casa_situacion: dirDomi[0].ownership ? dirDomi[0].ownership === true ? 1 : 0 : 0, //No se guarda el ownership 0 => RENTADO / 1- => PROPIO
                     tiempo_habitado_inicio: dirDomi[0].start_date ? getDates(dirDomi[0].start_date) :"2022-06-22",
                     tiempo_habitado_final: dirDomi[0].end_date ? getDates(dirDomi[0].end_date) : "2022-06-20",
@@ -377,10 +388,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id_municipio: dirIfe.length >= 1  ? dirIfe[0].municipality[0] ? dirIfe[0].municipality[0] : (person.DIRECCIONES)[0].id_municipio : (person.DIRECCIONES)[0].id_municipio,
                     id_localidad: dirIfe.length >= 1  ? dirIfe[0].city[0] ? dirIfe[0].city[0] : (person.DIRECCIONES)[0].id_localidad: (person.DIRECCIONES)[0].id_localidad,
                     id_asentamiento: dirIfe.length >= 1 ? dirIfe[0].colony[0] ? dirIfe[0].colony[0] : (person.DIRECCIONES)[0].id_asentamiento : (person.DIRECCIONES)[0].id_asentamiento,
-                    direccion: dirIfe.length >= 1 ? dirIfe[0].address_line1 ? dirIfe[0].address_line1 : "Dirección IFE" : "Dirección IFE",
+                    direccion: dirIfe.length >= 1 ? dirIfe[0].address_line1 ? dirIfe[0].address_line1 : (person.DIRECCIONES)[0].direccion : (person.DIRECCIONES)[0].direccion,
                     numero_exterior: "SN",
                     numero_interior: "SN",
-                    referencia: dirIfe.length >= 1 ? dirIfe[0].street_reference ? dirIfe[0].street_reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
+                    referencia: dirIfe.length >= 1 ? dirIfe[0].street_reference ? dirIfe[0].street_reference : (person.DIRECCIONES)[0].direccion : (person.DIRECCIONES)[0].direccion,
                     casa_situacion: dirIfe.length >= 1 ? dirIfe[0].ownership ? dirIfe[0].ownership === true ? 1 : 0 : 0 : (person.DIRECCIONES)[0].casa_situacion,
                     tiempo_habitado_inicio: dirIfe.length >= 1 ? dirIfe[0].start_date ? getDates(dirIfe[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                     tiempo_habitado_final: dirIfe.length >= 1 ? dirIfe[0].end_dat ? getDates(dirIfe[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final : (person.DIRECCIONES)[0].tiempo_habitado_final,
@@ -402,10 +413,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id_municipio: dirRfc.length >= 1  ? dirRfc[0].municipality[0] ? dirRfc[0].municipality[0] : (person.DIRECCIONES)[0].id_municipio : (person.DIRECCIONES)[0].id_municipio,
                     id_localidad: dirRfc.length >= 1  ? dirRfc[0].city[0] ? dirRfc[0].city[0] : (person.DIRECCIONES)[0].id_localidad: (person.DIRECCIONES)[0].id_localidad,
                     id_asentamiento: dirRfc.length >= 1 ? dirRfc[0].colony[0] ? dirRfc[0].colony[0] : (person.DIRECCIONES)[0].id_asentamiento : (person.DIRECCIONES)[0].id_asentamiento,
-                    direccion: dirRfc.length >= 1 ? dirRfc[0].address_line1 ? dirRfc[0].address_line1 : "Dirección RFC": "Dirección RFC",
+                    direccion: dirRfc.length >= 1 ? dirRfc[0].address_line1 ? dirRfc[0].address_line1 : (person.DIRECCIONES)[0].direccion : (person.DIRECCIONES)[0].direccion,
                     numero_exterior: "SN",
                     numero_interior: "SN",
-                    referencia: dirRfc.length >= 1 ? dirRfc[0].street_reference ? dirRfc[0].street_reference : (person.DIRECCIONES)[0].referencia : (person.DIRECCIONES)[0].referencia,
+                    referencia: dirRfc.length >= 1 ? dirRfc[0].street_reference ? dirRfc[0].street_reference : (person.DIRECCIONES)[0].direccion : (person.DIRECCIONES)[0].direccion,
                     casa_situacion: dirRfc.length >= 1 ? dirRfc[0].ownership ? dirRfc[0].ownership === true ? 1 : 0 : 0 : (person.DIRECCIONES)[0].casa_situacion,
                     tiempo_habitado_inicio: dirRfc.length >= 1 ? dirRfc[0].start_date ? getDates(dirRfc[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                     tiempo_habitado_final: dirRfc.length >= 1 ? dirRfc[0].end_dat ? getDates(dirRfc[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final : (person.DIRECCIONES)[0].tiempo_habitado_final,
@@ -461,11 +472,12 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         ];
 
         clientHF.TELEFONO = [];
+        const phonePerson = phones[0];
         const phoneBusiness = phones[1];
         (clientHF.TELEFONO).push(
             {
                 id: action === 'INSERTAR_PERSONA' ? 0 : phoneBusiness._id,
-                idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : "0000000000" : "000000000",
+                idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
                 extension: "",
                 tipo_telefono: phoneBusiness? phoneBusiness.type ? phoneBusiness.type : " " : " ",
                 compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : " " : " ",
@@ -482,7 +494,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         id_dir: action === 'INSERTAR_PERSONA' ? 0 : campo._id, //id de la dirección del negocio
                         nombre: business_data.business_name ? business_data.business_name : "NEGOCIO",
                         calle: campo.address_line1 ? campo.address_line1 : "Calle ...",
-                        referencia: campo.street_reference ? campo.street_reference : "Frente a ...",
+                        referencia: campo.address_line1 ? campo.address_line1 : "Calle ...",
                         letra_exterior: "SN",
                         letra_interior: "SN",
                         num_exterior: 0,
@@ -493,7 +505,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         id_ciudad: campo.city[0] ? campo.city[0] : 1534,
                         id_colonia: campo.colony[0] ? campo.colony[0] : 42665,
                         cp: campo.post_code,
-                        rfc: client.rfc ? client.rfc : client.curp.slice(0,10),
+                        rfc: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,13),
                         econ_registro_egresos_ingresos: 0,
                         casa_situacion: campo.ownership ? campo.ownership === true ? 1 :0 : 0,
                         correo_electronico: client.email ? client.email : "",
@@ -507,8 +519,8 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         ventas_totales_cantidad: 5000.0,
                         ventas_totales_unidad: 0.0,
                         id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 716,
-                        tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "2010-03-07",
-                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "2008-01-01",
+                        tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "1970-01-01",
+                        tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "1970-01-01",
                         id_empresa: action === 'INSERTAR_PERSONA' ? 0 : client.data_company[0].id_empresa,
                         id_oficina_empresa: action === 'INSERTAR_PERSONA' ? 0 : client.data_company[0].id_oficina_empresa
                     }
@@ -633,6 +645,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             sendSms(`+52${user.phone}`,body)
         }
 
+        // console.log(person);
+        // console.log(clientHF);
+
         res.status(201).send({
             result,
             response,
@@ -722,35 +737,42 @@ router.delete("/clients/:id", auth, async(req, res) =>{
 
 });
 
-router.delete("/clientsBD/:id", auth, async(req, res) =>{
+router.delete("/clientsBD", auth, async(req, res) =>{
 
     try{
-        const _id = req.params.id;
 
-        const client = await Client.findOne({_id});
-        if(!client){
-            throw new Error("Not able to find the client");
+        const match = {};
+
+        if(req.query.id){
+            match._id = req.query.id;
         }
 
-        const user = await User.findOne({client_id: client._id});
-        if(user!= null){
-            const userDeleted = await user.remove();
-            if(!userDeleted){
-                throw new Error("Error deleting user");
+        const client = await Client.find(match);
+        if(!client || client.length === 0){
+            throw new Error("Not found any record");
+        }
+
+        for(let i = 0; i < client.length; i++){
+            const dataClient = client[i];
+            // console.log(dataClient._id)
+            const user = await User.findOne({client_id: dataClient._id});
+            if(user!= null){
+                const userDeleted = await user.remove();
+                if(!userDeleted){
+                    throw new Error("Error deleting user");
+                }
+            }
+
+            const clientDeleted = await dataClient.remove();
+            if(!clientDeleted){
+                throw new Error("Error deleting client");
             }
         }
 
-        const clientDeleted = await client.remove();
-        if(!clientDeleted){
-            throw new Error("Error deleting client");
-        }
-
-        res.status(200).send({
-            client: `${client.name} ${client.lastname} ${client.second_lastname}`,
-            message: 'Client removed successfully'
-        });
+        res.status(200).send('Done!')
 
     }catch(e) {
+        console.log(e)
        res.status(400).send(e + '');
     }
 
@@ -905,6 +927,44 @@ const addPhones = (body) =>{
     }
 
     return phones;
+}
+
+const orderGuarantees = (guarantees) => {
+
+    const guarantee = JSON.parse(JSON.stringify(guarantees));
+
+    const equipment = [];
+    const vehicle = [];
+    const property = [];
+    const result = {};
+
+
+    for(let i = 0; i < guarantee.length; i++) {
+        const data = guarantee[i];
+        if(data.guarantee_type === 'equipment'){
+            delete data.property;
+            delete data.vehicle;
+            equipment.push(data);
+        }
+        if(data.guarantee_type === 'vehicle') {
+            delete data.equipment;
+            delete data.property;
+            vehicle.push(data)
+        }
+        if(data.guarantee_type === 'property'){
+            delete data.equipment;
+            delete data.vehicle;
+            property.push(data)
+        }
+    }
+
+    result.equipment = equipment;
+    result.vehicle = vehicle;
+    result.property = property;
+
+    // console.log(result);
+
+    return result;
 }
 
 module.exports = router;

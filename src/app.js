@@ -19,9 +19,11 @@ const attachedFileRouter = require('./routers/attachedFile');
 const signUpRouter =  require('./routers/signup');
 const contractRouter = require('./routers/contract');
 const rccFycoRouter =  require('./routers/rccfyco');
+const guaranteeRouter = require('./routers/guarantee');
+const identityRouter = require('./routers/identityimg');
 
 const app = express()
-app.use(express.json({limit: '1mb'}))
+app.use(express.json({limit: '50mb'}))
 app.use(userRouter)
 app.use(productRouter)
 app.use(clientRouter)
@@ -38,6 +40,8 @@ app.use(attachedFileRouter)
 app.use(signUpRouter)
 app.use(contractRouter)
 app.use(rccFycoRouter)
+app.use(guaranteeRouter)
+app.use(identityRouter)
 
 
 module.exports = app

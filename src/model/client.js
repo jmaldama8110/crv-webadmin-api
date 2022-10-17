@@ -121,6 +121,7 @@ const clientSchema = new mongoose.Schema({
         trim: true,
     },
     rcc_last_query: {},
+    criminal_record_query: {},
     nationality: [],
     province_of_birth: [],
     country_of_birth: [],
@@ -128,126 +129,24 @@ const clientSchema = new mongoose.Schema({
     marital_status: [],
     identities: [],
     identification_type: [], // INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
-    guarantor: [{
-        name: {
-            type: String,
-            trim: true,
-            uppercase: true,
-        },
-        lastname: {
-            type: String,
-            trim: true,
-            uppercase: true,
-        },
-        second_lastname: {
-            type: String,
-            trim: true,
-            uppercase: true,
-        },
-        dob: {
-            type: Date,
-            required: false,
-        },
-        sex: [],
-        nationality: [],
-        province_of_birth: [],
-        country_of_birth: [],
-        rfc: {
-            type: String,
-            trim: true,
-        },
-        curp: {
-            type: String,
-            trim: true,
-        },
-        ocupation: [],
-        e_signature: {
-            type: String,
-            trim: true,
-        },
-        marital_status: [],
-        phones: [{
-            phone: {
-                type: String,
-                trim: true,
-            },
-            phone_type: {
-                type: String,
-                trim: true,
-            },
-        }, ],
-        email: {
-            type: String,
-            trim: true,
-        },
-        identification_type: [],
-        identification_number: {
-            type: String,
-            trim: true,
-        },
-        company_works_at: {
-            type: String,
-            trim: true,
-        },
-        address: [],
-        person_resides_in: {
-            type: String,
-            trim: true,
-        },
-    }, ],
     business_data: {
         economic_activity: [],
         profession: [],
         business_name: {type:String},
         business_start_date: {type: Date}
     },
-    beneficiaries: [{
-        name: {
-            type: String,
-            trim: true,
-            uppercase: true,
-        },
-        lastname: {
-            type: String,
-            trim: true,
-            uppercase: true,
-        },
-        second_lastname: {
-            type: String,
-            trim: true,
-            uppercase: true,
-        },
-        dob: {
-            type: Date,
-            required: false,
-        },
-        relationship: [],
-        phones: [{
-            phone: {
-                type: String,
-                trim: true,
-            },
-            phone_type: {
-                type: String,
-                trim: true,
-            },
-        }, ],
-        percentage: {
-            //Verificar que del total de beneficiarios sume 100%
-            type: String,
-            trim: true,
-            uppercase: true,
-        },
-        address: [],
-    }, ],
-    personal_references: [],
-    guarantee: [],
+    guarantors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Guarantor" }],
+    beneficiaries: [{ type: mongoose.Schema.Types.ObjectId, ref: "Reference" }],
+    references: [{type: mongoose.Schema.Types.ObjectId, ref: "Reference"}],
+    guarantee: [{ type: mongoose.Schema.Types.ObjectId, ref: "Guarantee" }],
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    bankacc: [{ type: mongoose.Schema.Types.ObjectId, ref: "Bankacc" }],
     id_oficial: { type: Number},
     ife_details: [], //data.recordsets[2] 
     data_company: [], //data.recordsets[8];
     data_efirma: [], //data.recordsets[9];
-    status:[]
+    status:[],
+    coordinates: []
 }, { timestamps: true });
 
 clientSchema.methods.toJSON = function(){

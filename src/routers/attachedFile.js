@@ -2,6 +2,7 @@ const express = require('express');
 const router = new express.Router();
 const auth = require('../middleware/auth');
 const attachedFile = require ('../model/attachedFile');
+const Loan = require('../model/loanapp');
 
 router.post('/attachedFiles', auth, async(req, res) => {
     try{
@@ -10,6 +11,20 @@ router.post('/attachedFiles', auth, async(req, res) => {
 
         const registro = new attachedFile({...data});
         const file = await registro.save();
+
+        if(data.loan_id && req.query.order){
+            console.log('es para el loan')
+            
+            const _id = data.loan_id;
+            const loan = await Loan.findById({_id})
+
+            const check = loan.general_checklist.find((checklist) => checklist.order === parseInt(req.query.order));
+            check.id_file = file._id;
+
+            await loan.save();
+            // return res.send(check);
+
+        }
 
         res.status(201).send(file);
 

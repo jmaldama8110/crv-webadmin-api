@@ -14,7 +14,7 @@ const identityimgSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    user_id: {},
+    user_id: { type: mongoose.Schema.Types.ObjectId},
     status: []
 }, { timestamps: true });
 

@@ -114,6 +114,23 @@ router.get("/employees", auth, async(req, res) =>{
 
 });
 
+router.get("/comittee", auth, async(req, res) =>{
+
+    try{
+    
+        const employee = await Employee.find({ is_committee : true});
+        if (!employee || employee.length === 0) {
+            throw new Error("No committee could be found");
+        }
+        
+        // console.log(employee)
+        res.status(200).send(employee);
+    } catch(e){
+        res.status(400).send(e + '');
+    }
+
+});
+
 router.get('/employees/hf', auth, async(req, res) => {
 
     try{
@@ -269,7 +286,7 @@ const removeAccents = (str) => {
 }
 
 const comparar = (entrada) =>{
-    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id", "role", "branch"];
+    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id", "role", "branch", "is_committee"];
     const result = entrada.every(campo => permitido.includes(campo));
     return result;
 }

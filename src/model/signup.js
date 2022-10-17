@@ -51,8 +51,8 @@ const signupSchema = new mongoose.Schema({
             }
 
         }
-    }
-
+    },
+    coordinates: []
 
 }, { timestamps: true })
 
