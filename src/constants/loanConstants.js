@@ -7,7 +7,9 @@ const loanConstants = {
     "Pendiente": [1,"Pendiente"],
     "ListoPT": [2,"Listo para tramite"],
     "PorAut": [3,"Por autorizar"],
-    "Autorizado": [4,"Autorizado"]
+    "Autorizado": [4,"Autorizado"],
+    "Rechazado": [5,"Rechazado"],
+    "Cancelado": [6,"Cancelado"],
 }
 
 module.exports = loanConstants;

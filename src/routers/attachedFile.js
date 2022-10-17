@@ -9,24 +9,22 @@ router.post('/attachedFiles', auth, async(req, res) => {
 
         const data = req.body;
 
-        // if(data.loan_id && req.query.order){
-
-        //     console.log('es para el loan')
-            
-        //     const _id = data.loan_id;
-        //     const loan = await Loan.findById({_id})
-
-        //     const check = loan.general_checklist.find((checklist) => checklist.order === parseInt(req.query.order));
-        //     check.id_file = '633f15fbd1a9d046cc1b7196';
-
-        //     // return res.send(loan.general_checklist);
-        //     await loan.save();
-        //     return res.send(check);
-
-        // }
-
         const registro = new attachedFile({...data});
         const file = await registro.save();
+
+        if(data.loan_id && req.query.order){
+            console.log('es para el loan')
+            
+            const _id = data.loan_id;
+            const loan = await Loan.findById({_id})
+
+            const check = loan.general_checklist.find((checklist) => checklist.order === parseInt(req.query.order));
+            check.id_file = file._id;
+
+            await loan.save();
+            // return res.send(check);
+
+        }
 
         res.status(201).send(file);
 

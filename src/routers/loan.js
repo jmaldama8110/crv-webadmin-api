@@ -166,6 +166,24 @@ router.get('/loanDetail', auth, async(req, res) => {
 
 });
 
+router.get('/statusGLByLoan', async(req, res)=> {
+    try{
+        const idLoan = req.query.idLoan;
+        if(!idLoan){
+            throw new Error('Is required to provide the idLoan')
+        }
+
+        const seguro = await Loan.getStatusGLByLoan(idLoan);
+
+        res.status(200).send(seguro);
+
+    }
+    catch(e){
+        console.log(e);
+        res.send(e + '');
+    }
+});
+
 router.get('/toAuthorizeLoansHF', auth, async(req, res) =>{
     try{
 
@@ -230,7 +248,7 @@ router.patch('/updateComitteeChecklist/:id', auth, async(req, res) => {
         const employee = await Employee.findById(req.user.employee_id);
         // console.log(employee);
 
-        if(employee && !employee.isComittee){
+        if(employee && !employee.is_committee){
             throw new Error('Permission denied to check');
         }
 
@@ -410,7 +428,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         }
 
         const detail = await Loan.getDetailLoan(id_soli, 1);
-        const seguro2 = await Loan.getStatusGLByLoan(id_soli);
+        const statusGL = await Loan.getStatusGLByLoan(id_soli);
 
         // // Una vez asignado el monto actualizamos campos del crédito
         loan["approved_at"] = new Date();
@@ -421,7 +439,7 @@ router.post('/sendLoantoHF/:id', auth, async(req, res) => {//enviar a listo para
         loan["id_oficial"] = official_id;
         loan["id_producto"] = detail[0][0].id_producto;
         loan["loan_detail"] = detail[5][0];
-        loan["seguro_detail"] = seguro2;
+        loan["seguro_detail"] = statusGL;
         // loan.createGenerallChecklist();
         // loan.createCommitteeChecklist();
         client.updateCheckList('new_loan_application');
@@ -473,11 +491,11 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
         detail[0][0].fecha_entrega = getDates(detail[0][0].fecha_entrega);
         detail[0][0].fecha_creacion = getDates(detail[0][0].fecha_creacion);
 
-        if(seguro.estatus === "FALTA G.L."){
+        if(action === 1 && seguro.estatus === "FALTA G.L."){
             throw new Error("No se puede realizar la acción debido a que falta la garantía líquida")
         }
 
-        const result = await Loan.toAuthorizeLoanHF(detail, seguro, status);
+        const result = await Loan.updateLoanDataHF(detail, seguro, status);
         const detail2 = await Loan.getDetailLoan(idLoan, 1);
 
         loan["status"] = status;
@@ -500,21 +518,46 @@ router.post('/toAuthorizeLoanHF/:action/:id', auth, async(req, res) => {//Enviar
     }
 });
 
-router.get('/loanSeguroDetailHF', async(req, res)=> {
+router.post('/declineCancelLoanHF/:action/:id', auth, async(req, res) => {//Cancelar o rechazar un loan
+
+    const _id = req.params.id;
+    const action = parseInt(req.params.action);
+    let status = [];
+
     try{
-        const idLoan = req.query.idLoan;
-        if(!idLoan){
-            throw new Error('Is required to provide the idLoan')
+        
+        const loan = await Loan.findOne({_id});
+        if(!loan){
+            throw new Error('Not able to find any loan');
         }
+        const user = await User.findOne({_id: loan.apply_by});
+        const product = await Product.findOne({_id: loan.product});
 
+        if(action === 1){
+            status = loanConstants.Rechazado;
+        }
+        if(action === 2){
+            status = loanConstants.Cancelado
+        }
+        const idLoan = loan.id_loan;
+        console.log(status);
+
+        const detail = await Loan.getDetailLoan(idLoan, 1);
         const seguro = await Loan.getStatusGLByLoan(idLoan);
+        detail[0][0].fecha_primer_pago = getDates(detail[0][0].fecha_primer_pago);
+        detail[0][0].fecha_entrega = getDates(detail[0][0].fecha_entrega);
+        detail[0][0].fecha_creacion = getDates(detail[0][0].fecha_creacion);
 
-        res.status(200).send(seguro);
+        const result = await Loan.updateLoanDataHF(detail, seguro, status);
+
+        loan["status"] = status;
+        await loan.save();
+
+        res.status(200).send(result);
 
     }
-    catch(e){
-        console.log(e);
-        res.send(e + '');
+    catch(err){
+        res.status(400).send(err.message)
     }
 });
 

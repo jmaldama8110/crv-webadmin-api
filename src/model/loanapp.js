@@ -92,7 +92,9 @@ loanappSchema.methods.activateItemGeneralChecklist = function(title, checked_by,
         : {
             order: item.order,
             title: item.title,
-            checked: item.checked
+            checked: item.checked,
+            checked_by: item.checked_by,
+            checked_at: item.checked_at
           }   
     );
     
@@ -313,15 +315,17 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
     }
 }
 
-loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
+loanappSchema.statics.updateLoanDataHF = async(body, seguro, status) => { //Metodo para actualizar datos del loan en el HF (principalmente los estatus)
     try {
         const pool = await sql.connect(sqlConfig);
 
         let id_producto = body[0][0].id_producto;
         let statusHF = 'ACEPTADO';
+        let subestatusHF = 'AUTORIZADO';
 
         if(status[0] === 3){
             statusHF = 'TRAMITE';
+            subestatusHF = 'POR AUTORIZAR';
             console.log('crear el producto')
             const productHF = await pool.request()
             .input('tasa_anual', sql.Decimal(18, 4), body[0][0].tasa_anual)
@@ -335,27 +339,36 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
             id_producto = productHF.output.id_producto
         }
 
+        if(status[0] === 5){
+            statusHf = 'RECHAZADO';
+            subestatusHF = 'RECHAZADO';
+        }
+        if(status[0] === 6){
+            statusHf = 'CANCELADO';
+            subestatusHF = 'CANCELADO';
+        }
+
         tbl.UDT_Solicitud.rows.add(
             body[0][0].id,
             body[0][0].id_cliente,
-            body[0][0].id_oficial, // OFICIAL CREDITO debe ser el id de la persona oficial
+            body[0][0].id_oficial,
             id_producto,
-            body[0][0].id_disposicion, // se obtiene del procedimiento asignarDisposicion
-            body[0][0].monto_total_solicitado, // Ej. 10000.00 (debe estar entre la politicas)
-            body[0][0].monto_total_autorizado, // Monto_autorizado TODO: MANDAR EN 0 DESDE MÓVIL
-            body[0][0].periodicidad, // Meses/Quincena (Se obtiene de configuracionMaestro)
-            body[0][0].plazo, // 1, 2, 3, 6, 12, 24, etc.
+            body[0][0].id_disposicion,
+            body[0][0].monto_total_solicitado,
+            body[0][0].monto_total_autorizado,
+            body[0][0].periodicidad,
+            body[0][0].plazo,
             statusHF,// ESTATUS
-            status[1].toUpperCase(),  // SUB_ESTATUS 
-            body[0][0].fecha_primer_pago, // Ej. 2022-07-20
-            body[0][0].fecha_entrega, // Ej. 2022-07-20
+            subestatusHF,  // SUB_ESTATUS 
+            body[0][0].fecha_primer_pago,
+            body[0][0].fecha_entrega,
             body[0][0].medio_desembolso.trim(), // ORP -> Orden de pago / cheque
-            body[0][0].garantia_liquida, // Ej. 10 Se obtiene de configuracionMaestro
+            body[0][0].garantia_liquida,
             body[0][0].fecha_creacion, // FECHA DE CREACION
-            body[0][0].id_oficina, // 1 por defecto
+            body[0][0].id_oficina,
             body[0][0].garantia_liquida_financiable, // 0/1 False/True
-            body[0][0].id_producto_maestro, // Ej. 4
-            body[0][0].tasa_anual, // Se calcula dependiendo del plazo
+            body[0][0].id_producto_maestro,
+            body[0][0].tasa_anual,
             0
         );
 
@@ -368,7 +381,7 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
             '', // SUB_ESTATUS (MANDAR VACIO)
             body[0][0].id_oficial,
             body[0][0].id_oficina,
-            body[0][0].tipo_cliente // 0 TODO: Ver si se requiere en el procedimiento
+            body[0][0].tipo_cliente
         );
 
 
@@ -380,12 +393,12 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
             '', // Apellido paterno
             '', // Apellido Materno
             statusHF,// ESTATUS
-            status[1].toUpperCase(),  // SUB_ESTATUS 
+            subestatusHF,  // SUB_ESTATUS 
             '', // CARGO
             body[0][0].monto_total_solicitado,
-            body[0][0].monto_total_autorizado, // TODO: Se establece cuando sea POR AUTORIZAR (WEB ADMIN)
-            body[0][0].monto_total_autorizado, // 0 -> desde Móvil, >0 desde WEB ADMIN 
-            0, // econ_id_actividad_economica // TODO: ver si lo ocupa el procedimiento
+            body[0][0].monto_total_autorizado,
+            body[0][0].monto_total_autorizado, 
+            0,
             0, // CURP Fisica
             0, // motivo
             body[4][0].id_cata_medio_desembolso, //1->CHEQUE, 2->ORDEN DE PAGO, 3->TARJETA DE PAGO
@@ -405,11 +418,11 @@ loanappSchema.statics.toAuthorizeLoanHF = async(body, seguro, status) => {
             body[5][0].id_solicitud_prestamo,
             body[5][0].id_individual,
             body[5][0].id_seguro,
-            body[5][0].id_asignacion_seguro, // a
-            body[5][0].nombre_socia.trim(), // nombre socia
+            body[5][0].id_asignacion_seguro,
+            body[5][0].nombre_socia.trim(),
             body[5][0].nombre_beneficiario.trim(), // Ej. OMAR MELENDEZ
-            body[5][0].parentesco.trim(), // Ej. AMIGO,PRIMO, ETC.
-            body[5][0].porcentaje, // Ej. 100.00
+            body[5][0].parentesco.trim(),
+            body[5][0].porcentaje,
             valorSeguro, 
             body[5][0].incluye_saldo_deudor,
             0,

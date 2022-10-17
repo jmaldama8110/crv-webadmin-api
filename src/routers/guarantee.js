@@ -4,26 +4,29 @@ const auth = require('../middleware/auth');
 const Guarantee =  require('../model/guarantees');
 const Client = require('../model/client');
 
-router.post('/guarantees', auth, async(req, res) => {
-    try{
-
+router.post('/guarantees/:id', auth, async(req, res) => {
+    try {
         
+        const _id = req.params.id;
 
-    } catch(err){
-        res.status(400).send(err.message);
+        const client = await Client.findById(_id).exec();
+
+        // return res.send(client);
+        
+        const newGuarantee = new Guarantee({
+            ...req.body,
+            createdBy: client.user_id
+        });
+        client.guarantee.push(newGuarantee);
+        await client.save();
+        await newGuarantee.save();
+        res.send(newGuarantee);
+    }
+    catch(error){
+        console.log(error);
+        res.status(400).send(error);
     }
 });
-
-router.post('/prueba', async (req, res) => {
-    console.log('llega')
-    try{
-        
-        res.status(200).send('hola');
-
-    } catch(e){
-        res.status(400).send(e.message);
-    }
-})
 
 router.get('/guarantees', auth, async(req, res) => {
     try{
@@ -56,9 +59,9 @@ router.get('/guarantees/:client_id', auth, async (req, res)=>{
 
         const _id = req.params.client_id;
         
-        const clientInfo = await Client.findById({_id}).exec();
+        const client = await Client.findById({_id}).exec();
         
-        let data = await clientInfo.populate("guarantee").execPopulate();
+        let data = await client.populate("guarantee").execPopulate();
 
         res.send( req.query.id ? data.guarantee.filter( (i) => i._id == req.query.id) : data.guarantee );
 

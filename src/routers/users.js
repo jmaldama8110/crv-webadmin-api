@@ -41,4 +41,44 @@ router.get('/users', auth, async(req, res) =>{
     }
 });
 
+router.patch("/user/:id", auth, async (req, res) => {
+    // PATCH (actualiza) usuario
+    try {
+
+        const _id = req.params.id;
+
+        const update = req.body;
+        const actualizaciones = Object.keys(update);
+
+        const user = await User.findById({_id});
+
+        // return res.send(user)
+        if(!user){
+            return res.status(204).send();
+        }
+        
+        if(update.password != undefined){
+            update.password = await User.passwordHashing(update.password);
+        }
+    
+        actualizaciones.forEach((valor) => (user[valor] = update[valor]));
+        await user.save();
+  
+      
+        //   //Actualizar si es empleado, función de la web
+        //   if(req.body.employee_id != undefined || req.body.employee_id != ""){
+        //     const _id = req.user.employee_id;
+        //     const employee = await Employee.findOne({_id});
+        //     if(employee != null){
+        //       actualizaciones.forEach((valor) => (employee[valor] = update[valor]));
+        //       await employee.save();
+        //     }
+        //   }
+  
+        res.status(200).send(user);
+    } catch (e) {
+      res.status(400).send(e + '');
+    }
+  });
+
 module.exports = router;

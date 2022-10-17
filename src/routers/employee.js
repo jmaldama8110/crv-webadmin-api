@@ -118,7 +118,7 @@ router.get("/comittee", auth, async(req, res) =>{
 
     try{
     
-        const employee = await Employee.find({ isComittee : true});
+        const employee = await Employee.find({ is_committee : true});
         if (!employee || employee.length === 0) {
             throw new Error("No committee could be found");
         }
@@ -286,7 +286,7 @@ const removeAccents = (str) => {
 }
 
 const comparar = (entrada) =>{
-    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id", "role", "branch", "isComitte"];
+    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id", "role", "branch", "is_committee"];
     const result = entrada.every(campo => permitido.includes(campo));
     return result;
 }
