@@ -94,6 +94,9 @@ UDT_CONT_Negocios.columns.add('ventas_totales_unidad', SQL.Money, { nullable: tr
 UDT_CONT_Negocios.columns.add('id_actividad_economica', SQL.Int, { nullable: true });
 UDT_CONT_Negocios.columns.add('tiempo_actividad_inicio', SQL.Date, { nullable: true });
 UDT_CONT_Negocios.columns.add('tiempo_actividad_final', SQL.Date, { nullable: true });
+UDT_CONT_Negocios.columns.add('longitud_negocio', SQL.VarChar(100), { nullable: true });
+UDT_CONT_Negocios.columns.add('latitud_negocio', SQL.VarChar(100), { nullable: true });
+
 //#endregion
 
 //#region UTD_CLIE_Clientes
@@ -145,6 +148,8 @@ UDT_CLIE_Individual.columns.add('vivienda_techo_losa', SQL.Bit, { nullable: true
 UDT_CLIE_Individual.columns.add('vivienda_bano', SQL.Bit, { nullable: true });
 UDT_CLIE_Individual.columns.add('vivienda_letrina', SQL.Bit, { nullable: true });
 UDT_CLIE_Individual.columns.add('vivienda_block', SQL.Bit, { nullable: true });
+UDT_CLIE_Individual.columns.add('longitud_titular', SQL.VarChar(100), { nullable: true });
+UDT_CLIE_Individual.columns.add('latitud_titular', SQL.VarChar(100), { nullable: true });
 //#endregion
 
 //#region UDT_CLIE_Solicitud
@@ -235,7 +240,7 @@ UDT_Solicitud.columns.add('id_oficina', SQL.Int, { nullable: true });
 UDT_Solicitud.columns.add('garantia_liquida_financiable', SQL.Bit, { nullable: true });
 UDT_Solicitud.columns.add('id_producto_maestro', SQL.Int, { nullable: true });
 UDT_Solicitud.columns.add('tasa_anual', SQL.Decimal(18, 2), { nullable: true });
-UDT_Solicitud.columns.add('seguro_financiado', SQL.Bit, { nullable: true });
+// UDT_Solicitud.columns.add('seguro_financiado', SQL.Bit, { nullable: true });
 //#endregion
 
 //#region Cliente
@@ -302,7 +307,7 @@ UDT_CLIE_DetalleSeguro.columns.add('parentesco', SQL.VarChar(200), { nullable: t
 UDT_CLIE_DetalleSeguro.columns.add('porcentaje', SQL.Money, { nullable: true });
 UDT_CLIE_DetalleSeguro.columns.add('costo_seguro', SQL.Money, { nullable: true });
 UDT_CLIE_DetalleSeguro.columns.add('incluye_saldo_deudor', SQL.Bit, { nullable: true });
-UDT_CLIE_DetalleSeguro.columns.add('aplica_seguro_financiado', SQL.Bit, { nullable: true });
+// UDT_CLIE_DetalleSeguro.columns.add('aplica_seguro_financiado', SQL.Bit, { nullable: true });
 UDT_CLIE_DetalleSeguro.columns.add('activo', SQL.Bit, { nullable: true });
 //#endregion
 

@@ -460,7 +460,9 @@ clientSchema.statics.createClientHF = async(data, value) => {
             data["NEGOCIO"][0].ventas_totales_unidad,
             data["NEGOCIO"][0].id_actividad_economica,
             data["NEGOCIO"][0].tiempo_actividad_incio,
-            data["NEGOCIO"][0].tiempo_actividad_final
+            data["NEGOCIO"][0].tiempo_actividad_final,
+            '',
+            ''
         );
 
         tbl.UTD_CLIE_Clientes.rows.add(
@@ -510,7 +512,9 @@ clientSchema.statics.createClientHF = async(data, value) => {
             0,
             0,
             0,
-            0
+            0,
+            '',
+            ''
         );
 
         tbl.UDT_CLIE_Solicitud.rows.add(0, null, null, null, null, null, null);

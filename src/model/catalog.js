@@ -61,7 +61,7 @@ catalogSchema.statics.updateCatalogFromHF = async(name, chunk) => {
                 rowData = [];
                 request.resume();
 
-                console.log("Done Catalogs!!", result);
+                console.log("Done Catalog", name, "!!", result);
             });
 
         })
