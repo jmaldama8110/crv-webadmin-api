@@ -29,7 +29,6 @@ router.post("/hierarchySuperAdmin", async(req, res) => {
                 ]
             },
             {
-                
                 _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db552'),
                 "hierarchy_name": "SUBDIRECTOR COMERCIAL",
                 "workstation": "SUBDIRECTOR COMERCIAL",
