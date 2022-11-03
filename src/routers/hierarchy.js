@@ -10,34 +10,83 @@ router.post("/hierarchySuperAdmin", async(req, res) => {
     try{
         const data = [
             {
-                _id: ObjectId('628d5ddb2eb899da313db550'),
-                "hierarchy_name": "DIRECCION GENERAL",//CONSERVA
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db550'),
+                "hierarchy_name": "DIRECTOR GENERAL",
                 "workstation": "DIRECTOR GENERAL",
                 "isroot": true,
-                "parent": "NA"
+                "parent": ["NA"]
             },
             {
-                _id: ObjectId('628d5ddb2eb899da313db551'),
-                "hierarchy_name": "DIRECCION COMERCIAL",
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db551'),
+                "hierarchy_name": "DIRECTOR COMERCIAL",
                 "workstation": "DIRECTOR COMERCIAL",
                 "isroot": false,
                 "parent": [
                     {
-                        "id_Parent":"628d5ddb2eb899da313db550",
-                        "name_Parent":"DIRECCION GENERAL"
+                        "id_Parent": "628d5ddb2eb899da313db550",
+                        "name_Parent": "DIRECTOR GENERAL"
                     }
                 ]
             },
             {
-                _id: ObjectId('628d5ddb2eb899da313db552'),
-                "hierarchy_name": "SUBDIRECCION COMERCIAL",
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db552'),
+                "hierarchy_name": "SUBDIRECTOR COMERCIAL",
                 "workstation": "SUBDIRECTOR COMERCIAL",
                 "isroot": false,
                 "parent": [
                     {
-                        "id_Parent":"628d5ddb2eb899da313db551",
-                        "name_Parent":"DIRECCION COMERCIAL"
-                }
+                        "id_Parent": "628d5ddb2eb899da313db551",
+                        "name_Parent": "DIRECTOR COMERCIAL"
+                    }
+                ]
+            },
+            {
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db553'),
+                "hierarchy_name": "GERENTE REGIONAL",
+                "workstation": "GERENTE REGIONAL",
+                "isroot": false,
+                "parent": [
+                    {
+                        "id_Parent": "628d5ddb2eb899da313db552",
+                        "name_Parent": "SUBDIRECTOR COMERCIAL"
+                    }
+                ]
+            },
+            {
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db554'),
+                "hierarchy_name": "GERENTE DE SUCURSAL",
+                "workstation": "GERENTE DE SUCURSAL",
+                "isroot": false,
+                "parent": [
+                    {
+                        "id_Parent": "628d5ddb2eb899da313db553",
+                        "name_Parent": "GERENTE REGIONAL"
+                    }
+                ]
+            },
+            {
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db555'),
+                "hierarchy_name": "COORDINADOR",
+                "workstation": "COORDINADOR",
+                "isroot": false,
+                "parent": [
+                    {
+                        "id_Parent": "628d5ddb2eb899da313db554",
+                        "name_Parent": "GERENTE DE SUCURSAL"
+                    }
+                ]
+            },
+            {
+                
+                _id: mongoose.Types.ObjectId('628d5ddb2eb899da313db556'),
+                "hierarchy_name": "OFICIAL",
+                "workstation": "OFICIAL",
+                "isroot": false,
+                "parent": [
+                    {
+                        "id_Parent": "628d5ddb2eb899da313db555",
+                        "name_Parent": "COORDINADOR"
+                    }
                 ]
             }
         ];
@@ -153,74 +202,6 @@ router.get('/hierarchies/hf', auth, async(req, res) => {
         const hierarchies = DataHF.recordsets[0];
 
         res.status(200).send(hierarchies);
-
-    } catch (e){
-        // console.log(e + '')
-        res.status(400).send(e + '');
-    }
-
-})
-
-router.get('/createHierarchies/hf', auth, async(req, res) => {
-
-    try{
-        await HierarchyHF.deleteMany();
-        const DataHF = await Hierarchy.getAllHierarchies();
-        // console.log((DataHF.recordsets[0]).length);
-
-        const hierarchies = DataHF.recordsets[0];
-        const employees = DataHF.recordsets[1];
-
-        //Coemnzamos a ordenar los datos para insertar las jerarquías
-        const rowData = [];
-        let id_puesto;
-        let id_empleado_padre;
-        let etiqueta = '';
-        let root = false;
-        let nombre_puestoPadre = '';
-        let id_puestoPadre = '';
-
-        employees.forEach((employee, index) => {
-
-            let puesto = hierarchies.filter(element => element.id === employee.id_puesto);
-            puesto.length != 0 ? etiqueta = puesto[0].etiqueta : etiqueta = 'Sin puesto';
-            etiqueta === 'DIRECTOR GENERAL' ? root = true : root = false;
-
-            //Buscamos el empleado padre para obtener el id de su puesto
-            let patern = employees.filter(element => element.id === employee.id_empleado_padre);
-            //Obtenemos el id_puesto del empleado padre, si no tiene empleado padre, por default lo dejamos como hijo del DIRECTOR GENERAL
-            patern.length != 0 ? id_empleado_padre = patern[0].id_puesto : id_empleado_padre = 41;
-            //Buscamos el puesto del empleado padre
-            let puestopadre = hierarchies.filter(element => element.id === id_empleado_padre);
-
-            if(puestopadre.length != 0 ){
-                nombre_puesto = puestopadre[0].etiqueta
-                id_puestoPadre = puestopadre[0].id
-            }else{
-                nombre_puesto = 'No está registrado su puesto padre';
-                id_puestoPadre = 0;
-            }
-
-            rowData.push({
-                external_id: puesto[0].id,
-                hierarchy_name: puesto[0].descripcion,
-                workstation: etiqueta,
-                // nombres: employee.persona_nombre_completo,
-                external_idEmployee : employee.id,
-                padre: employee.id_empleado_padre,
-                is_root: root,
-                parent: [
-                    {
-                        id_Parent: id_puestoPadre,
-                        name_Parent: nombre_puesto
-                    }
-                ]
-            })
-        })
-
-        await HierarchyHF.insertMany(rowData);
-
-        res.status(200).send('Creados');
 
     } catch (e){
         // console.log(e + '')

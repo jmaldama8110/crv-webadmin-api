@@ -54,7 +54,8 @@ const loanappSchema = new mongoose.Schema({
             title: {type: String, required: true},
             checked: []
         }
-    ]
+    ],
+    coordinates: []
 }, { timestamps: true });
 
 loanappSchema.methods.createGenerallChecklist = function () {

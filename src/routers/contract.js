@@ -43,8 +43,9 @@ apiClient.requestJWTUserToken(dsClientId, dsUserID, 'signature', rsaKey, jwtLife
 
 router.post('/contracts', auth, async(req, res) => {
     try{
-
+        console.log('llega');
         const data = req.body;
+        // return res.send(data);
         const { users, documents, client_id, loan_id } = data;
 
         let envelopeApi = new docusign.EnvelopesApi(apiClient);

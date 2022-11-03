@@ -605,6 +605,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             }
         ]
 
+        // console.log(person);
+        // console.log(clientHF);
+
         const response = await Client.createClientHF(clientHF, value);
         if(!response){
             console.log('Errorr', response);
@@ -639,14 +642,11 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         client["status"] = [2, "Aprobado"];
         await client.save();
 
-        if(action === 'INSERTAR_PERSONA'){
-            const user = await User.findOne({client_id: _id})
-            const body = `Bienvenido ${user.name}, tus datos han sido verificados, ahora ya eres cliente de Conserva. \nYa puedes solicitar cualquiera de nuestros créditos disponibles para ti. Siempre estaremos aquí cerca para ayudarte en lo que necesites.`;
-            sendSms(`+52${user.phone}`,body)
-        }
-
-        // console.log(person);
-        // console.log(clientHF);
+        // if(action === 'INSERTAR_PERSONA'){
+        //     const user = await User.findOne({client_id: _id})
+        //     const body = `Bienvenido ${user.name}, tus datos han sido verificados, ahora ya eres cliente de Conserva. \nYa puedes solicitar cualquiera de nuestros créditos disponibles para ti. Siempre estaremos aquí cerca para ayudarte en lo que necesites.`;
+        //     sendSms(`+52${user.phone}`,body)
+        // }
 
         res.status(201).send({
             result,
