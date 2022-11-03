@@ -240,7 +240,7 @@ UDT_Solicitud.columns.add('id_oficina', SQL.Int, { nullable: true });
 UDT_Solicitud.columns.add('garantia_liquida_financiable', SQL.Bit, { nullable: true });
 UDT_Solicitud.columns.add('id_producto_maestro', SQL.Int, { nullable: true });
 UDT_Solicitud.columns.add('tasa_anual', SQL.Decimal(18, 2), { nullable: true });
-// UDT_Solicitud.columns.add('seguro_financiado', SQL.Bit, { nullable: true });
+UDT_Solicitud.columns.add('seguro_financiado', SQL.Bit, { nullable: true });
 //#endregion
 
 //#region Cliente
@@ -307,7 +307,7 @@ UDT_CLIE_DetalleSeguro.columns.add('parentesco', SQL.VarChar(200), { nullable: t
 UDT_CLIE_DetalleSeguro.columns.add('porcentaje', SQL.Money, { nullable: true });
 UDT_CLIE_DetalleSeguro.columns.add('costo_seguro', SQL.Money, { nullable: true });
 UDT_CLIE_DetalleSeguro.columns.add('incluye_saldo_deudor', SQL.Bit, { nullable: true });
-// UDT_CLIE_DetalleSeguro.columns.add('aplica_seguro_financiado', SQL.Bit, { nullable: true });
+UDT_CLIE_DetalleSeguro.columns.add('aplica_seguro_financiado', SQL.Bit, { nullable: true });
 UDT_CLIE_DetalleSeguro.columns.add('activo', SQL.Bit, { nullable: true });
 //#endregion
 

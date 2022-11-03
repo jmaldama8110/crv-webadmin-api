@@ -214,6 +214,46 @@ router.patch("/employees/:id", auth, async(req, res) => {
 
 });
 
+router.delete("/employeesBD", auth, async(req, res) =>{
+
+    try{
+
+        const match = {};
+
+        if(req.query.id){
+            match._id = req.query.id;
+        }
+
+        const employee = await Employee.find(match);
+        if(!employee || employee.length === 0){
+            throw new Error("Not found any record");
+        }
+
+        for(let i = 0; i < employee.length; i++){
+            const dataEmployee = employee[i];
+            const user = await User.findOne({employee_id: dataEmployee._id});
+            if(user !== null){
+                const userDeleted = await user.remove();
+                if(!userDeleted){
+                    throw new Error("Error deleting user");
+                }
+            }
+
+            const employeeDeleted = await dataEmployee.remove();
+            if(!employeeDeleted){
+                throw new Error("Error deleting employee");
+            }
+        }
+
+        res.status(200).send('Done!')
+
+    }catch(e) {
+        console.log(e)
+       res.status(400).send(e + '');
+    }
+
+});
+
 router.delete("/employees/:id", auth, async(req, res) =>{
 
     try{

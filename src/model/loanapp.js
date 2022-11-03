@@ -200,7 +200,7 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             data['SOLICITUD'][0].garantia_liquida_financiable, // 0/1 False/True
             data['SOLICITUD'][0].id_producto_maestro, // Ej. 4
             data['SOLICITUD'][0].tasa_anual, // Se calcula dependiendo del plazo
-            // 0
+            0
         );
 
         tbl.Cliente.rows.add(
@@ -248,7 +248,7 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
             data['SEGURO'][0].porcentaje, // Ej. 100.00
             data['SEGURO'][0].costo_seguro, // 1560
             data['SEGURO'][0].incluye_saldo_deudor,
-            // 0,
+            0,
             0
         );
 
@@ -370,7 +370,7 @@ loanappSchema.statics.updateLoanDataHF = async(body, seguro, status) => { //Meto
             body[0][0].garantia_liquida_financiable, // 0/1 False/True
             body[0][0].id_producto_maestro,
             body[0][0].tasa_anual,
-            // 0
+            0
         );
 
         // return tbl.UDT_Solicitud.rows;
@@ -426,7 +426,7 @@ loanappSchema.statics.updateLoanDataHF = async(body, seguro, status) => { //Meto
             body[5][0].porcentaje,
             valorSeguro, 
             body[5][0].incluye_saldo_deudor,
-            // 0,
+            0,
             body[5][0].activo
         );
 

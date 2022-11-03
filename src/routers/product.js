@@ -261,7 +261,7 @@ router.post('/products/restore/:id',auth,async(req, res) => {
 });
 
 const isComparaArreglos = (actualizar) => {
-    const permitido = ["deleted","product_type","product_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency", "default_frecuency","allowed_term_type","year_days","min_rate", "max_rate", "rate","logo","avatar","description","default_mobile_product", "enabled", "years_type", "requires_insurance", "liquid_guarantee", "GL_financeable", "tax", "external_id"];
+    const permitido = ["deleted","product_type","product_name","short_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency", "default_frecuency","allowed_term_type","year_days","min_rate", "max_rate", "rate","logo","avatar","description","default_mobile_product", "enabled", "years_type", "requires_insurance", "liquid_guarantee", "GL_financeable", "tax", "external_id"];
     const result = actualizar.every((campo) => permitido.includes(campo));
     return result;
 };

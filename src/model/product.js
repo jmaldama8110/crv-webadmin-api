@@ -15,6 +15,11 @@ const productSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    short_name: {
+        type: String,
+        required: true,
+        trim: true
+    },
     step_amount: {
         type: String,
         trim: true

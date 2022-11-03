@@ -157,7 +157,7 @@ userSchema.methods.toJSON = function(){
 userSchema.statics.findUserByCredentials = async ( email, password ) => {
     
     // const user = await User.findOne( {email} ).populate('employee_id',{role: 1});
-    const user = await User.findOne({$and : [{email}, {"employee_id" : {$exists: true}}]}).populate('employee_id',{role: 1});
+    const user = await User.findOne({$and : [{email}, {"employee_id" : {$exists: true}}]}).populate('employee_id',{role: 1, branch: 1, hierarchy_id: 1});
 
     if( !user ){
         throw new Error('The username does not exist in the employee collection...')
