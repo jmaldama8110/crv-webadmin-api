@@ -642,11 +642,11 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         client["status"] = [2, "Aprobado"];
         await client.save();
 
-        // if(action === 'INSERTAR_PERSONA'){
-        //     const user = await User.findOne({client_id: _id})
-        //     const body = `Bienvenido ${user.name}, tus datos han sido verificados, ahora ya eres cliente de Conserva. \nYa puedes solicitar cualquiera de nuestros créditos disponibles para ti. Siempre estaremos aquí cerca para ayudarte en lo que necesites.`;
-        //     sendSms(`+52${user.phone}`,body)
-        // }
+        if(action === 'INSERTAR_PERSONA'){
+            const user = await User.findOne({client_id: _id})
+            const body = `Bienvenido ${user.name}, tus datos han sido verificados, ahora ya eres cliente de Conserva. \nYa puedes solicitar cualquiera de nuestros créditos disponibles para ti. Siempre estaremos aquí cerca para ayudarte en lo que necesites.`;
+            sendSms(`+52${user.phone}`,body)
+        }
 
         res.status(201).send({
             result,
@@ -668,6 +668,211 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
     }
 
 });
+
+router.post('/createClientHF/:id', auth, async (req, res) => {
+    try{
+
+        const _id = req.params.id
+        const client = await Client.findById(_id);
+        if(!client){
+            return res.status(204).send('Not found any record');
+        }
+
+        // return  res.send(client);
+
+        const clientHF = {};
+        const phones = client.phones;
+        const addresses = client.address;
+
+        clientHF.PERSONA = [
+            {
+                id: client.id_persona?  client.id_persona : 0
+            }
+        ];
+
+        clientHF.TELEFONO = [];
+        const phonePerson = phones[0];
+        const phoneBusiness = phones[1];
+
+        (clientHF.TELEFONO).push(
+            {
+                id: 0,
+                idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
+                extension: "",
+                tipo_telefono: phoneBusiness? phoneBusiness.type ? phoneBusiness.type : "Móvil" : "Móvil",
+                compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : "Telcel" : "Telcel",
+                sms: 0
+            }
+        );
+
+        const business_data = client.business_data;
+        const dirBussiness = addresses.filter(addresses => addresses.type === 'NEGOCIO');
+        const dirNego = dirBussiness[0];
+
+        clientHF.NEGOCIO = [
+            {
+                id: 0,
+                id_dir: 0, //id de la dirección del negocio
+                nombre: business_data.business_name ? business_data.business_name : "MI NEGOCIO",
+                calle: dirNego.address_line1 ? dirNego.address_line1 : " ",
+                referencia: dirNego.address_line1 ? dirNego.address_line1 : " ",
+                letra_exterior: "SN",
+                letra_interior: "SN",
+                num_exterior: 0,
+                num_interior: 0,
+                id_pais: dirNego.country[0] ? dirNego.country[0] : 1,
+                id_estado: dirNego.province[0] ? dirNego.province[0] : 5,
+                id_municipio: dirNego.municipality[0] ? dirNego.municipality[0] : 946,
+                id_ciudad: dirNego.city[0] ? dirNego.city[0] : 1534,
+                id_colonia: dirNego.colony[0] ? dirNego.colony[0] : 42665,
+                cp: dirNego.post_code,
+                rfc: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,13),
+                econ_registro_egresos_ingresos: 0,
+                casa_situacion: dirNego.ownership ? dirNego.ownership === true ? 1 :0 : 0,
+                correo_electronico: client.email ? client.email : "",
+                id_vialidad: 1,
+                nombre_oficina: business_data.business_name ? `OFICINA ${business_data.business_name}` : "OFICINA...", //Mandar el nombre del negocio concatenar 'Oficina'
+                nombre_puesto: business_data.position ? business_data.position :"dueño",//PONER SOLO dueño //no actualizar
+                departamento: business_data.department ? business_data.department : "cobranza",
+                numero_empleados: business_data.employees ? business_data.employees : 10,
+                registro_egresos: 0,
+                revolvencia: "QUINCENAL",
+                ventas_totales_cantidad: 5000.0,
+                ventas_totales_unidad: 0.0,
+                id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 716,
+                tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "1970-01-01",
+                tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "1970-01-01",
+                id_empresa: 0,
+                id_oficina_empresa: 0
+            }
+        ];
+
+        clientHF.CLIENTE = [
+            {
+                id_cliente:  0,
+                id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,
+                id_oficial_credito: 0
+            }
+        ]
+
+        clientHF.IDENTIFICACIONES = [
+            {
+                id: 0,
+                id_entidad: 0,
+                tipo_identificacion: "PROSPERA",
+                id_numero: ""
+            }
+        ]
+
+        clientHF.INDIVIDUAL = [ //Datos socieconomicos
+            {
+                id_cliente: 0,
+                id_persona: client.id_persona,
+                econ_ocupacion: client.ocupation[1] ? client.ocupation[1] : "EMPLEADO",
+                econ_id_actividad_economica: 5,
+                econ_id_destino_credito: 5,
+                econ_id_ubicacion_negocio: 14,
+                econ_id_rol_hogar: 1,
+                econ_id_empresa: 1,
+                econ_cantidad_mensual: 0.0,
+                econ_sueldo_conyugue: 0.0,
+                econ_otros_ingresos: 0.0,
+                econ_otros_gastos: 0.0,
+                econ_familiares_extranjeros: 0,
+                econ_parentesco: "",
+                envia_dinero: 0,
+                econ_dependientes_economicos: 1,
+                econ_pago_casa: 0.0,
+                econ_gastos_vivienda: 2000.0,
+                econ_gastos_familiares: 0.0,
+                econ_gastos_transporte: 0.0,
+                credito_anteriormente: 0,
+                mejorado_ingreso: 0,
+                lengua_indigena: 0,
+                habilidad_diferente: 0,
+                utiliza_internet: 0,
+                utiliza_redes_sociales: 0,
+                id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 5,
+                id_ocupacion: client.ocupation[0] ? client.ocupation[0] : 12,
+                id_profesion: business_data.profession[0] ? business_data.profession[0] : 5
+            }
+        ]
+
+        clientHF.PLD = [
+            {
+                id_cliente: 0,
+                desempenia_funcion_publica: 0,
+                desempenia_funcion_publica_cargo: "",
+                desempenia_funcion_publica_dependencia: "",
+                familiar_desempenia_funcion_publica: 0,
+                familiar_desempenia_funcion_publica_cargo: "",
+                familiar_desempenia_funcion_publica_dependencia: "",
+                familiar_desempenia_funcion_publica_nombre: "",
+                familiar_desempenia_funcion_publica_paterno: "",
+                familiar_desempenia_funcion_publica_materno: "",
+                familiar_desempenia_funcion_publica_parentesco: "",
+                id_instrumento_monetario: 1
+            }
+        ]
+
+        clientHF.BANCARIO = []
+
+        clientHF.EFIRMA = [
+            {
+                id_firma_electronica: 0,
+                fiel: ""
+            }
+        ];
+        // console.log(clientHF);
+
+        // return res.send({
+        //     clientHF,
+        //     addresses
+        // })
+
+        const response = await Client.createClientHF(clientHF, 1);
+        if(!response){
+            console.log('Errorr', response);
+            throw new Error('Ocurrió un error al registrar el cliente al HF');
+        }
+
+        const id_persona = response[0][0].id_persona;
+        const id_cliente = response[0][0].id_cliente;
+
+        //Creado el cliente agregamos sus datos del hf
+        const dataHF = await Client.findClientByExternalId(id_cliente);
+        const identificationsHF = addIdentities(dataHF.recordsets[1]);
+        const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
+        const addressHF = addAddressClientHF(addresses, dataHF.recordsets[3]);
+        const phonesHF = addPhones(dataHF.recordsets[4]);
+        const personData = dataHF.recordsets[0][0];
+
+        client["id_persona"] = id_persona;
+        client["id_cliente"] = id_cliente;
+        client["phones"] = phonesHF;
+        client["address"] = addressHF;
+        client["identities"] = identificationsHF;
+        client["ife_details"] = ife_details;
+        client["ine_duplicates"] = ife_details ? ife_details.numero_emision : "00";
+        client["data_company"] = dataHF.recordsets[8];
+        client["data_efirma"] = dataHF.recordsets[9];
+        client["branch"] = [personData.id_oficina, personData.nombre_oficina] 
+        client["nationality"] = [personData.id_nationality, personData.nationality];
+        client["province_of_birth"] = [personData.id_province_of_birth, personData.province_of_birth]
+        client["country_of_birth"] = [personData.id_country_of_birth, personData.country_of_birth]
+        client["status"] = [2, "Aprobado"];
+        await client.save();
+
+        res.status(201).send({
+            response,
+            clientHF
+        });
+
+    } catch(e){
+        console.log(e)
+        res.status(400).send(e.message)
+    }
+})
 
 router.post('/sendsms', async (req, res) => {
     try{
@@ -904,6 +1109,57 @@ const addAddress = (body) => {
             int_number: add.numero_interior.trim(),
             street_reference: add.referencia,
             ownership: add.casa_situacion === 'RENTADO' ? true : false,
+            post_code: add.codigo_postal,
+            residence_since: add.tiempo_habitado_inicio,
+            residence_to: add.tiempo_habitado_final
+        })
+    }
+
+    return address;
+}
+
+const addAddressClientHF = (addressMongo, addressHF) => {
+    const address = []
+    const domicilio = addressMongo.find((item) => (item.type === 'DOMICILIO'));
+
+    // console.log('domicilio', domicilio);
+    for (let i = 0; i < addressHF.length; i++) {
+        const add = addressHF[i];
+
+        if(add.tipo.trim() === 'DOMICILIO') {
+            add.id_pais = domicilio.country[0];
+            add.nombre_pais = domicilio.country[1];
+            add.id_estado = domicilio.province[0];
+            add.nombre_estado = domicilio.province[1];
+            add.id_municipio = domicilio.municipality[0];
+            add.nombre_municipio = domicilio.municipality[1];
+            add.id_ciudad_localidad = domicilio.city[0];
+            add.nombre_ciudad_localidad = domicilio.city[1];
+            add.id_asentamiento = domicilio.colony[0];
+            add.nombre_asentamiento = domicilio.colony[1];
+            add.direccion = domicilio.address_line1;
+            add.codigo_postal = domicilio.post_code;
+            add.casa_situacion = domicilio.ownership ? 'PROPIO': 'RENTADO';
+        }
+
+        // console.log(add);
+
+        address.push({
+            _id: add.id,
+            type: add.tipo.trim(),
+
+            country: [add.id_pais, add.nombre_pais],
+
+            province: [add.id_estado, add.nombre_estado],
+            municipality: [add.id_municipio, add.nombre_municipio],
+            city: [add.id_ciudad_localidad, add.nombre_ciudad_localidad],
+            colony: [add.id_asentamiento, add.nombre_asentamiento],
+
+            address_line1: add.direccion,
+            ext_number: add.numero_exterior.trim(),
+            int_number: add.numero_interior.trim(),
+            street_reference: add.referencia,
+            ownership: add.casa_situacion === 'RENTADO' ? false : true,
             post_code: add.codigo_postal,
             residence_since: add.tiempo_habitado_inicio,
             residence_to: add.tiempo_habitado_final
