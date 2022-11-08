@@ -70,6 +70,8 @@ const clientSchema = new mongoose.Schema({
     branch: [],
     sex: [],
     education_level: [],
+    not_bis: { type: Boolean,default: false },
+    bis_address_same: { type: Boolean,default: false },
     address: [{
         _id: { type: Number },
         type: {type: String},

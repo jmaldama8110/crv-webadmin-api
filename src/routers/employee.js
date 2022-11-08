@@ -15,6 +15,7 @@ router.post("/insertSuperAdmin", async(req, res) =>{
             lastname: "SUPERADMIN",
             second_lastname: "SUPERADMIN",
             email: "admin@gmail.com",
+            phone: "00000000",
             password: "123456",
             dob: "1980-02-12T00:00:00.000Z",
             hierarchy_id: "628d5ddb2eb899da313db550",
@@ -46,6 +47,9 @@ router.post("/employees", auth, async(req, res) =>{
         const registro = Object.keys(req.body)
         const data = req.body;
 
+        // console.log(data);
+        // return res.status(201).send(data);
+
         if(!comparar(registro)){
             return res.status(400).send({ error: "Body includes invalid properties..." });
         }
@@ -65,6 +69,7 @@ router.post("/employees", auth, async(req, res) =>{
 
         data.password = await User.passwordHashing(data.password)
         const user = new User({employee_id: employee._id, ...data});
+        user.resetChecklist();
         await user.save();
 
         employee["user_id"] = user._id;
@@ -326,7 +331,7 @@ const removeAccents = (str) => {
 }
 
 const comparar = (entrada) =>{
-    const permitido = ["name","lastname","second_lastname","email","password","dob","hierarchy_id", "role", "branch", "is_committee"];
+    const permitido = ["name","lastname","second_lastname","email","phone","password","dob","hierarchy_id", "role", "branch", "is_committee"];
     const result = entrada.every(campo => permitido.includes(campo));
     return result;
 }
