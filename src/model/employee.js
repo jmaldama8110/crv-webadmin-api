@@ -34,6 +34,11 @@ const employeeSchema = new mongoose.Schema({
             }   
         }
     },
+    phone: {
+        type: String,
+        required: false,
+        trim: true,
+    },
     dob: {
         type: Date,
         required: false

@@ -454,7 +454,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             if(!result){
                 throw new Error('Ocurrió un error al registrar la persona al HF');
             }
-            console.log(result);
+            // console.log(result);
             id = result[0][0].id;
             // id = 1234;
         }
@@ -825,9 +825,8 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
         ];
         // console.log(clientHF);
 
-        // return res.send({
-        //     clientHF,
-        //     addresses
+        // return res.status(201).send({
+        //     clientHF
         // })
 
         const response = await Client.createClientHF(clientHF, 1);
