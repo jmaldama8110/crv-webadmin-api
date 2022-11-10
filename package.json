@@ -8,7 +8,8 @@
     "dev": "env-cmd -f ./config/dev.env nodemon src/index.js",
     "dev:prod": "env-cmd -f ./config/devprod.env nodemon src/index.js",
     "test": "env-cmd -f ./config/test.env jest --watch --runInBand",
-    "testApi": "env-cmd -f ./config/test.env jest src/test/cnsrv-api.test.js"
+    "testApi": "env-cmd -f ./config/test.env jest src/test/cnsrv-api.test.js",
+    "build": "tsc"
   },
   "jest": {
     "testEnvironment": "node"
