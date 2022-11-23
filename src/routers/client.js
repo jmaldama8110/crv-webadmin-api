@@ -907,6 +907,24 @@ router.get('/client/hf', auth, async(req, res) => {
 
 });
 
+router.get('/person/hf', auth, async(req, res) => {
+
+    try{
+
+        if(!req.query.curp){
+            throw new Error('Some query parameters area mising...')
+        }
+
+        const personHF = await Client.findPersonByCurp(req.query.curp);
+
+        res.status(200).send(personHF);
+
+    } catch(e) {
+        res.status(400).send(e.message);
+    }
+
+});
+
 router.delete("/clients/:id", auth, async(req, res) =>{
 
     try{

@@ -96,6 +96,57 @@ router.get('/products', auth, async(req, res) => {
 
 });
 
+router.get('/productsWebSite', async(req, res) => {
+
+    const match = {};
+
+    try {
+        const product = await Product.getProductsWeb();
+        if (!product || product.length === 0) {
+            throw new Error("Not able to find the product(s)");
+        }
+
+        const rowData = [];
+
+        product.forEach((item) => {
+            const periodicidades = item.periodicidades.split(",");
+            // console.log(periodicidades);
+
+            rowData.push(
+                {
+                    external_id: item.id,
+                    default_mobile_product: false,
+                    enabled: item.estatus === "Activo" ? true : false,
+                    product_type: item.tipo_credito,
+                    product_name: item.nombre,
+                    min_amount: item.valor_minimo,
+                    max_amount: item.valor_maximo,
+                    default_amount: item.valor_minimo,
+                    allowed_term_type: periodicidades,
+                    min_term: item.periodo_min,
+                    max_term: item.periodo_max,
+                    default_term: item.periodo_min,
+                    min_rate: item.tasa_anual_min,
+                    max_rate: item.tasa_anual_max,
+                    rate: item.tasa_anual_min,
+                    requires_insurance: item.requiere_seguro,
+                    liquid_guarantee: item.garantia_liquida,
+                    GL_financeable: item.garantia_liquida_financiable,
+                    tax: item.impuesto,
+                    years_type: item.tipo_ano
+                }
+            )
+        });
+
+        res.status(200).send(rowData);
+        // res.status(200).send(product);
+
+    } catch (e) {
+        res.status(400).send(e + '');
+    }
+
+});
+
 router.get('/products/hf', auth, async(req, res) => {
 
     try{

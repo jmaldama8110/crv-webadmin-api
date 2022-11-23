@@ -161,6 +161,21 @@ productSchema.statics.getAllProducts = async(id) => {
     }
 };
 
+productSchema.statics.getProductsWeb = async() =>{
+    try{
+
+        const pool = await sql.connect(sqlConfig);
+        let result = await pool
+                        .request()
+                        .execute('MOV_ProductsForWeb');
+        
+        return result.recordset;
+
+    } catch (err) {
+        return err;
+    }
+}
+
 productSchema.statics.getProductsByBranchId = async(id) =>{
     try{
         let pool = await sql.connect(sqlConfig);

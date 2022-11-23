@@ -198,6 +198,27 @@ clientSchema.statics.findClientByCurp = async(curp) => {
 
 };
 
+clientSchema.statics.findPersonByCurp = async (curp) =>{
+    
+    try{
+
+        let pool = await sql.connect(sqlConfig);
+        let result = await pool
+            .request()
+            .input("id", sql.Int, 0)
+            .input("palabra", sql.VarChar, curp)
+            .input("pagina_inicio", sql.Int, 0)
+            .input("numero_registros", sql.Int, 0)
+            .input("contador", sql.Int, 0)
+            // .execute("CONT_BuscarPersona");
+            .execute("MOV_BuscarPersona");
+        return result;
+    }
+    catch(error){
+
+    }
+}
+
 //Crear persona Hf
 clientSchema.statics.createPersonHF = async(data, action) => {
     const pool = await sql.connect(sqlConfig);
