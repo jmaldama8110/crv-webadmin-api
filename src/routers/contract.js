@@ -20,6 +20,7 @@ const dsClientId = process.env.DOCUSIGN_INTEGRATION_KEY;
 const keySecret = process.env.DOCUSIGN_PRIVATE_KEY.replace(/\\n/g, '\n');
 const rsaKey = Buffer.from(keySecret);
 
+
 const jwtLifeSec = 10 * 60;
 
 apiClient.requestJWTUserToken(dsClientId, dsUserID, 'signature', rsaKey, jwtLifeSec)
