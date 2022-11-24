@@ -44,7 +44,7 @@ router.post('/rccfyco/:client_id', auth, async(req, res) => {
             const customerKey = process.env.CC_CUSTOMER_KEY;
             const api = axios.create({
               method: "post",
-              url: "/v2/rccficoscore",
+              url: "/sandbox/v2/rccficoscore",
               baseURL: process.env.CC_API_HOST,
               headers: {
                 "content-type": "text/plain",
@@ -53,7 +53,7 @@ router.post('/rccfyco/:client_id', auth, async(req, res) => {
               },
             });
 
-            const rccResponse = await api.post("/v2/rccficoscore", 
+            const rccResponse = await api.post("/sandbox/v2/rccficoscore", 
             
             {
               apellidoPaterno: "SESENTAYDOS",

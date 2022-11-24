@@ -27,6 +27,8 @@ router.get('/catalogs/sync', auth, async (req,res) => {
         await Catalog.updateCatalogFromHF('CATA_Ciudad_Localidad',10000)
         await Catalog.updateCatalogFromHF('CATA_destinoCredito',10000)
         await Catalog.updateCatalogFromHF('CATA_ocupacionPLD',10000)
+        await Catalog.updateCatalogFromHF('CATA_banco',10000)
+        await Catalog.updateCatalogFromHF('CATA_TipoCuentaBancaria',10000)
 
         await Neighborhood.updateFromHF(1000);
         await City.updateFromHF(1000);
