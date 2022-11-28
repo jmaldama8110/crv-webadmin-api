@@ -23,7 +23,8 @@ const rsaKey = Buffer.from(keySecret);
 
 const jwtLifeSec = 10 * 60;
 
-apiClient.requestJWTUserToken(dsClientId, dsUserID, 'signature', rsaKey, jwtLifeSec)
+try{
+    apiClient.requestJWTUserToken(dsClientId, dsUserID, 'signature', rsaKey, jwtLifeSec)
     .then((results) => {
         dsConfig.dsAccessToken = results.body.access_token;
         console.log('DucuSing SignIn...');
@@ -40,6 +41,9 @@ apiClient.requestJWTUserToken(dsClientId, dsUserID, 'signature', rsaKey, jwtLife
                 console.log('User information saved 👌');
             }).catch((error) => { console.log(error); });
     });
+} catch(e){
+    console.log(e)
+}
 
 router.post('/contracts', auth, async(req, res) => {
     try{

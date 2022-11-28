@@ -22,6 +22,7 @@ const rccFycoRouter =  require('./routers/rccfyco');
 const guaranteeRouter = require('./routers/guarantee');
 const identityRouter = require('./routers/identityimg');
 const socioeconomicRouter = require('./routers/socioeconomic');
+const emailsWebSiteRouter = require('./routers/emailsWebSite');
 
 const app = express()
 app.use(express.json({limit: '50mb'}))
@@ -44,6 +45,7 @@ app.use(rccFycoRouter)
 app.use(guaranteeRouter)
 app.use(identityRouter)
 app.use(socioeconomicRouter)
+app.use(emailsWebSiteRouter)
 
 
 module.exports = app

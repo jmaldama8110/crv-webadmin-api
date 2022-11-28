@@ -125,7 +125,7 @@ router.patch("/users/me", auth, async (req, res) => {
 
     const update = req.body;
     const actualizaciones = Object.keys(update);
-    const camposPermitidos = ["name", "password", "lastname","second_lastname"];
+    const camposPermitidos = ["name", "password", "lastname","second_lastname", "selfi"];
 
     if (!isComparaArreglosJSON(actualizaciones, camposPermitidos)) {
       return res.status(400).send({ error: "Body includes invalid properties..." });
