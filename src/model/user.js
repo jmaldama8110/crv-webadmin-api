@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
         }
     },
     selfi:{
-        type: Buffer,
+        type: String,
         required: false
     },
     tokens: [{
@@ -142,7 +142,7 @@ userSchema.methods.toJSON = function(){
     // delete userPublic._id;
     delete userPublic.password
     delete userPublic.tokens
-    delete userPublic.selfi
+    // delete userPublic.selfi
     delete userPublic.recoverpassword
     // delete userPublic.deleted
     delete userPublic.deletedAt
