@@ -12,6 +12,7 @@ router.post('/sendEmailHelp', async(req, res) => {
         const hoy = moment().format('L');
         const hora = moment().format('LT');
         // console.log(data);
+        const clienta = data.checked ? 'Sí' : 'No';
 
         let subjectOption = '';
         let titleOption = '';
@@ -39,21 +40,50 @@ router.post('/sendEmailHelp', async(req, res) => {
 
         // <h2><b>Alerta CSV - ${titleOption}</b></h2><p/>
 
-        console.log(hora.toLowerCase())
+        // console.log(hora.toLowerCase())
 
-        const text = `
-                        <h4> <b>${txtOption} con folio #1000</b><p/></h4>
+        let text;
 
-                        Fecha de recepción: ${hoy} a las ${hora.toLowerCase()}<br/>
-                        Nombre: ${data.name} <br/>
-                        Email: ${data.email} <br/>
-                        Teléfono: ${data.phone} <p/>
+        if(data.checked){
+            text = `
+                        <h3> <b>${txtOption} con folio #1000</b><p/></h3>
 
-                        <h4><strong>${pOption}</strong><br/></h4>
-                        ${data.comment}
-                        
-                    
+                        <h4>
+                            Fecha de recepción: ${hoy} a las ${hora.toLowerCase()}<br/>
+                            Nombre: ${data.name} <br/>
+                            Email: ${data.email} <br/>
+                            Teléfono: ${data.phone} <p/>
+                            Clienta de Conserva: ${clienta} <br/>
+                            Sucursal: ${data.branch} <br/>
+                            Promotor: ${data.promotor} <br/>
+                            Estado de la república: ${data.province} <p/><br/>
+                        </h4>
+
+                        <h3><strong>${pOption}</strong><br/></h3>
+                        <h4>${data.comment}</h4>
                     `;
+
+        } else{
+            text = `
+                        <h3> <b>${txtOption} con folio #1000</b><p/></h3>
+
+                        <h4>
+                            Fecha de recepción: ${hoy} a las ${hora.toLowerCase()}<br/>
+                            Nombre: ${data.name} <br/>
+                            Email: ${data.email} <br/>
+                            Teléfono: ${data.phone} <p/>
+                            Clienta de Conserva: ${clienta} <p/><br/>
+
+                        </h4>
+
+                        <h3><strong>${pOption}</strong><br/></h3>
+                        <h4>${data.comment}</h4>
+
+                        
+                    `;
+        }
+
+        // console.log(text);
 
         sgMail.send({
             to: 'callcenter@grupoconserva.mx',
@@ -83,18 +113,18 @@ router.post('/sendEmailComplaint', async(req, res) => {
         const anonimo = data.checked ? 'Sí' : 'No';
 
         const text = `
-                        <h4> <b>Se ha recibido una nueva denuncia con folio #1000</b><p/></h4>
+                        <h3> <b>Se ha recibido una nueva denuncia con folio #1000</b><p/></h3>
 
-                        Fecha de recepción: ${hoy} a las ${hora.toLowerCase()}<br/>
-                        Nombre: ${data.name} <br/>
-                        Email: ${data.email} <br/>
-                        Teléfono: ${data.phone} <br/>
-                        <b>*Desea que su denuncia sea anónima: ${anonimo}</b><br/>
+                        <h4>
+                            Fecha de recepción: ${hoy} a las ${hora.toLowerCase()}<br/>
+                            Nombre: ${data.name} <br/>
+                            Email: ${data.email} <br/>
+                            Teléfono: ${data.phone} <br/>
+                            <b>*Desea que su denuncia sea anónima: ${anonimo}</b><p/>
+                        </h4>
 
-                        <h4><strong>Con la siguiente denuncia:</strong></h4>
-                        ${data.comment}
-                        
-                    
+                        <h3><strong>Con la siguiente denuncia:</strong></h3>
+                        <h4>${data.comment}</h4>
                     `;
 
         const correos = [
@@ -133,28 +163,30 @@ router.post('/sendEmailRecruitment', async(req, res) => {
         const hoy = moment().format('L');
         const hora = moment().format('LT');
         // const hoy = new Date();
-        console.log(data);
+        // console.log(data);
 
         const text = `
-                        <h4> <b>Se ha recibido una nueva Solicitud de empleo con folio #1000</b><p/></h4>
+                        <h3> <b>Se ha recibido una nueva Solicitud de empleo con folio #1000</b><p/></h3>
 
-                        Fecha de recepción: ${hoy} a las ${hora.toLowerCase()}<br/>
-                        Nombre: ${data.name} <br/>
-                        Email: ${data.email} <br/>
-                        Teléfono: ${data.phone} <br/>
-                        Area de interés: ${data.area} <br/>
-                        Edad: ${data.age} <br/>
-                        Estado: ${data.province} <br/>
-                        Sexo: ${data.sex} <br/>
+                        <h4>
+                            Fecha de recepción: ${hoy} a las ${hora.toLowerCase()}<br/>
+                            Nombre: ${data.name} <br/>
+                            Email: ${data.email} <br/>
+                            Teléfono: ${data.phone} <br/>
+                            Area de interés: ${data.area} <br/>
+                            Puesto solicitado: ${data.position} <br/>
+                            Edad: ${data.age} <br/>
+                            Estado: ${data.province} <br/>
+                            Sexo: ${data.sex} <p/>
+                        </h4>
 
-                        <h4><strong>Motivacion para trabajar con Conserva:</strong></h4>
-                        ${data.comment}
-                        
-                    
+                        <h3><strong>Motivacion para trabajar con Conserva:</strong></h3>
+                        <h4>${data.comment}</h4>
                     `;
 
         sgMail.send({
             to: 'klsalazar@grupoconserva.mx',
+            // to: 'solorzanojluis01@gmail.com',
             from: 'Servicio de Atención a Clientes<contacto@grupoconserva.mx>',
             subject: `Alerta CSV - Solicitud de empleo recibida`,
             html: text,
