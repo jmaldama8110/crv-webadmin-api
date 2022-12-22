@@ -331,7 +331,7 @@ const removeAccents = (str) => {
 }
 
 const comparar = (entrada) =>{
-    const permitido = ["name","lastname","second_lastname","email","phone","password","dob","hierarchy_id", "role", "branch", "is_committee"];
+    const permitido = ["name","lastname","second_lastname","email","phone","password","dob","hierarchy_id", "role", "branch", "is_committee","couchdb_name","app_session_hours"];
     const result = entrada.every(campo => permitido.includes(campo));
     return result;
 }

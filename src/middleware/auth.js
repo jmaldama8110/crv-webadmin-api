@@ -15,7 +15,7 @@ const auth = async (req, res, next ) => {
         if( expiresAt.getTime() < new Date().getTime() ) {
             throw new Error('Token has expired');
         }
-
+        
         const user = await User.findOne( { _id: decoded._id, 'tokens.token': token  } )
 
         if( !user  ){

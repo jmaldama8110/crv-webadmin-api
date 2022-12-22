@@ -2,6 +2,7 @@ const express = require('express');
 require('./db/mongoose')
 // require('./db/connSQL')
 require('./db/populateData');
+require('./db/connCouch');
 
 const userRouter = require('./routers/user');
 const productRouter =  require('./routers/product');
@@ -17,12 +18,13 @@ const notificationRouter = require('./routers/notification');
 const paymentIntermediareRouter = require('./routers/paymentIntermediarie');
 const attachedFileRouter = require('./routers/attachedFile');
 const signUpRouter =  require('./routers/signup');
-const contractRouter = require('./routers/contract');
+// const contractRouter = require('./routers/contract');
 const rccFycoRouter =  require('./routers/rccfyco');
 const guaranteeRouter = require('./routers/guarantee');
 const identityRouter = require('./routers/identityimg');
 const socioeconomicRouter = require('./routers/socioeconomic');
 const emailsWebSiteRouter = require('./routers/emailsWebSite');
+const coundbRouter = require('./routers/couchdb');
 
 const app = express()
 app.use(express.json({limit: '50mb'}))
@@ -40,12 +42,14 @@ app.use(notificationRouter)
 app.use(paymentIntermediareRouter)
 app.use(attachedFileRouter)
 app.use(signUpRouter)
-app.use(contractRouter)
+// app.use(contractRouter)
 app.use(rccFycoRouter)
 app.use(guaranteeRouter)
 app.use(identityRouter)
 app.use(socioeconomicRouter)
 app.use(emailsWebSiteRouter)
+
+app.use(coundbRouter);
 
 
 module.exports = app

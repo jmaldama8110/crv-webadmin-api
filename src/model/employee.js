@@ -48,6 +48,8 @@ const employeeSchema = new mongoose.Schema({
         required: false,
     },
     role: [],
+    couchdb_name: { type: String },
+    app_session_hours: { type: Number }, // hours
     user_id: {
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User'
