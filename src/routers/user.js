@@ -199,7 +199,7 @@ router.post("/users/login", async (req, res) => {
       req.body.email,
       req.body.password
     );
-
+    
     const token = await user.generateAuthToken();
 
     res.status(200).send({ user, token });
