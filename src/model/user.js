@@ -112,12 +112,11 @@ const userSchema = new mongoose.Schema({
 userSchema.methods.generateAuthToken = async function () {
     const user = this
 
-    /// adds 5 hours of token expiration
+    /// adds 24 hours of token expiration
     const expires_at = new Date();
-    expires_at.setHours( expires_at.getHours() + 5);
+    expires_at.setHours( expires_at.getHours() + 24);
     // expires_at.setMinutes( expires_at.getMinutes() + 1);
     ///////////
-
     /**
      * Token requirements when the login is requested by a Loan Office for offline App
      * 
@@ -138,10 +137,8 @@ userSchema.methods.generateAuthToken = async function () {
     /**
      * END
      */
-
     const jwt_secret_key = process.env.JWT_SECRET_KEY
     const token  = jwt.sign( {   _id : user._id.toString(), expires_at, sync_info } , jwt_secret_key)
-
 
     user.tokens = user.tokens.concat( { token  } )
 

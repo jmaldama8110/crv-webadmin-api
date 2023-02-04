@@ -174,7 +174,6 @@ router.patch("/clients/:id", auth, async (req, res) => {
             throw new Error("Not able to find the client")
         }
 
-
         const user = await User.findOne({ client_id: mongoose.Types.ObjectId(_id) });
         if (user != null) {
             actualizar.forEach((valor) => (user[valor] = data[valor]));
@@ -234,6 +233,182 @@ router.post('/checkHomonimos', async (req, res) => {
         res.status(400).send(e + '');
     }
 });
+
+
+router.get("/clients/hf", auth, async(req, res) => {
+
+    //  get the Client Data with identityNumber and externalId
+    /* 
+      recordsets[0][0]  -> Datos personsales
+      recordsets[1] Dataset -> Identificaciones
+      recordsets[2] Dataset -> Datos del IFE / INE
+      recordsets[3] Direcciones -> Direcciones  
+      recordsets[4] Telefonos
+      recordsets[5] Aval
+      recordsets[6] Ciclo
+      recordsets[7] Datos economicos
+      */
+    try {
+        
+        let data;
+        if ( (req.query.externalId) ) {
+            data = await Client.findClientByExternalId(req.query.externalId);
+        } else {
+            throw new Error('Some query parameters area mising...')
+        }
+        
+        if (data.recordset.length == 1) {
+
+            /// extract CURP and Ine Folio
+            const curp = data.recordsets[1].find(
+                (i) => i.tipo_identificacion === "CURP"
+            );
+
+            const ife = data.recordsets[1].find(
+                (i) => i.tipo_identificacion === "IFE"
+            );
+            const rfc = data.recordsets[1].find(
+                (i) => i.tipo_identificacion === "RFC"
+            );
+
+            /// busca el detalle de la IFE/INE
+            const ineDetail = data.recordsets[2]
+            const ine_detalle = ineDetail.find( (i) => i.id_identificacion_oficial === ife.id_numero )
+
+            const identities = []
+            for( let i=0; i< data.recordsets[1].length; i++){
+                const itemIdentity = data.recordsets[1][i];
+                identities.push({
+                    _id: itemIdentity.id,
+                    id_persona: itemIdentity.id_persona,
+                    tipo_id: itemIdentity.tipo_identificacion,
+                    numero_id: itemIdentity.id_numero,
+                    id_direccion: itemIdentity.id_direccion,
+                    status: itemIdentity.estatus_registro
+                })
+            }
+
+            const address = []
+            for (let i = 0; i < data.recordsets[3].length; i++) {
+                const add = data.recordsets[3][i]
+
+                address.push({
+                    _id: add.id,
+                    type: add.tipo.trim(),
+
+                    country: [`COUNTRY|${add.id_pais}`,  add.nombre_pais],
+
+                    province: [`PROVINCE|${add.id_estado}`, add.nombre_estado],
+                    municipality: [`MUNICIPALITY|${add.id_municipio}`, add.nombre_municipio],
+                    city: [`CITY|${add.id_ciudad_localidad}`, add.nombre_ciudad_localidad],
+                    colony: [`NEIGHBORHOOD|${add.id_asentamiento}`, add.nombre_asentamiento],
+                    address_line1: add.direccion,
+                    ext_number: add.numero_exterior,
+                    int_number: add.numero_interior,
+                    street_reference: add.referencia,
+                    ownership: add.casa_situacion === 'RENTADO' ? true : false,
+                    post_code: add.codigo_postal,
+                    residence_since: add.tiempo_habitado_inicio,
+                    residence_to: add.tiempo_habitado_final
+                })
+            }
+            const phones = [];
+            for (let l = 0; l < data.recordsets[4].length; l++) {
+                
+                const phoneAdd = data.recordsets[4][l]
+                if( phoneAdd.idcel_telefono.trim() ){
+                    phones.push({
+                        _id: phoneAdd.id,
+                        phone: phoneAdd.idcel_telefono.trim(),
+                        type: phoneAdd.tipo_telefono.trim(),
+                        company: phoneAdd.compania.trim(),
+                        validated: false
+                    });
+                }
+            }
+
+            const perSet = {
+                ...data.recordsets[0][0],
+            };
+            
+            let business_data = { 
+                economic_activity:[], 
+                profession:[],
+                business_name: '',
+                business_start_date:''
+            }
+            if( data.recordsets[7].length ) {
+                business_data = {
+                    economic_activity: [data.recordsets[7][0].id_actividad_economica,
+                        data.recordsets[7][0].nombre_actividad_economica
+                    ],
+                    profession: [data.recordsets[7][0].id_profesion,
+                        data.recordsets[7][0].nombre_profesion
+                    ],
+                    business_name: data.recordsets[7][0].nombre_negocio,
+                    business_start_date: data.recordsets[7][0].econ_fecha_inicio_act_productiva
+                }
+            }
+
+            const cicloData = data.recordsets[6]
+            const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0
+
+            const result = {
+                id_persona: perSet.id_persona,
+                id_cliente: perSet.id,
+                name: perSet.name,
+                lastname: perSet.lastname,
+                second_lastname: perSet.second_lastname,
+                // email: req.user.email,
+                curp: curp ? curp.id_numero : "",
+                ine_clave: ife ? ife.id_numero : "",
+                ine_emision: ine_detalle ? ine_detalle.numero_emision: '',
+                ine_vertical_ocr: ine_detalle ? ine_detalle.numero_vertical_ocr : '',
+                rfc: rfc ? rfc.id_numero : "",
+                dob: perSet.dob,
+                loan_cycle,
+                branch: [perSet.id_oficina, perSet.nombre_oficina],
+                sex: [perSet.id_gender, perSet.gender],
+                education_level: [perSet.id_scholarship, perSet.scholarship],
+                identities,
+                address,
+                phones,
+                tributary_regime: [],
+
+                nationality: [perSet.id_nationality, perSet.nationality],
+                province_of_birth: [
+                    `PROVINCE|${perSet.id_province_of_birth}`,
+                    perSet.province_of_birth,
+                ],
+                country_of_birth: [
+                    `COUNTRY|${perSet.id_country_of_birth}`,
+                    perSet.country_of_birth,
+                ],
+                ocupation: [perSet.id_occupation, perSet.occupation],
+                marital_status: [perSet.id_marital_status, perSet.marital_status],
+                identification_type: [], // INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
+                guarantor: [],
+                business_data,
+                beneficiaries: [],
+                personal_references: [],
+                guarantee: [],
+                ife_details: ineDetail,
+                data_company: data.recordsets[8][0],
+                data_efirma: data.recordsets[9][0],
+                
+            };
+            res.send(result);
+        } else {
+            
+            res.status(404).send("Not found");
+        }
+    } catch (err) {
+        console.log(err);
+        res.status(404).send('Client data not found');
+    }
+});
+
+
 
 router.patch('/updateCurp/:id', async (req, res) => {
 
@@ -319,9 +494,8 @@ router.post("/approveClient/:action/:id", auth, async (req, res) => {
     let result;
     let id = 0;
     const clientHF = {};
-
-
-    try {
+    
+    try{
 
         const update = Object.keys(req.body);
         const data = req.body;
@@ -721,6 +895,33 @@ router.post("/approveClient/:action/:id", auth, async (req, res) => {
         res.status(400).send(e + ' ');
     }
 
+});
+
+router.get('/clients/exits', auth, async (req, res)=>{
+
+    try {
+
+        if( !req.query.identityNumber ){
+            throw new Error('Identity Number parameter is required..');
+        }
+
+        data = await Client.findClientByCurp(req.query.identityNumber);
+        if( data.recordset.length == 1 ){
+            /// recordsets[0][0] contains personal Info from HF
+            const personalData = {
+                ...data.recordsets[0][0],
+            };
+        
+            res.send({ id_cliente: personalData.id });
+        } else {
+            res.send({id_cliente: ''});
+        }
+
+    }
+    catch(error){
+        console.log(error)
+        res.status(400).send(error)
+    }
 });
 
 router.post('/createClientHF/:id', auth, async (req, res) => {

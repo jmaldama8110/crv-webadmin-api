@@ -32,7 +32,6 @@ cron.schedule('*/3 * * * *', async() => {
         }
 
         // console.log('Updated loans status on', moment().format('MMMM Do YYYY, h:mm:ss a'));
-
     } catch(err) {
         console.log(err);
     }
