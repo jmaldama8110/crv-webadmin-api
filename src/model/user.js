@@ -5,6 +5,22 @@ const jwt = require('jsonwebtoken')
 const axios = require('axios');
 const url = require('url');
 const mongoose_delete = require('mongoose-delete');
+class userModel {
+    constructor(name, lastname, second_lastname, email, phone, password, selfi, tokens, recoverpassword,checklist, doc_verification) {
+        this.name = name,
+        this.lastname = lastname,
+        this.second_lastname = second_lastname,
+        this.email = email,
+        this.phone = phone,
+        this.password = password,
+        this.selfi = selfi,
+        this.tokens = tokens,
+        this.recoverpassword = recoverpassword,
+        this.checklist = checklist,
+        this.doc_verification = doc_verification
+
+    }
+}
 
 const userSchema = new mongoose.Schema({
     name: {

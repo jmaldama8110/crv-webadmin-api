@@ -11,7 +11,11 @@ const moment = require("moment");
 const formato = 'YYYY-MM-DD';
 const cron = require('node-cron');
 const sendSms = require('../sms/sendsms');
-const formatLocalCurrency = require('../utils/numberFormatter')
+const formatLocalCurrency = require('../utils/numberFormatter');
+const LoanAppCollection = require('./../model/loanAppCollection');
+const authCouch = require('../middleware/authCouch');
+
+const loanAppCollection = new LoanAppCollection();
 
 cron.schedule('*/3 * * * *', async() => {
     try{
@@ -34,21 +38,25 @@ cron.schedule('*/3 * * * *', async() => {
     }
 });
 
-router.get('/loans', auth, async(req, res) =>{
+router.get('/loans', async(req, res) =>{
     try{
         const match = {}
 
-        if(req.query.id){
-            match._id = req.query.id
-        }
+        if(req.query.id) match._id = req.query.id;
+        // const loanAppCollection = new LoanAppCollection();
+        const loans = await loanAppCollection.find(match);
+        if(!loans) throw new Error('Not able to find any loan');
 
-        const loans = await Loan.find(match);
-        if(!loans){
-            throw new Error('Not able to find any loan');
-        }
+        // loans.map((loan) => {
+        //     // console.log('crear el general')
+        //     if(loan.general_checklist.length === 0 || loans.general_checklist === undefined) {
+        //         const newDataLoan = new LoanAppCollection(loan);
+        //         newDataLoan.createGenerallChecklist();
+        //         newDataLoan.save();
+        //     }
+        // })
 
-        for(let i = 0; i < loans.length; i++){
-
+        /*for(let i = 0; i < loans.length; i++){
             if(loans[i].general_checklist.length === 0 || loans[i].general_checklist === undefined){
                 // console.log('crear el general')
                 loans[i].createGenerallChecklist();
@@ -67,92 +75,187 @@ router.get('/loans', auth, async(req, res) =>{
             }
 
             await loans[i].save();
-
-        }
+        }*/
 
         res.status(200).send(loans);
 
     } catch(e){
         console.log(e)
-        res.status(400).send(e)
+        res.status(400).send(e.message)
     }
 });
+// router.get('/loans', auth, async(req, res) =>{
+//     try{
+//         const match = {}
 
-router.get('/statusLoans/:status', auth, async(req, res) =>{
+//         if(req.query.id){
+//             match._id = req.query.id
+//         }
 
+//         const loans = await Loan.find(match);
+//         if(!loans){
+//             throw new Error('Not able to find any loan');
+//         }
+
+//         for(let i = 0; i < loans.length; i++){
+
+//             if(loans[i].general_checklist.length === 0 || loans[i].general_checklist === undefined){
+//                 // console.log('crear el general')
+//                 loans[i].createGenerallChecklist();
+//             }
+
+//             if(loans[i].committee_checklist.length === 0 || loans[i].committee_checklist === undefined){
+//                 // console.log('crear el comite')
+//                 loans[i].createCommitteeChecklist();
+//             }
+
+//             await loans[i].populate('product', {product_name:1}).execPopulate();
+//             const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
+//             if(applyBy.client_id !== undefined || applyBy.client_id !== null){
+//                 // console.log('Esteee',applyBy)
+//                 await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1,email:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
+//             }
+
+//             await loans[i].save();
+
+//         }
+
+//         res.status(200).send(loans);
+
+//     } catch(e){
+//         console.log(e)
+//         res.status(400).send(e)
+//     }
+// });
+
+router.get('/statusLoans/:status', async(req, res) =>{
     try{
+        const constantesLoans = {
+            "Pendiente": 1,
+            "Listo para tramite": 2,
+            "Por autorizar": 3,
+            "Aprobado": 4,
+            "Eliminado": 5,
+            4: 4,
+        };
         const status = req.params.status;
- 
-        const loans = await Loan.find({ status: { $in : [parseInt(status)] } });
-        if(!loans || loans.length === 0){
-            throw new Error("No records with this status");
-        }
+        console.log(status)
+        const valueStatus = constantesLoans[status];
+        const statusSend = status == 4 ? ["Aprobado", 4] : [valueStatus, status];
 
-        for(let i = 0; i < loans.length; i++){
-            await loans[i].populate('product', {product_name:1}).execPopulate();
-            const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
-            if(applyBy.client_id !== undefined || applyBy.client_id !== null){
-                await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1,email:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
-            }
-        }
+        // const loanAppCollection = new LoanAppCollection();
+        const loans = await loanAppCollection.find({status: statusSend});
+        if(!loans || loans.length === 0) throw new Error("No records with this status");
+
+        // for(let i = 0; i < loans.length; i++){
+        //     await loans[i].populate('product', {product_name:1}).execPopulate();
+        //     const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
+        //     if(applyBy.client_id !== undefined || applyBy.client_id !== null){
+        //         await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1,email:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
+        //     }
+        // }
 
         res.status(200).send(loans);
  
     } catch(e) {
-     //    console.log(e)
-        res.status(400).send(e + '');
+        res.status(400).send(e.message);
     }
 });
+// router.get('/statusLoans/:status', async(req, res) =>{
+
+//     try{
+//         const status = req.params.status;
+//         const loans = await Loan.find({ status: { $in : [parseInt(status)] } });
+//         if(!loans || loans.length === 0){
+//             throw new Error("No records with this status");
+//         }
+
+//         // for(let i = 0; i < loans.length; i++){
+//         //     await loans[i].populate('product', {product_name:1}).execPopulate();
+//         //     const applyBy = await loans[i].populate('apply_by', {_id:1, client_id: 1}).execPopulate();
+//         //     if(applyBy.client_id !== undefined || applyBy.client_id !== null){
+//         //         await applyBy.apply_by.populate('client_id', {name:1, lastname:1, second_lastname:1,email:1, id_persona: 1, id_cliente:1, branch: 1}).execPopulate();
+//         //     }
+//         // }
+
+//         res.status(200).send(loans);
+ 
+//     } catch(e) {
+//         res.status(400).send(e.message);
+//     }
+// });
 
 router.get('/seguroProduct', async(req, res)=> {
     try{
+        // const loanAppCollection = new LoanAppCollection();
         const idProduct = req.query.idProduct;
-        if(!idProduct){
-            throw new Error('Is required to provide the idProduct')
-        }
 
-        const seguro = await Loan.getSeguroProducto(idProduct);
-
+        if(!idProduct) throw new Error('Is required to provide the idProduct')
+        const seguro = await loanAppCollection.getSeguroProducto(idProduct);
+        
         res.status(200).send(seguro);
-
     }
     catch(e){
-        console.log(e);
-        res.send(e + '');
+        res.send(e.message);
     }
 });
+// router.get('/seguroProduct', async(req, res)=> {
+//     try{
+//         const idProduct = req.query.idProduct;
+//         if(!idProduct){
+//             throw new Error('Is required to provide the idProduct')
+//         }
+
+//         const seguro = await Loan.getSeguroProducto(idProduct);
+
+//         res.status(200).send(seguro);
+
+//     }
+//     catch(e){
+//         console.log(e);
+//         res.send(e + '');
+//     }
+// });
 
 router.get('/disposition', async(req, res)=> {
     try{
         const idOffice = req.query.idOffice;
-        if(!idOffice){
-            throw new Error('Is required to provide the idOffice')
-        }
+        // const loanAppCollection = new LoanAppCollection();
+        if(!idOffice) throw new Error('Is required to provide the idOffice')
 
-        const disposition = await Loan.getDisposicionByOffice(idOffice);
+        const disposition = await loanAppCollection.getDisposicionByOffice(idOffice);
 
         res.status(200).send(disposition);
-
     }
     catch(e){
-        console.log(e);
-        res.send(e + '');
+        res.send(e.message);
     }
 });
+// router.get('/disposition', async(req, res)=> {
+//     try{
+//         const idOffice = req.query.idOffice;
+//         if(!idOffice){
+//             throw new Error('Is required to provide the idOffice')
+//         }
 
-router.get('/loanDetail', auth, async(req, res) => {
+//         const disposition = await Loan.getDisposicionByOffice(idOffice);
 
+//         res.status(200).send(disposition);
+
+//     }
+//     catch(e){
+//         console.log(e);
+//         res.send(e + '');
+//     }
+// });
+
+router.get('/loanDetail', async(req, res) => {
     try{
-
         const idLoan = req.query.idLoan;
-        if(!idLoan){
-            throw new Error('Is required to provide the idLoan');
-        }
+        if(!idLoan) throw new Error('Is required to provide the idLoan');
 
-        const detail = await Loan.getDetailLoan(idLoan, 1);
-        if(detail[0].length === 0){
-            throw new Error('No results found');
-        }
+        const detail = await loanAppCollection.getDetailLoan(idLoan, 1);
+        if(detail[0].length === 0) throw new Error('No results found');
 
         detail[0][0].fecha_primer_pago = getDates(detail[0][0].fecha_primer_pago);
         detail[0][0].fecha_entrega = getDates(detail[0][0].fecha_entrega);
@@ -161,45 +264,94 @@ router.get('/loanDetail', auth, async(req, res) => {
         res.status(200).send(detail);
 
     } catch(e) {
-        res.status(400).send(e + '');
+        res.status(400).send(e.message);
     }
-
 });
+// router.get('/loanDetail', async(req, res) => {
+
+//     try{
+
+//         const idLoan = req.query.idLoan;
+//         if(!idLoan){
+//             throw new Error('Is required to provide the idLoan');
+//         }
+
+//         const detail = await Loan.getDetailLoan(idLoan, 1);
+//         if(detail[0].length === 0){
+//             throw new Error('No results found');
+//         }
+
+//         detail[0][0].fecha_primer_pago = getDates(detail[0][0].fecha_primer_pago);
+//         detail[0][0].fecha_entrega = getDates(detail[0][0].fecha_entrega);
+//         detail[0][0].fecha_creacion = getDates(detail[0][0].fecha_creacion);
+
+//         res.status(200).send(detail);
+
+//     } catch(e) {
+//         res.status(400).send(e + '');
+//     }
+
+// });
 
 router.get('/statusGLByLoan', async(req, res)=> {
     try{
         const idLoan = req.query.idLoan;
-        if(!idLoan){
-            throw new Error('Is required to provide the idLoan')
-        }
+        if(!idLoan) throw new Error('Is required to provide the idLoan');
 
-        const seguro = await Loan.getStatusGLByLoan(idLoan);
+        const seguro = await loanAppCollection.getStatusGLByLoan(idLoan);
 
         res.status(200).send(seguro);
-
     }
     catch(e){
-        console.log(e);
-        res.send(e + '');
+        res.send(e.message);
     }
 });
+// router.get('/statusGLByLoan', async(req, res)=> {
+//     try{
+//         const idLoan = req.query.idLoan;
+//         if(!idLoan){
+//             throw new Error('Is required to provide the idLoan')
+//         }
 
-router.get('/toAuthorizeLoansHF', auth, async(req, res) =>{
+//         const seguro = await Loan.getStatusGLByLoan(idLoan);
+
+//         res.status(200).send(seguro);
+
+//     }
+//     catch(e){
+//         console.log(e);
+//         res.send(e + '');
+//     }
+// });
+
+router.get('/toAuthorizeLoansHF', async(req, res) =>{
     try{
-
         const idOffice = req.query.idOffice;
-        if(!idOffice){
-            throw new Error('idOffice must be provided');
-        }
+        if(!idOffice) throw new Error('idOffice must be provided');
 
         const loans = await Loan.getLoanPorAutorizar(idOffice);
 
         res.status(200).send(loans);
-
     } catch(err) {
-        res.status(400).send(err + '');
+        res.status(400).send(err.message);
     }
 });
+// router.get('/toAuthorizeLoansHF', async(req, res) =>{
+//     try{
+
+//         const idOffice = req.query.idOffice;
+//         if(!idOffice){
+//             throw new Error('idOffice must be provided');
+//         }
+
+//         const loans = await Loan.getLoanPorAutorizar(idOffice);
+
+//         res.status(200).send(loans);
+
+//     } catch(err) {
+//         res.status(400).send(err + '');
+//     }
+// });
 
 router.patch('/updateGeneralChecklist/:id', auth, async(req, res) => {
     try{
