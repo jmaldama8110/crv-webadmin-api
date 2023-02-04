@@ -4,11 +4,7 @@ const User = require('../model/user')
 const auth = async (req, res, next ) => {
 
     try{
-        const temp = req.header('Authorization').replace('Bearer ','')
-        // console.log(temp);
-        
-        const token = req.header('Authorization').replace('Bearer ','')
-        
+        const token = req.header('Authorization').replace('Bearer ','')        
         const decoded = jwt.verify(token,process.env.JWT_SECRET_KEY)
 
         const expiresAt = new Date(decoded.expires_at);

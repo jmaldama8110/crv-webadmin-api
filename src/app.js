@@ -25,6 +25,7 @@ const identityRouter = require('./routers/identityimg');
 const socioeconomicRouter = require('./routers/socioeconomic');
 const emailsWebSiteRouter = require('./routers/emailsWebSite');
 const coundbRouter = require('./routers/couchdb');
+const groupsRouter = require('./routers/group');
 
 const app = express()
 app.use(express.json({limit: '50mb'}))
@@ -50,6 +51,7 @@ app.use(socioeconomicRouter)
 app.use(emailsWebSiteRouter)
 
 app.use(coundbRouter);
+app.use(groupsRouter);
 
 
 module.exports = app
