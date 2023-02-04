@@ -3,8 +3,111 @@ const router =  new express.Router();
 const User = require("../model/user");
 const Employee = require("../model/employee");
 const Hierarchy = require("../model/hierarchy");
-const auth = require("../middleware/auth");
+const auth = require("../middleware/authCouch");
 const mongoose = require('mongoose');
+
+const EmployeeCollection = require("./../model/employeeCollection");
+const UserCollection = require("./../model/userCollection");
+
+router.post("/couch/insertSuperAdmin", async(req, res) =>{
+
+    try{
+        // const registro = Object.keys(req.body)
+        const data = {
+            name: "SUPERADMIN",
+            lastname: "SUPERADMIN",
+            second_lastname: "SUPERADMIN",
+            email: "admin@gmail.com",
+            phone: "00000000",
+            password: "123456",
+            dob: "1980-02-12T00:00:00.000Z",
+            hierarchy_id: "628d5ddb2eb899da313db550",
+            role: [1, "Admin"]
+        };
+
+        const employee = new EmployeeCollection({...data});
+        await employee.save();
+
+        data.password = await UserCollection.passwordHashing(data.password)
+        const user = new UserCollection({employee_id: employee._id, ...data});
+        await user.save();
+
+        employee["user_id"] = user._id;
+        await employee.save();
+
+        return res.status(201).send(employee);
+
+    } catch(e){
+        console.log(e)
+        res.status(400).send(e + '')
+    }
+
+});
+
+router.post("/couch/employees", auth, async(req, res) =>{
+
+    try{
+        const registro = Object.keys(req.body)
+        const data = req.body;
+        const employeeCollection = new EmployeeCollection();
+        const userCollection = new UserCollection();
+
+        if(!comparar(registro)) throw new Error("Body includes invalid properties...")
+
+        const existEmployee = await employeeCollection.findOne({email: data.email});
+        if(existEmployee) throw new Error("The email is already linked to a registered employeed")
+
+        const existUser = await userCollection.findOne({email: data.email});
+        if(existUser) throw new Error("The email is already linked to a to a user account")
+
+        const employee = new EmployeeCollection({...data});
+        await employee.save();
+
+        data.password = await UserCollection.passwordHashing(data.password)
+        const user = new UserCollection({employee_id: employee._id, ...data});
+        user.resetChecklist();
+        await user.save();
+
+        employee["user_id"] = user._id;
+        await employee.save();
+
+        return res.status(201).send(employee);
+
+    } catch(e){
+        res.status(400).send(e + '')
+    }
+
+});
+router.get("/couch/employees", async(req, res) =>{
+    try{
+        const match = {};
+        const employeeCollection = new EmployeeCollection();
+        if(req.query.id){
+            match._id = req.query.id;
+        }
+    
+        const employee = await employeeCollection.find(match);
+        if (!employee || employee.length === 0) {
+            throw new Error("Not able to find the employee");
+        }
+
+        for(let i=0; i < employee.length; i++){
+            const _id = employee[i].hierarchy_id;
+            const workstation = await Hierarchy.findOne({_id});
+            if(workstation){
+                employee[i].workstation = workstation.hierarchy_name;
+            } else{
+                employee[i].workstation = 'Sin puesto asignado';
+            }
+        }
+        
+        // console.log(employee)
+        res.status(200).send(employee);
+    } catch(e){
+        res.status(400).send(e + '');
+    }
+
+});
 
 router.post("/insertSuperAdmin", async(req, res) =>{
 
@@ -87,7 +190,7 @@ router.post("/employees", auth, async(req, res) =>{
 
 });
 
-router.get("/employees", auth, async(req, res) =>{
+router.get("/employees", async(req, res) =>{
 
     const match = {}
 
@@ -120,21 +223,33 @@ router.get("/employees", auth, async(req, res) =>{
 });
 
 router.get("/comittee", auth, async(req, res) =>{
-
     try{
-    
+        console.log(req.user)
         const employee = await Employee.find({ is_committee : true});
-        if (!employee || employee.length === 0) {
-            throw new Error("No committee could be found");
-        }
+        if (!employee || employee.length === 0) throw new Error("No committee could be found");
         
-        // console.log(employee)
         res.status(200).send(employee);
     } catch(e){
-        res.status(400).send(e + '');
+        res.status(400).send(e.message);
     }
 
 });
+// router.get("/comittee", auth, async(req, res) =>{
+
+//     try{
+    
+//         const employee = await Employee.find({ is_committee : true});
+//         if (!employee || employee.length === 0) {
+//             throw new Error("No committee could be found");
+//         }
+        
+//         // console.log(employee)
+//         res.status(200).send(employee);
+//     } catch(e){
+//         res.status(400).send(e + '');
+//     }
+
+// });
 
 router.get('/employees/hf', auth, async(req, res) => {
 

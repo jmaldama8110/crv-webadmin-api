@@ -5,6 +5,8 @@ const auth = require("../middleware/auth");
 const multer = require("multer"); // parar cargar imagenes
 const sharp = require("sharp");
 
+const ProductCollection = require("../model/productCollection");
+
 const upload = multer({
     limits: {
       fileSize: 1000000, // 1,0 megabytes z
@@ -31,6 +33,24 @@ const convertToBuffer = async(img) => {
 
 const images = upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'avatar', maxCount: 1 }])
 
+router.post("/couch/products", async(req,res) => {
+    try{
+        //Creamos un nuevo producto
+        const newProduct = req.body;
+        const registro = Object.keys(newProduct);
+        
+        if (!isComparaArreglos(registro)) throw new Error('Body includes invalid properties...');
+
+        const product = new ProductCollection(newProduct);
+
+        await product.save();
+
+        res.status(201).send(product);
+
+    } catch(e){
+        res.status(400).send(e.message);
+    }
+});
 router.post("/products", auth, async(req,res) => {
     //Creamos un nuevo producto
     try{
@@ -72,7 +92,23 @@ router.post("/products", auth, async(req,res) => {
     }
 });
 
+router.get('/couch/products', async(req, res) => {    
+    try {
+        const match = {};
 
+        if(req.query.id) match._id = req.query.id;
+        const productCollection = new ProductCollection();
+        const product = await productCollection.find(match);
+
+        if (!product || product.length === 0) throw new Error("Not able to find the product(s)");
+        //TODO QUITAR EL ID Y DATOS PRIVADOS DE LA RESPUESTA(getDataPublic())
+        res.status(200).send(product);
+
+    } catch (e) {
+        res.status(400).send(e.message);
+    }
+
+});
 router.get('/products', auth, async(req, res) => {
 
     const match = {};
@@ -96,6 +132,7 @@ router.get('/products', auth, async(req, res) => {
 
 });
 
+//TODO NO SE OCUPA
 router.get('/productsWebSite', async(req, res) => {
 
     const match = {};
@@ -147,6 +184,49 @@ router.get('/productsWebSite', async(req, res) => {
 
 });
 
+router.get('/couch/products/hf', async(req, res) => {
+    try{
+        const products = await ProductCollection.getAllProducts();
+        const result = (products.recordsets[0]).filter(configuracion => configuracion.configuracion === "MONTOS_OTORGADOS");
+
+        const rowData = [];
+
+        result.forEach((item) => {
+            const periodicidades = item.periodicidades.split(",");
+            rowData.push(
+                {
+                    external_id: item.id,
+                    default_mobile_product: false,
+                    enabled: item.estatus === "Activo" ? true : false,
+                    product_type: item.tipo_credito,
+                    product_name: item.nombre,
+                    min_amount: item.valor_minimo,
+                    max_amount: item.valor_maximo,
+                    default_amount: item.valor_minimo,
+                    allowed_term_type: periodicidades,
+                    min_term: item.periodo_min,
+                    max_term: item.periodo_max,
+                    default_term: item.periodo_min,
+                    min_rate: item.tasa_anual_min,
+                    max_rate: item.tasa_anual_max,
+                    rate: item.tasa_anual_min,
+                    requires_insurance: item.requiere_seguro,
+                    liquid_guarantee: item.garantia_liquida,
+                    GL_financeable: item.garantia_liquida_financiable,
+                    tax: item.impuesto,
+                    years_type: item.tipo_ano
+                }
+            )
+        });
+
+        res.status(200).send(rowData);
+
+    } catch (e){
+        console.log(e)
+        res.status(400).send(e.message);
+    }
+
+});
 router.get('/products/hf', auth, async(req, res) => {
 
     try{
@@ -200,6 +280,18 @@ router.get('/products/hf', auth, async(req, res) => {
 
 });
 
+router.get('/couch/productByBranch/:id', async(req, res) => {
+    try{
+        const id = req.params.id;
+        const result = await ProductCollection.getProductsByBranchId(id);
+
+        res.status(200).send(result.recordset);
+
+    } catch(e){
+        console.log(e);
+        res.status(400).send(e + '');
+    }
+});
 router.get('/productByBranch/:id', auth, async(req, res) => {
     try{
 
@@ -215,6 +307,39 @@ router.get('/productByBranch/:id', auth, async(req, res) => {
     }
 });
 
+//TODO FALTA
+router.patch('/couch/products/:id', async(req, res) => {
+    try {
+        const data = req.body;
+        const _id = req.params.id;
+        const actualizaciones = Object.keys(data);
+        
+        if (!isComparaArreglos(actualizaciones)) throw new Error('Body includes invalid properties...');
+        const productCollection = new ProductCollection();
+        const product = await productCollection.findOne( {_id} );
+
+        if (!product) throw new Error("Not able to find the product");
+        //TODO DUDA
+        if(data.default_mobile_product != undefined && data.default_mobile_product === true){
+            const default_mobile = await Product.findOne({"default_mobile_product": true})
+            if(default_mobile != null){
+                if(default_mobile._id != _id){//id diferentes cambiar a falso el que estaba por defecto
+                    await Product.updateOne({_id: default_mobile._id},{"default_mobile_product": false})
+                }
+            }
+        }
+        actualizaciones.forEach((valor) => (product[valor] = data[valor]));
+        const productUpdate = new ProductCollection(product)
+        productUpdate.save();
+
+        // await product.save();
+
+        res.status(200).send(product);
+    } catch (e) {
+        res.status(400).send(e.message);
+    }
+
+});
 router.patch('/products/:id', auth, async(req, res) => {
 
     try {

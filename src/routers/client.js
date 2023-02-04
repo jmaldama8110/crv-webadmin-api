@@ -11,101 +11,155 @@ const References = require('../model/references');
 const BacnkAcc = require('../model/bankacc');
 
 const auth = require("../middleware/auth");
+const authCouch = require("../middleware/authCouch");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
 const sendSms = require("../sms/sendsms");
-const formatLocalCurrency = require('../utils/numberFormatter')
+const formatLocalCurrency = require('../utils/numberFormatter');
+const ClientCollection = require('./../model/clientCollection');
 
 
-router.post("/clients", auth, async(req, res) =>{
-
-    try{
+router.post("/clients", auth, async (req, res) => {
+    try {
+        //CREAR
         const registro = Object.keys(req.body)
-        // if(!comparar(registro)){
-        //     return res.status(400).send({ error: "Body includes invalid properties..." });
-        // }
-
         const data = req.body;
         const status = [1, "Pendiente"];
-        // console.log('datos cliente', data)
 
-        const existClient = await Client.findOne({email: data.email});
-        if(existClient){
-            throw new Error("The email is already linked to a registered client")
-        }
+        const existClient = await Client.findOne({ email: data.email });
+        if (existClient) throw new Error("The email is already linked to a registered client");
 
-        const client = new Client({...data, status});
-        
-        // console.log(client);
+        const client = new Client({ ...data, status });
         const result = await client.save();
 
         res.status(201).send(result);
 
-    } catch(e){
-        console.log(e + '')
-        res.status(400).send(e + '')
+    } catch (e) {
+        res.status(400).send(e.message)
     }
 });
+// router.post("/clients", auth, async (req, res) => {
 
-router.get("/clients", auth, async(req, res) =>{
+//     try {
+//         const registro = Object.keys(req.body)
+//         // if(!comparar(registro)){
+//         //     return res.status(400).send({ error: "Body includes invalid properties..." });
+//         // }
 
-    const match = {};
+//         const data = req.body;
+//         const status = [1, "Pendiente"];
+//         // console.log('datos cliente', data)
 
-    try{
-            if(req.query.id){
-                match._id = req.query.id
-            }
+//         const existClient = await Client.findOne({ email: data.email });
+//         if (existClient) {
+//             throw new Error("The email is already linked to a registered client")
+//         }
 
-            const client = await Client.find(match);
-            // console.log(client);
-            if(!client || client.length === 0){
-                throw new Error("Not able to find the client");
-            }
+//         const client = new Client({ ...data, status });
 
-            for(let i = 0; i < client.length; i++) {
-                const data = client[i];
+//         // console.log(client);
+//         const result = await client.save();
 
-                if(data.user_id != undefined){
-                    const c1 = await data.populate('user_id',{veridoc:1}).execPopulate();
-                    await c1.user_id.populate('veridoc', {frontImage: 1, backImage:1, faceImage: 1, _id:0}).execPopulate()
-                }
+//         res.status(201).send(result);
 
-                await data.populate('guarantee').execPopulate();
-                await data.populate('guarantors').execPopulate();
-                await data.populate('references').execPopulate();
-                await data.populate('beneficiaries').execPopulate();
-                await data.populate('bankacc').execPopulate();
-            }
+//     } catch (e) {
+//         console.log(e + '')
+//         res.status(400).send(e + '')
+//     }
+// });
 
-            res.status(200).send(client);
+router.get("/clients", authCouch, async (req, res) => {
+    try {
+        const match = {};
+        if (req.query.id) match._id = req.query.id;
 
-    } catch(e) {
-           console.log(e)
-        res.status(400).send(e + '');
+        const clientCollection = new ClientCollection();
+        // console.log(clientCollection)
+        const client = await clientCollection.find(match);
+        // console.log(client[0])
+
+        if (!client || client.length === 0) throw new Error("Not able to find the client");
+
+        // for (let i = 0; i < client.length; i++) {
+        //     const data = client[i];
+
+        //     if (data.user_id != undefined) {
+        //         const c1 = await data.populate('user_id', { veridoc: 1 }).execPopulate();
+        //         await c1.user_id.populate('veridoc', { frontImage: 1, backImage: 1, faceImage: 1, _id: 0 }).execPopulate()
+        //     }
+
+        //     await data.populate('guarantee').execPopulate();
+        //     await data.populate('guarantors').execPopulate();
+        //     await data.populate('references').execPopulate();
+        //     await data.populate('beneficiaries').execPopulate();
+        //     await data.populate('bankacc').execPopulate();
+        // }
+
+        res.status(200).send(client);
+
+    } catch (e) {
+        res.status(400).send(e.message);
     }
 });
+// router.get("/clients", auth, async (req, res) => {
 
-router.get("/statusClients/:status", auth, async(req, res) =>{
+//     const match = {};
 
-   try{
+//     try {
+//         if (req.query.id) {
+//             match._id = req.query.id
+//         }
+
+//         const client = await Client.find(match);
+//         // console.log(client);
+//         if (!client || client.length === 0) {
+//             throw new Error("Not able to find the client");
+//         }
+
+//         for (let i = 0; i < client.length; i++) {
+//             const data = client[i];
+
+//             if (data.user_id != undefined) {
+//                 const c1 = await data.populate('user_id', { veridoc: 1 }).execPopulate();
+//                 await c1.user_id.populate('veridoc', { frontImage: 1, backImage: 1, faceImage: 1, _id: 0 }).execPopulate()
+//             }
+
+//             await data.populate('guarantee').execPopulate();
+//             await data.populate('guarantors').execPopulate();
+//             await data.populate('references').execPopulate();
+//             await data.populate('beneficiaries').execPopulate();
+//             await data.populate('bankacc').execPopulate();
+//         }
+
+//         res.status(200).send(client);
+
+//     } catch (e) {
+//         console.log(e)
+//         res.status(400).send(e + '');
+//     }
+// });
+
+router.get("/statusClients/:status", auth, async (req, res) => {
+
+    try {
         const status = req.params.status;
 
-        const clients = await Client.find({ status: { $in : [parseInt(status)] } });
-        if(!clients || clients.length === 0){
+        const clients = await Client.find({ status: { $in: [parseInt(status)] } });
+        if (!clients || clients.length === 0) {
             throw new Error("No records with this status");
         }
 
         res.status(200).send(clients);
 
-   } catch(e) {
-    //    console.log(e)
-       res.status(400).send(e + '');
-   }
+    } catch (e) {
+        //    console.log(e)
+        res.status(400).send(e + '');
+    }
 });
 
-router.patch("/clients/:id", auth, async(req, res) =>{
+router.patch("/clients/:id", auth, async (req, res) => {
 
-    try{
+    try {
         // const update = req.body;
         // if(!comparar(update)){
         //     return res.status(400).send({ error: "Body includes invalid properties..." });
@@ -115,29 +169,29 @@ router.patch("/clients/:id", auth, async(req, res) =>{
         const data = req.body;
         const actualizar = Object.keys(data);
 
-        const client = await Client.findOne({_id});
-        if(!client){
+        const client = await Client.findOne({ _id });
+        if (!client) {
             throw new Error("Not able to find the client")
         }
-         
+
         const user = await User.findOne({ client_id: mongoose.Types.ObjectId(_id) });
-        if(user != null){
+        if (user != null) {
             actualizar.forEach((valor) => (user[valor] = data[valor]));
             await user.save()
-            .then((result) =>{
-                
-            })
-            .catch((e) =>{
-                throw new Error("Error updating user");
-            })
+                .then((result) => {
+
+                })
+                .catch((e) => {
+                    throw new Error("Error updating user");
+                })
         }
 
         actualizar.forEach((valor) => (client[valor] = data[valor]));
         await client.save();
 
         res.status(200).send(client);
-        
-    }catch(e) {
+
+    } catch (e) {
         console.log(e + '');
         res.status(400).send(e + '');
     }
@@ -145,17 +199,17 @@ router.patch("/clients/:id", auth, async(req, res) =>{
 });
 
 router.post('/checkHomonimos', async (req, res) => {
-    try{
+    try {
         const data = req.body;
 
         const result = await Client.getHomonimoHF(data.name, data.lastname, data.second_lastname);
 
         // return res.status(200).send(result);
 
-        if(result.length > 0) {
+        if (result.length > 0) {
             const finalResult = [];
 
-            for(let i=0; i<result.length; i++) {
+            for (let i = 0; i < result.length; i++) {
                 const person = result[i];
                 finalResult.push({
                     id_persona: person.id,
@@ -174,9 +228,9 @@ router.post('/checkHomonimos', async (req, res) => {
 
         throw new Error('No se encontraron homónimos para esta persona');
 
-    } catch(e){
+    } catch (e) {
         // console.log(e);
-        res.status(400).send(e +'');
+        res.status(400).send(e + '');
     }
 });
 
@@ -358,17 +412,17 @@ router.get("/clients/hf", auth, async(req, res) => {
 
 router.patch('/updateCurp/:id', async (req, res) => {
 
-    try{
+    try {
         const data = req.body; //id_persona, curp, id_cliente
         const _id = req.params.id;
 
-        const client = await Client.findOne({_id});
-        if(!client){
+        const client = await Client.findOne({ _id });
+        if (!client) {
             throw new Error('Could not find client');
         }
 
         const result = await Client.updateCurpPersonaHF(data.id_persona, data.curp);
-        if(!result){
+        if (!result) {
             throw new Error("Ocurrió un error al actualizar el curp de la persona")
         }
 
@@ -377,10 +431,10 @@ router.patch('/updateCurp/:id', async (req, res) => {
             title: 'CONSERVA',
             notification: `Hemos detectado una inconsistencia al momento de validar tus datos. Por favor vuelve a completar tu registro ingresando tu CURP y tu número de cliente: ${data.id_cliente}`
         }
-        const notiPush = new notificationPush({ user_id: client.user_id, ...notification}) 
+        const notiPush = new notificationPush({ user_id: client.user_id, ...notification })
         await notiPush.save();
 
-        const user = await User.findOne({_id: client.user_id});
+        const user = await User.findOne({ _id: client.user_id });
         const body = `Hola ${user.name} hemos detectado una inconsistencia al momento de validar tus datos. \n\nPor favor vuelve a completar tu registro ingresando tu CURP y tu número de cliente: ${data.id_cliente}`
         sendSms(`+52${user.phone}`, body);
 
@@ -391,22 +445,22 @@ router.patch('/updateCurp/:id', async (req, res) => {
         //Eliminamos los datos del cliente para que se vuelva a registrar.
         await client.remove();
 
-        res.status(200).send({message: "La curp se ha corregido satisfactoriamente, notificación enviada..."});
+        res.status(200).send({ message: "La curp se ha corregido satisfactoriamente, notificación enviada..." });
 
-    } catch(e){
+    } catch (e) {
         console.log(e);
         res.status(400).send(e.message);
     }
 });
 
-router.post('/pruebaNotification/:id', async(req, res) => {
-    try{
+router.post('/pruebaNotification/:id', async (req, res) => {
+    try {
 
         const _id = req.params.id;
         const id_cliente = 5568974;
 
-        const client = await Client.findOne({_id});
-        if(!client){
+        const client = await Client.findOne({ _id });
+        if (!client) {
             throw new Error('Could not find client');
         }
 
@@ -415,21 +469,21 @@ router.post('/pruebaNotification/:id', async(req, res) => {
             notification: `Hemos detectado una inconsistencia de datos, por favor registrate como cliente ingresando tu curp y tu id de cliente: ${id_cliente}`
         }
 
-        const notiPush = new notificationPush({ user_id: client.user_id, ...notification}) 
+        const notiPush = new notificationPush({ user_id: client.user_id, ...notification })
         await notiPush.save();
 
-        const user = await User.findOne({_id: client.user_id});
+        const user = await User.findOne({ _id: client.user_id });
         // user.client_id = undefined;
         // await user.save();
 
         res.status(200).send(user);
 
-    } catch(e){
+    } catch (e) {
         res.status(400).send(e.message)
     }
 });
 
-router.post("/approveClient/:action/:id", auth, async(req, res) => {
+router.post("/approveClient/:action/:id", auth, async (req, res) => {
 
     const _id = req.params.id;
     const action = req.params.action;//Para insertar o actualizar la persona
@@ -440,30 +494,30 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
     let result;
     let id = 0;
     const clientHF = {};
-
+    
     try{
 
         const update = Object.keys(req.body);
         const data = req.body;
 
-        client = await Client.findOne({_id});
-        if(!client){
+        client = await Client.findOne({ _id });
+        if (!client) {
             throw new Error("Not able to find the client");
         }
         backupClient = JSON.parse(JSON.stringify(client));
 
-        if( action === "INSERTAR_PERSONA" && client.status[1] === "Aprobado"){
+        if (action === "INSERTAR_PERSONA" && client.status[1] === "Aprobado") {
             throw new Error("This client is already approved");
         }
 
-        if(action === 'ACTUALIZAR_PERSONA' || action === 'ACTUALIZAR_CLIENTE'){
+        if (action === 'ACTUALIZAR_PERSONA' || action === 'ACTUALIZAR_CLIENTE') {
             action === 'ACTUALIZAR_CLIENTE' ? value = 2 : value;
             console.log(action);
             console.log(value);
             update.forEach((campo) => (client[campo] = data[campo]))
             await client.save()
 
-            const user = await User.findOne({ client_id: client._id});
+            const user = await User.findOne({ client_id: client._id });
             update.forEach((valor) => (user[valor] = data[valor]));
             await user.save();
         }
@@ -476,10 +530,10 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         const phones = client.phones;
 
         const entidad_nac = dirDomi[0].province[0] ? dirDomi[0].province[0] : 5;
-        const province = await Province.findOne({_id: entidad_nac});
+        const province = await Province.findOne({ _id: entidad_nac });
 
         // Creamos/actualizamos la persona en el HF
-        if(action === 'INSERTAR_PERSONA' || action === 'ACTUALIZAR_PERSONA'){
+        if (action === 'INSERTAR_PERSONA' || action === 'ACTUALIZAR_PERSONA') {
             console.log('Insertar/actualizar persona')
             person.DATOS_PERSONALES = [
                 {
@@ -503,7 +557,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     es_persona_prohibida: 0
                 }
             ]
-    
+
             person.IDENTIFICACIONES = [];
             person.IDENTIFICACIONES.push(
                 {
@@ -516,22 +570,22 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[0]._id,
                     id_entidad: action === 'INSERTAR_PERSONA' ? 0 : client.id_persona,
                     tipo_identificacion: "IFE",
-                    id_numero: client.ine_clave.slice(0,18)
+                    id_numero: client.ine_clave.slice(0, 18)
                 },
                 {
                     id: action === 'INSERTAR_PERSONA' ? 0 : client.identities[1]._id,
                     id_entidad: action === 'INSERTAR_PERSONA' ? 0 : client.id_persona,
                     tipo_identificacion: "RFC",
-                    id_numero: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,13)
+                    id_numero: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0, 13)
                 }
             )
-    
-            person.DIRECCIONES = []     
-            
+
+            person.DIRECCIONES = []
+
             person.DIRECCIONES.push(
                 {
                     id: action === 'INSERTAR_PERSONA' ? 0 : dirDomi[0]._id,
-                    tipo:'DOMICILIO',
+                    tipo: 'DOMICILIO',
                     id_pais: dirDomi[0].country[0] ? dirDomi[0].country[0] : 1,
                     id_estado: dirDomi[0].province[0] ? dirDomi[0].province[0] : 5,
                     id_municipio: dirDomi[0].municipality[0] ? dirDomi[0].municipality[0] : 946,
@@ -542,7 +596,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     numero_interior: "SN",
                     referencia: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : " ",
                     casa_situacion: dirDomi[0].ownership ? dirDomi[0].ownership === true ? 1 : 0 : 0, //No se guarda el ownership 0 => RENTADO / 1- => PROPIO
-                    tiempo_habitado_inicio: dirDomi[0].start_date ? getDates(dirDomi[0].start_date) :"2022-06-22",
+                    tiempo_habitado_inicio: dirDomi[0].start_date ? getDates(dirDomi[0].start_date) : "2022-06-22",
                     tiempo_habitado_final: dirDomi[0].end_date ? getDates(dirDomi[0].end_date) : "2022-06-20",
                     correo_electronico: client.email,
                     num_interior: 0,
@@ -551,16 +605,16 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     domicilio_actual: 1
                 }
             )
-            
+
             //Si no se encuentra una dirección del IFE, se le asignará el mismo del domicilio
             person.DIRECCIONES.push(
                 {
                     id: action === 'INSERTAR_PERSONA' ? 0 : dirIfe[0]._id,
-                    tipo:'IFE',
+                    tipo: 'IFE',
                     id_pais: dirIfe.length >= 1 ? dirIfe[0].country[0] ? dirIfe[0].country[0] : (person.DIRECCIONES)[0].id_pais : (person.DIRECCIONES)[0].id_pais,
-                    id_estado: dirIfe.length >= 1 ? dirIfe[0].province[0] ? dirIfe[0].province[0] : (person.DIRECCIONES)[0].id_estado :(person.DIRECCIONES)[0].id_estado,
-                    id_municipio: dirIfe.length >= 1  ? dirIfe[0].municipality[0] ? dirIfe[0].municipality[0] : (person.DIRECCIONES)[0].id_municipio : (person.DIRECCIONES)[0].id_municipio,
-                    id_localidad: dirIfe.length >= 1  ? dirIfe[0].city[0] ? dirIfe[0].city[0] : (person.DIRECCIONES)[0].id_localidad: (person.DIRECCIONES)[0].id_localidad,
+                    id_estado: dirIfe.length >= 1 ? dirIfe[0].province[0] ? dirIfe[0].province[0] : (person.DIRECCIONES)[0].id_estado : (person.DIRECCIONES)[0].id_estado,
+                    id_municipio: dirIfe.length >= 1 ? dirIfe[0].municipality[0] ? dirIfe[0].municipality[0] : (person.DIRECCIONES)[0].id_municipio : (person.DIRECCIONES)[0].id_municipio,
+                    id_localidad: dirIfe.length >= 1 ? dirIfe[0].city[0] ? dirIfe[0].city[0] : (person.DIRECCIONES)[0].id_localidad : (person.DIRECCIONES)[0].id_localidad,
                     id_asentamiento: dirIfe.length >= 1 ? dirIfe[0].colony[0] ? dirIfe[0].colony[0] : (person.DIRECCIONES)[0].id_asentamiento : (person.DIRECCIONES)[0].id_asentamiento,
                     direccion: dirIfe.length >= 1 ? dirIfe[0].address_line1 ? dirIfe[0].address_line1 : (person.DIRECCIONES)[0].direccion : (person.DIRECCIONES)[0].direccion,
                     numero_exterior: "SN",
@@ -576,16 +630,16 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     domicilio_actual: 1
                 }
             )
-    
+
             //Agregamos la dirección del RFC
             person.DIRECCIONES.push(
                 {
                     id: action === 'INSERTAR_PERSONA' ? 0 : dirRfc[0]._id,
-                    tipo:'RFC',
+                    tipo: 'RFC',
                     id_pais: dirRfc.length >= 1 ? dirRfc[0].country[0] ? dirRfc[0].country[0] : (person.DIRECCIONES)[0].id_pais : (person.DIRECCIONES)[0].id_pais,
-                    id_estado: dirRfc.length >= 1 ? dirRfc[0].province[0] ? dirRfc[0].province[0] : (person.DIRECCIONES)[0].id_estado :(person.DIRECCIONES)[0].id_estado,
-                    id_municipio: dirRfc.length >= 1  ? dirRfc[0].municipality[0] ? dirRfc[0].municipality[0] : (person.DIRECCIONES)[0].id_municipio : (person.DIRECCIONES)[0].id_municipio,
-                    id_localidad: dirRfc.length >= 1  ? dirRfc[0].city[0] ? dirRfc[0].city[0] : (person.DIRECCIONES)[0].id_localidad: (person.DIRECCIONES)[0].id_localidad,
+                    id_estado: dirRfc.length >= 1 ? dirRfc[0].province[0] ? dirRfc[0].province[0] : (person.DIRECCIONES)[0].id_estado : (person.DIRECCIONES)[0].id_estado,
+                    id_municipio: dirRfc.length >= 1 ? dirRfc[0].municipality[0] ? dirRfc[0].municipality[0] : (person.DIRECCIONES)[0].id_municipio : (person.DIRECCIONES)[0].id_municipio,
+                    id_localidad: dirRfc.length >= 1 ? dirRfc[0].city[0] ? dirRfc[0].city[0] : (person.DIRECCIONES)[0].id_localidad : (person.DIRECCIONES)[0].id_localidad,
                     id_asentamiento: dirRfc.length >= 1 ? dirRfc[0].colony[0] ? dirRfc[0].colony[0] : (person.DIRECCIONES)[0].id_asentamiento : (person.DIRECCIONES)[0].id_asentamiento,
                     direccion: dirRfc.length >= 1 ? dirRfc[0].address_line1 ? dirRfc[0].address_line1 : (person.DIRECCIONES)[0].direccion : (person.DIRECCIONES)[0].direccion,
                     numero_exterior: "SN",
@@ -601,22 +655,22 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                     domicilio_actual: 1
                 }
             )
-    
+
             person.DATOS_IFE = [
                 {
                     id: action === 'INSERTAR_PERSONA' ? 0 : client.ife_details[0].id,
-                    numero_emision: client.ine_duplicates ?  client.ine_duplicates.slice(0,2) : "00",
-                    numero_vertical_ocr: client.ine_doc_number ? client.ine_doc_number.slice(0,13) : "0000000000000"
+                    numero_emision: client.ine_duplicates ? client.ine_duplicates.slice(0, 2) : "00",
+                    numero_vertical_ocr: client.ine_doc_number ? client.ine_doc_number.slice(0, 13) : "0000000000000"
                 }
             ]
-    
+
             person.TELEFONOS = [];
             const phonePerson = phones[0];
-    
+
             (person.TELEFONOS).push(
                 {
                     id: action === 'INSERTAR_PERSONA' ? 0 : phonePerson._id,
-                    idcel_telefono: phonePerson ? phonePerson.phone ? phonePerson.phone : "0000000000" :"0000000000",
+                    idcel_telefono: phonePerson ? phonePerson.phone ? phonePerson.phone : "0000000000" : "0000000000",
                     extension: "",
                     tipo_telefono: phonePerson ? phonePerson.type ? phonePerson.type : "Móvil" : "Móvil",
                     compania: phonePerson ? phonePerson.company ? phonePerson.company : "Telcel" : "Telcel",
@@ -625,16 +679,16 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             )
 
             result = await Client.createPersonHF(person, action);
-            if(!result){
+            if (!result) {
                 throw new Error('Ocurrió un error al registrar la persona al HF');
             }
             // console.log(result);
             id = result[0][0].id;
             // id = 1234;
         }
-        
 
-        if(action === 'ACTUALIZAR_PERSONA'){
+
+        if (action === 'ACTUALIZAR_PERSONA') {
             return res.status(200).send(result);
         }
 
@@ -653,7 +707,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                 id: action === 'INSERTAR_PERSONA' ? 0 : phoneBusiness._id,
                 idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
                 extension: "",
-                tipo_telefono: phoneBusiness? phoneBusiness.type ? phoneBusiness.type : " " : " ",
+                tipo_telefono: phoneBusiness ? phoneBusiness.type ? phoneBusiness.type : " " : " ",
                 compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : " " : " ",
                 sms: 0
             }
@@ -661,7 +715,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
 
         const business_data = client.business_data;
         addresses.forEach((campo) => {
-            if(campo.type === 'NEGOCIO'){
+            if (campo.type === 'NEGOCIO') {
                 clientHF.NEGOCIO = [
                     {
                         id: action === 'INSERTAR_PERSONA' ? 0 : client.data_company[0].id_empresa,
@@ -679,13 +733,13 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
                         id_ciudad: campo.city[0] ? campo.city[0] : 1534,
                         id_colonia: campo.colony[0] ? campo.colony[0] : 42665,
                         cp: campo.post_code,
-                        rfc: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,13),
+                        rfc: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0, 13),
                         econ_registro_egresos_ingresos: 0,
-                        casa_situacion: campo.ownership ? campo.ownership === true ? 1 :0 : 0,
+                        casa_situacion: campo.ownership ? campo.ownership === true ? 1 : 0 : 0,
                         correo_electronico: client.email ? client.email : "",
                         id_vialidad: 1,
                         nombre_oficina: business_data.business_name ? `OFICINA ${business_data.business_name}` : "OFICINA...", //Mandar el nombre del negocio concatenar 'Oficina'
-                        nombre_puesto: business_data.position ? business_data.position :"dueño",//PONER SOLO dueño //no actualizar
+                        nombre_puesto: business_data.position ? business_data.position : "dueño",//PONER SOLO dueño //no actualizar
                         departamento: business_data.department ? business_data.department : "cobranza",
                         numero_empleados: business_data.employees ? business_data.employees : 10,
                         registro_egresos: 0,
@@ -783,7 +837,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         // console.log(clientHF);
 
         const response = await Client.createClientHF(clientHF, value);
-        if(!response){
+        if (!response) {
             console.log('Errorr', response);
             throw new Error('Ocurrió un error al registrar el cliente al HF');
         }
@@ -795,7 +849,7 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         const dataHF = await Client.findClientByExternalId(id_cliente);
         const identificationsHF = addIdentities(dataHF.recordsets[1]);
         // const ife_details = dataHF.recordsets[2];
-        const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
+        const ife_details = { ...dataHF.recordsets[2][dataHF.recordsets[2].length - 1] };
         const addressHF = addAddress(dataHF.recordsets[3]);
         const phonesHF = addPhones(dataHF.recordsets[4]);
         const personData = dataHF.recordsets[0][0];
@@ -809,17 +863,17 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
         client["ine_duplicates"] = ife_details ? ife_details.numero_emision : "00";
         client["data_company"] = dataHF.recordsets[8];
         client["data_efirma"] = dataHF.recordsets[9];
-        client["branch"] = [personData.id_oficina, personData.nombre_oficina] 
+        client["branch"] = [personData.id_oficina, personData.nombre_oficina]
         client["nationality"] = [personData.id_nationality, personData.nationality];
         client["province_of_birth"] = [personData.id_province_of_birth, personData.province_of_birth]
         client["country_of_birth"] = [personData.id_country_of_birth, personData.country_of_birth]
         client["status"] = [2, "Aprobado"];
         await client.save();
 
-        if(action === 'INSERTAR_PERSONA'){
-            const user = await User.findOne({client_id: _id})
+        if (action === 'INSERTAR_PERSONA') {
+            const user = await User.findOne({ client_id: _id })
             const body = `Bienvenido ${user.name}, tus datos han sido verificados, ahora ya eres cliente de Conserva. \nYa puedes solicitar cualquiera de nuestros créditos disponibles para ti. Siempre estaremos aquí cerca para ayudarte en lo que necesites.`;
-            sendSms(`+52${user.phone}`,body)
+            sendSms(`+52${user.phone}`, body)
         }
 
         res.status(201).send({
@@ -829,9 +883,9 @@ router.post("/approveClient/:action/:id", auth, async(req, res) => {
             clientHF
         });
 
-    } catch(e) {
+    } catch (e) {
         //Si ocurre un error al modificar datos en el hf, rstauramos los datos de ese cliente en mongo
-        if(action === 'ACTUALIZAR_PERSONA' || action === 'ACTUALIZAR_CLIENTE'){
+        if (action === 'ACTUALIZAR_PERSONA' || action === 'ACTUALIZAR_CLIENTE') {
             console.log('entró al catch al actualizar')
             const restoreClient = Object.keys(backupClient);
             restoreClient.forEach((campo) => (client[campo] = backupClient[campo]))
@@ -871,11 +925,11 @@ router.get('/clients/exits', auth, async (req, res)=>{
 });
 
 router.post('/createClientHF/:id', auth, async (req, res) => {
-    try{
+    try {
 
         const _id = req.params.id
         const client = await Client.findById(_id);
-        if(!client){
+        if (!client) {
             return res.status(204).send('Not found any record');
         }
 
@@ -887,7 +941,7 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
 
         clientHF.PERSONA = [
             {
-                id: client.id_persona?  client.id_persona : 0
+                id: client.id_persona ? client.id_persona : 0
             }
         ];
 
@@ -900,7 +954,7 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
                 id: 0,
                 idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
                 extension: "",
-                tipo_telefono: phoneBusiness? phoneBusiness.type ? phoneBusiness.type : "Móvil" : "Móvil",
+                tipo_telefono: phoneBusiness ? phoneBusiness.type ? phoneBusiness.type : "Móvil" : "Móvil",
                 compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : "Telcel" : "Telcel",
                 sms: 0
             }
@@ -927,13 +981,13 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
                 id_ciudad: dirNego.city[0] ? dirNego.city[0] : 1534,
                 id_colonia: dirNego.colony[0] ? dirNego.colony[0] : 42665,
                 cp: dirNego.post_code,
-                rfc: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0,13),
+                rfc: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0, 13),
                 econ_registro_egresos_ingresos: 0,
-                casa_situacion: dirNego.ownership ? dirNego.ownership === true ? 1 :0 : 0,
+                casa_situacion: dirNego.ownership ? dirNego.ownership === true ? 1 : 0 : 0,
                 correo_electronico: client.email ? client.email : "",
                 id_vialidad: 1,
                 nombre_oficina: business_data.business_name ? `OFICINA ${business_data.business_name}` : "OFICINA...", //Mandar el nombre del negocio concatenar 'Oficina'
-                nombre_puesto: business_data.position ? business_data.position :"dueño",//PONER SOLO dueño //no actualizar
+                nombre_puesto: business_data.position ? business_data.position : "dueño",//PONER SOLO dueño //no actualizar
                 departamento: business_data.department ? business_data.department : "cobranza",
                 numero_empleados: business_data.employees ? business_data.employees : 10,
                 registro_egresos: 0,
@@ -950,7 +1004,7 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
 
         clientHF.CLIENTE = [
             {
-                id_cliente:  0,
+                id_cliente: 0,
                 id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,
                 id_oficial_credito: 0
             }
@@ -1031,7 +1085,7 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
         // })
 
         const response = await Client.createClientHF(clientHF, 1);
-        if(!response){
+        if (!response) {
             console.log('Errorr', response);
             throw new Error('Ocurrió un error al registrar el cliente al HF');
         }
@@ -1042,7 +1096,7 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
         //Creado el cliente agregamos sus datos del hf
         const dataHF = await Client.findClientByExternalId(id_cliente);
         const identificationsHF = addIdentities(dataHF.recordsets[1]);
-        const ife_details = {...dataHF.recordsets[2][dataHF.recordsets[2].length - 1]};
+        const ife_details = { ...dataHF.recordsets[2][dataHF.recordsets[2].length - 1] };
         const addressHF = addAddressClientHF(addresses, dataHF.recordsets[3]);
         const phonesHF = addPhones(dataHF.recordsets[4]);
         const personData = dataHF.recordsets[0][0];
@@ -1056,7 +1110,7 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
         client["ine_duplicates"] = ife_details ? ife_details.numero_emision : "00";
         client["data_company"] = dataHF.recordsets[8];
         client["data_efirma"] = dataHF.recordsets[9];
-        client["branch"] = [personData.id_oficina, personData.nombre_oficina] 
+        client["branch"] = [personData.id_oficina, personData.nombre_oficina]
         client["nationality"] = [personData.id_nationality, personData.nationality];
         client["province_of_birth"] = [personData.id_province_of_birth, personData.province_of_birth]
         client["country_of_birth"] = [personData.id_country_of_birth, personData.country_of_birth]
@@ -1068,14 +1122,14 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
             clientHF
         });
 
-    } catch(e){
+    } catch (e) {
         console.log(e)
         res.status(400).send(e.message)
     }
 })
 
 router.post('/sendsms', async (req, res) => {
-    try{
+    try {
 
         const data = req.body;
         const cantidad = formatLocalCurrency(30000)
@@ -1085,16 +1139,16 @@ router.post('/sendsms', async (req, res) => {
         sendSms('+529191207777', body);
         res.send('ok');
 
-    } catch(e){
+    } catch (e) {
         res.status(404).send(e.message);
     }
 })
 
-router.get('/client/hf', auth, async(req, res) => {
+router.get('/client/hf', auth, async (req, res) => {
 
-    try{
+    try {
 
-        if(!req.query.id){
+        if (!req.query.id) {
             throw new Error('Some query parameters area mising...')
         }
 
@@ -1102,17 +1156,17 @@ router.get('/client/hf', auth, async(req, res) => {
 
         res.status(200).send(dataHF);
 
-    } catch(e) {
+    } catch (e) {
         res.status(400).send(e.message);
     }
 
 });
 
-router.get('/person/hf', auth, async(req, res) => {
+router.get('/person/hf', auth, async (req, res) => {
 
-    try{
+    try {
 
-        if(!req.query.curp){
+        if (!req.query.curp) {
             throw new Error('Some query parameters area mising...')
         }
 
@@ -1120,32 +1174,32 @@ router.get('/person/hf', auth, async(req, res) => {
 
         res.status(200).send(personHF);
 
-    } catch(e) {
+    } catch (e) {
         res.status(400).send(e.message);
     }
 
 });
 
-router.delete("/clients/:id", auth, async(req, res) =>{
+router.delete("/clients/:id", auth, async (req, res) => {
 
-    try{
+    try {
         const _id = req.params.id;
 
-        const client = await Client.findOne({_id});
-        if(!client){
+        const client = await Client.findOne({ _id });
+        if (!client) {
             throw new Error("Not able to find the client");
         }
 
-        const user = await User.findOne({client_id: client._id});
-        if(user!= null){
+        const user = await User.findOne({ client_id: client._id });
+        if (user != null) {
             const userDeleted = await user.delete();
-            if(!userDeleted){
+            if (!userDeleted) {
                 throw new Error("Error deleting user");
             }
         }
 
         const clientDeleted = await client.delete();
-        if(!clientDeleted){
+        if (!clientDeleted) {
             throw new Error("Error deleting client");
         }
 
@@ -1154,106 +1208,106 @@ router.delete("/clients/:id", auth, async(req, res) =>{
             message: 'Client successfully disabled'
         });
 
-    }catch(e) {
-       res.status(400).send(e + '');
+    } catch (e) {
+        res.status(400).send(e + '');
     }
 
 });
 
-router.delete("/clientsBD", auth, async(req, res) =>{
+router.delete("/clientsBD", auth, async (req, res) => {
 
-    try{
+    try {
 
         const match = {};
 
-        if(req.query.id){
+        if (req.query.id) {
             match._id = req.query.id;
         }
 
         const client = await Client.find(match);
-        if(!client || client.length === 0){
+        if (!client || client.length === 0) {
             throw new Error("Not found any record");
         }
 
-        for(let i = 0; i < client.length; i++){
+        for (let i = 0; i < client.length; i++) {
             const dataClient = client[i];
             // console.log(dataClient._id)
-            const user = await User.findOne({client_id: dataClient._id});
-            if(user!= null){
+            const user = await User.findOne({ client_id: dataClient._id });
+            if (user != null) {
                 const userDeleted = await user.remove();
-                if(!userDeleted){
+                if (!userDeleted) {
                     throw new Error("Error deleting user");
                 }
             }
 
             const clientDeleted = await dataClient.remove();
-            if(!clientDeleted){
+            if (!clientDeleted) {
                 throw new Error("Error deleting client");
             }
         }
 
         res.status(200).send('Done!')
 
-    }catch(e) {
+    } catch (e) {
         console.log(e)
-       res.status(400).send(e + '');
+        res.status(400).send(e + '');
     }
 
 });
 
-router.get("/clientsDeleted", async(req, res) =>{
-    try{
+router.get("/clientsDeleted", async (req, res) => {
+    try {
 
         const client = await Client.findDeleted()
-        if(!client || client.length === 0){
+        if (!client || client.length === 0) {
             throw new Error("Not able to find the client");
         }
 
         res.status(200).send(client)
 
-    }catch(e) {
+    } catch (e) {
         res.status(400).send(e + '')
     }
 })
 
-router.post("/clients/restore/:id", auth,async(req,res) =>{
-    
-    try{
+router.post("/clients/restore/:id", auth, async (req, res) => {
+
+    try {
         const _id = req.params.id;
 
-        const client = await Client.findOneDeleted({_id});
-        if(!client){
+        const client = await Client.findOneDeleted({ _id });
+        if (!client) {
             throw new Error("Not able to find the client");
         }
 
-        const user = await User.findOneDeleted({client_id: client._id});
-        if(user!=null){
+        const user = await User.findOneDeleted({ client_id: client._id });
+        if (user != null) {
             const userRestore = await user.restore()
-            if(!userRestore){
+            if (!userRestore) {
                 throw new Error("Error restoring user");
             }
         }
 
         const clientRestore = await client.restore()
-        if(!clientRestore){
+        if (!clientRestore) {
             throw new Error("Error restore client");
         }
-        
+
         res.status(200).send({
             client,
             message: 'Client successfully enabled'
         });
 
-    }catch(e) {
-       res.status(400).send(e + '');
+    } catch (e) {
+        res.status(400).send(e + '');
     }
 
 });
 
 //------------Crear persona en HF
-router.post('/createPersonHF', auth, async(req, res) => {
+router.post('/createPersonHF', auth, async (req, res) => {
     try {
-        const result = await Client.createPersonHF(req.body,'INSERTAR_PERSONA')
+        const result = await Client.createPersonHF(req.body, 'INSERTAR_PERSONA')
 
         res.status(201).send(result);
     } catch (error) {
@@ -1262,7 +1316,7 @@ router.post('/createPersonHF', auth, async(req, res) => {
 });
 
 // ------------------- Crear  cliente idividual en HF
-router.post('/clients/hf/create', auth, async(req, res) => { // FUNCIONA
+router.post('/clients/hf/create', auth, async (req, res) => { // FUNCIONA
     try {
         const result = await Client.createClientHF(req.body);
 
@@ -1278,7 +1332,7 @@ const removeAccents = (str) => {
 };
 
 const comparar = (entrada) => {
-    const permitido = ["name","lastname","second_lastname","email","password","curp","ine_clave", "ine_duplicates", "ine_doc_number","dob","segmento","loan_cicle","client_type","branch","is_new","bussiness_data","gender","scolarship","address","phones","credit_circuit_data","external_id", "status"];
+    const permitido = ["name", "lastname", "second_lastname", "email", "password", "curp", "ine_clave", "ine_duplicates", "ine_doc_number", "dob", "segmento", "loan_cicle", "client_type", "branch", "is_new", "bussiness_data", "gender", "scolarship", "address", "phones", "credit_circuit_data", "external_id", "status"];
     const result = entrada.every(campo => permitido.includes(campo));
     return result;
 }
@@ -1290,7 +1344,7 @@ const getDates = (fecha) => {
 
 const addIdentities = (body) => {
     const identities = []
-    for( let i=0; i< body.length; i++){
+    for (let i = 0; i < body.length; i++) {
         const itemIdentity = body[i];
         identities.push({
             _id: itemIdentity.id,
@@ -1344,7 +1398,7 @@ const addAddressClientHF = (addressMongo, addressHF) => {
     for (let i = 0; i < addressHF.length; i++) {
         const add = addressHF[i];
 
-        if(add.tipo.trim() === 'DOMICILIO') {
+        if (add.tipo.trim() === 'DOMICILIO') {
             add.id_pais = domicilio.country[0];
             add.nombre_pais = domicilio.country[1];
             add.id_estado = domicilio.province[0];
@@ -1357,7 +1411,7 @@ const addAddressClientHF = (addressMongo, addressHF) => {
             add.nombre_asentamiento = domicilio.colony[1];
             add.direccion = domicilio.address_line1;
             add.codigo_postal = domicilio.post_code;
-            add.casa_situacion = domicilio.ownership ? 'PROPIO': 'RENTADO';
+            add.casa_situacion = domicilio.ownership ? 'PROPIO' : 'RENTADO';
         }
 
         // console.log(add);
@@ -1387,7 +1441,7 @@ const addAddressClientHF = (addressMongo, addressHF) => {
     return address;
 }
 
-const addPhones = (body) =>{
+const addPhones = (body) => {
     const phones = []
     for (let i = 0; i < body.length; i++) {
         const phone = body[i]
@@ -1413,19 +1467,19 @@ const orderGuarantees = (guarantees) => {
     const result = {};
 
 
-    for(let i = 0; i < guarantee.length; i++) {
+    for (let i = 0; i < guarantee.length; i++) {
         const data = guarantee[i];
-        if(data.guarantee_type === 'equipment'){
+        if (data.guarantee_type === 'equipment') {
             delete data.property;
             delete data.vehicle;
             equipment.push(data);
         }
-        if(data.guarantee_type === 'vehicle') {
+        if (data.guarantee_type === 'vehicle') {
             delete data.equipment;
             delete data.property;
             vehicle.push(data)
         }
-        if(data.guarantee_type === 'property'){
+        if (data.guarantee_type === 'property') {
             delete data.equipment;
             delete data.vehicle;
             property.push(data)

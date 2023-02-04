@@ -25,6 +25,8 @@ const identityRouter = require('./routers/identityimg');
 const socioeconomicRouter = require('./routers/socioeconomic');
 const emailsWebSiteRouter = require('./routers/emailsWebSite');
 const coundbRouter = require('./routers/couchdb');
+const loanDestRouter = require('./routers/loanDest');
+const actionRouter = require('./routers/action');
 const groupsRouter = require('./routers/group');
 
 const app = express()
@@ -51,7 +53,10 @@ app.use(socioeconomicRouter)
 app.use(emailsWebSiteRouter)
 
 app.use(coundbRouter);
-app.use(groupsRouter);
 
+app.use(loanDestRouter);
+app.use(actionRouter);
+
+app.use(groupsRouter);
 
 module.exports = app
