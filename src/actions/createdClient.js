@@ -582,7 +582,7 @@ async function createClientHF(data) {
         const dataHF = await getClientHFById(idClientCreated);
 
         const identificationsHF = addIdentities(dataHF[1]);
-        const ife_details = { ...dataHF[2][dataHF[2].length - 1] };
+        const ife_details = [{ ...dataHF[2][dataHF[2].length - 1] }]; // TODO CAMBIAR A ARREGLO
         const addressHF = addAddressClientHF(clientCouch.address, dataHF[3]);
         const phonesHF = addPhones(dataHF[4]);
         const personData = dataHF[0][0];
