@@ -30,7 +30,7 @@ cron.schedule('5 * * * * *', async () => {
                 if (!dataClient) { console.log('Client not found'); return };
             }
 
-            if (task.name === 'CREATE_CLIENT') {
+            if (task.name === 'CREATE_UPDATE_CLIENT') {
                 //TODO Se usar el status Aprobado para crear el cliente?
 
                 //CREATE PERSON
