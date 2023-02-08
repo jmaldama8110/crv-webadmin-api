@@ -1,11 +1,12 @@
+const auth  = require("../middleware/auth");
+const authCouch = require("../middleware/authCouch");
+const authorize = require("../middleware/authorize");
 const express = require("express");
 const router = new express.Router();
 const User = require("../model/user");
 const Client = require('../model/client');
 const Employee = require('../model/employee');
 const Signup = require("../model/signup");
-const auth = require("../middleware/auth");
-const authCouch = require("../middleware/authCouch");
 const moment = require("moment");
 const multer = require("multer"); // parar cargar imagenes
 const sharp = require("sharp");
@@ -206,6 +207,19 @@ router.get("/users/me", authCouch, async (req, res) => {
     res.status(400).send(e.message);
   }
 });
+router.get("/users/test/me", authorize, async (req, res) => {
+  try {
+    res.status(200).send({
+      name: req.user.name,
+      lastname: req.user.lastname,
+      second_lastname: req.user.second_lastname,
+      email: req.user.email
+    });
+  } catch (e) {
+    res.status(400).send(e.message);
+  }
+});
+
 
 // router.get("/users/me", auth, async (req, res) => {
 //   try {
@@ -358,44 +372,78 @@ router.delete("/users/me", auth, async (req, res) => {
   }
 });
 
-router.post("/users/login", async (req, res) => {
-  try {
-    let userCollection = new UserCollection();
-    const user = await userCollection.findUserByCredentials(
-      req.body.email,
-      req.body.password
-    );
-    const userSend = {...user};
-    user.employee_id = user.employee_id._id;
-    userCollection = new UserCollection(user);
-
-    const token = await userCollection.generateAuthToken();
-
-    res.status(200).send({ user: userSend, token });
-
-  } catch (error) {
-
-    res.status(400).send(error.message);
-  }
-});
 // router.post("/users/login", async (req, res) => {
-//   // Enviar peticion Login, generar un nuevo token
-
 //   try {
-//     const user = await User.findUserByCredentials(
+//     let userCollection = new UserCollection();
+
+//     const user = await userCollection.findUserByCredentials(
 //       req.body.email,
 //       req.body.password
 //     );
+//     const userSend = {...user};
+//     user.employee_id = user.employee_id._id;
+//     userCollection = new UserCollection(user);
 
-//     const token = await user.generateAuthToken();
+//     const token = await userCollection.generateAuthToken();
 
-//     res.status(200).send({ user, token });
+//     res.status(200).send({ user: userSend, token });
 
 //   } catch (error) {
 
-//     res.status(400).send(error + '');
+//     console.log(error);
+//     res.status(400).send(error.message);
 //   }
 // });
+
+
+router.post("/users/login", async (req, res) => {
+  // Enviar peticion Login, generar un nuevo token
+
+  try {
+    const user = await User.findUserByCredentials(
+      req.body.email,
+      req.body.password
+    );
+
+    const token = await user.generateAuthToken();
+
+    res.status(200).send({ user, token });
+
+  } catch (error) {
+
+    res.status(400).send(error + '');
+  }
+});
+
+
+router.post("/users/hf/login", async (req, res) => {
+
+  /***
+   * Test credentials
+   * JuanMorgado / jcmorgado
+   * LlenyMijangos / lmijangos
+   * LeonardoMendez / lmendez
+   */
+
+    try {
+    
+      const user = await User.findUserByCredentialsHF(
+        req.body.user,
+        req.body.password
+      );
+
+      const token = await User.generateAuthTokenHf(user)
+
+      res.status(200).send( {...user, token});
+  
+
+  } catch (error) {
+    // console.log(error);
+    res.status(400).send(error.message);
+  }
+});
+
+
 
 router.post("/users/logout", authCouch, async (req, res) => {
   // Enviar peticion de Logout, elimina el token actual

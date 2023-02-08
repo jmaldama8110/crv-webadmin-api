@@ -261,7 +261,7 @@ router.get('/employees/hf', auth, async(req, res) => {
         res.status(200).send(employees.recordsets[1]);
 
     } catch (e){
-        // console.log(e + '')
+        console.log(e )
         res.status(400).send(e + '');
     }
 
