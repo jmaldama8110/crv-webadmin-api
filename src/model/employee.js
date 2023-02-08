@@ -88,7 +88,7 @@ employeeSchema.statics.getAllEmployees = async(id) => {
     } catch (err) {
         console.log(err)
         return err;
-    }
+    }   
 };
 
 employeeSchema.statics.getAllOfficial = async(chunk) => {

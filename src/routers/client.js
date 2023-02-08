@@ -337,14 +337,18 @@ router.get("/clients/hf", auth, async(req, res) => {
                 business_name: '',
                 business_start_date:''
             }
+
+            const   econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
+                    econActCap =  data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString(): '';
+            const   profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
+                    profCap = data.recordsets[7][0].nombre_profesion? data.recordsets[7][0].nombre_profesion.toString() : '';
+            const   occupId = perSet.id_occupation ? perSet.id_occupation : 0,
+                    occupCap = perSet.occupation? perSet.occupation.toString() : '';
+
             if( data.recordsets[7].length ) {
                 business_data = {
-                    economic_activity: [data.recordsets[7][0].id_actividad_economica,
-                        data.recordsets[7][0].nombre_actividad_economica
-                    ],
-                    profession: [data.recordsets[7][0].id_profesion,
-                        data.recordsets[7][0].nombre_profesion
-                    ],
+                    economic_activity: [ econActId,econActCap],
+                    profession: [profId, profCap],
                     business_name: data.recordsets[7][0].nombre_negocio,
                     business_start_date: data.recordsets[7][0].econ_fecha_inicio_act_productiva
                 }
@@ -384,7 +388,7 @@ router.get("/clients/hf", auth, async(req, res) => {
                     `COUNTRY|${perSet.id_country_of_birth}`,
                     perSet.country_of_birth,
                 ],
-                ocupation: [perSet.id_occupation, perSet.occupation],
+                ocupation: [occupId , occupCap],
                 marital_status: [perSet.id_marital_status, perSet.marital_status],
                 identification_type: [], // INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
                 guarantor: [],
@@ -408,7 +412,41 @@ router.get("/clients/hf", auth, async(req, res) => {
     }
 });
 
+router.get('/clients/hf/getBalance', auth, async(req, res) => {
+    
+    try{
+        const result = await Client.getBalanceById(req.query.idCliente);
+        res.send(result[0]);
+    } catch (error) {
+        res.status(401).send(error.message)
+    }
+});
 
+router.get('/clients/hf/accountstatement', auth, async (req, res)=> {
+
+    const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+    const idContract = req.query.contractId;
+    const dateFrom = new Date(req.query.dateFrom);
+    const dateEnd = new Date(req.query.dateEnd);
+    const yearDate = dateEnd.getFullYear().toString();
+    const month = dateEnd.getMonth().toString();
+    
+    try {
+        
+        const monthDate = months[ month ];
+        data = await Client.getObtenerEstadoCuentaPeriodo(  parseInt(idContract),
+                                                            dateFrom,
+                                                            dateEnd,
+                                                            parseInt(yearDate),
+                                                            parseInt(monthDate) )
+        
+        res.send(data); 
+    }
+    catch(error){
+        console.log(error);
+        res.status(400).send(error);
+    }
+})
 
 router.patch('/updateCurp/:id', async (req, res) => {
 
@@ -1303,6 +1341,7 @@ router.post("/clients/restore/:id", auth, async (req, res) => {
     }
 
 });
+
 
 //------------Crear persona en HF
 router.post('/createPersonHF', auth, async (req, res) => {

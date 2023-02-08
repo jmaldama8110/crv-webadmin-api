@@ -2,6 +2,7 @@ const express = require('express');
 const router = new express.Router();
 const auth = require('../middleware/auth');
 const Group = require('../model/group');
+const nano = require('../db/connCouch');
 
 router.get('/groups/hf/search', auth, async(req, res) => {
     try{
@@ -90,6 +91,13 @@ router.get('/groups/hf/loanapps', auth, async(req, res) => {
                 }
             })
 
+        /// retrieves Product information, that is not provided by HF
+        const db = nano.use(process.env.COUCHDB_NAME);
+
+        await db.createIndex({ index:{  fields:["   "] }});
+        const productList = await db.find( { selector: { couchdb_type: "PRODUCT" }});
+        const productMaster = productList.docs.find( (prod)=> prod.external_id == loan_application.id_producto_maestro  )
+
         const loan_app = {
             id_cliente: loan_application.id_cliente,
             id_solicitud: loan_application.id_solicitud,
@@ -110,16 +118,16 @@ router.get('/groups/hf/loanapps', auth, async(req, res) => {
             sub_status: loan_application.sub_estatus.trim(),
             members,
             product: {
-              external_id: loan_application.id_producto_maestro,
-              min_amount: 5000,
-              max_amount: 1000000,
-              step_amount: 1000,
-              min_term: 1,
-              max_term: 52,
-              product_name: "",
-              term_types: [],
-              rate: loan_application.tasa_anual,
-              tax: 0,
+              external_id: productMaster.id_producto_maestro,
+              min_amount: productMaster.min_amount,
+              max_amount: productMaster.max_amount,
+              step_amount: productMaster.step_amount,
+              min_term: productMaster.min_term,
+              max_term: productMaster.max_term,
+              product_name: productMaster.product_name,
+              term_types: productMaster.allowed_term_type,
+              rate: productMaster.rate,
+              tax: productMaster.tax,
             }
         }
 
