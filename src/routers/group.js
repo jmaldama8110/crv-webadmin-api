@@ -1,16 +1,16 @@
 const express = require('express');
 const router = new express.Router();
-const auth = require('../middleware/auth');
+const authorize = require('../middleware/authorize');
 const Group = require('../model/group');
 const nano = require('../db/connCouch');
 
-router.get('/groups/hf/search', auth, async(req, res) => {
+router.get('/clients/hf/search', authorize, async(req, res) => {
     try{
 
-        if( !(req.query.branchId && req.query.groupName) ){
-            throw new Error('Query parametrs branchId or groupName are missing!')
+        if( !(req.query.branchId && req.query.clientName) ){
+            throw new Error('Query parametrs branchId or clientName are missing!')
         }
-        const data = await Group.searchGroupLoanByName(req.query.groupName,parseInt(req.query.branchId));
+        const data = await Group.searchGroupLoanByName(req.query.clientName,parseInt(req.query.branchId));
         res.status(200).send(data);
 
     } catch(err){
@@ -20,15 +20,13 @@ router.get('/groups/hf/search', auth, async(req, res) => {
 })
 
 
-router.get('/groups/hf/loanapps', auth, async(req, res) => {
+router.get('/groups/hf/loanapps', authorize, async(req, res) => {
     try{
 
         if( !(req.query.branchId && req.query.applicationId) ){
             throw new Error('Query parametrs branchId or groupName are missing!')
         }
-
         const data = await Group.getLoanApplicationById(parseInt(req.query.applicationId),parseInt(req.query.branchId));
-        
         /**
          * resultsets[0] => Detalle de la solicitud
          * resultsets[1] => Ciclo y estatus 
@@ -37,12 +35,11 @@ router.get('/groups/hf/loanapps', auth, async(req, res) => {
          * resultsets[4] => Integrantes, cargo, etc (importe solicitado, autorizado, etc)
          * resultsets[5] => Integrantes / Detalle Seguro (Costo, tipo seguro, Beneficiario, parentezco, etc)
          */ 
-
         const loan_application = data[0][0];
         const loan_cycle = data[1][0];
         const group_info = data[2][0];
         const group_address = data[3][0];
-    
+        
         const group_data = {
             
             id_cliente: group_info.id_cliente,
@@ -67,10 +64,11 @@ router.get('/groups/hf/loanapps', auth, async(req, res) => {
              
         }
         
-        const members = data[4].map( (i) =>{
+        const members = data[4].map( (i,nCounter) =>{
                 const insuranceMemberInfo = data[5].find( (x)=> x.id_individual === i.id_individual);
                 ///// buscar en la DB local si existe el integrante, como cliente por medio de id_cliente
                 return {
+                    _id: `${Date.now() + nCounter}`,
                     id_member: i.id,
                     id_cliente: i.id_individual,
                     fullname: `${i.nombre} ${i.apellido_paterno} ${i.apellido_materno}`,
@@ -94,9 +92,12 @@ router.get('/groups/hf/loanapps', auth, async(req, res) => {
         /// retrieves Product information, that is not provided by HF
         const db = nano.use(process.env.COUCHDB_NAME);
 
-        await db.createIndex({ index:{  fields:["   "] }});
+        await db.createIndex({ index:{  fields:["couchdb_type"] }});
         const productList = await db.find( { selector: { couchdb_type: "PRODUCT" }});
         const productMaster = productList.docs.find( (prod)=> prod.external_id == loan_application.id_producto_maestro  )
+        
+        const identifierFreq = loan_application.periodicidad.slice(0,1);
+        const frequency = productMaster.allowed_term_type.find( (i) => i.identifier === identifierFreq)
 
         const loan_app = {
             id_cliente: loan_application.id_cliente,
@@ -108,17 +109,17 @@ router.get('/groups/hf/loanapps', auth, async(req, res) => {
             apply_amount: loan_application.monto_total_solicitado,
             approved_total: loan_application.monto_total_autorizado,
             term: loan_application.plazo,
-            frequency: loan_application.periodicidad,
-            first_repay_at: loan_application.fecha_primer_pago,
-            disbursed_at: loan_application.fecha_entrega,
-            disbursment_mean: loan_application.medio_desembolso,
+            frequency: [frequency.identifier,frequency.value],
+            first_repay_date: loan_application.fecha_primer_pago,
+            disbursment_date: loan_application.fecha_entrega,
+            disbursment_mean: loan_application.medio_desembolso.trim(),
             liquid_guarantee: loan_application.garantia_liquida,
             loan_cycle: loan_cycle.ciclo,
             estatus: loan_application.estatus.trim(),
             sub_status: loan_application.sub_estatus.trim(),
             members,
             product: {
-              external_id: productMaster.id_producto_maestro,
+              external_id: productMaster.external_id,
               min_amount: productMaster.min_amount,
               max_amount: productMaster.max_amount,
               step_amount: productMaster.step_amount,

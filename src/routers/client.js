@@ -1,241 +1,21 @@
-const mongoose = require('mongoose')
 const express = require("express");
 const router = new express.Router();
 const User = require("../model/user");
 const Client = require('../model/client');
 const notificationPush = require('../model/notificationPush');
 const Province = require('../model/province');
-const Guarantee = require('../model/guarantees');
-const Guarantor = require('../model/guarantor');
-const References = require('../model/references');
-const BacnkAcc = require('../model/bankacc');
 
-const auth = require("../middleware/auth");
+const authorize = require("../middleware/authorize");
 const authCouch = require("../middleware/authCouch");
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
 const sendSms = require("../sms/sendsms");
 const formatLocalCurrency = require('../utils/numberFormatter');
-const ClientCollection = require('./../model/clientCollection');
 
 
-router.post("/clients", auth, async (req, res) => {
-    try {
-        //CREAR
-        const registro = Object.keys(req.body)
-        const data = req.body;
-        const status = [1, "Pendiente"];
-
-        const existClient = await Client.findOne({ email: data.email });
-        if (existClient) throw new Error("The email is already linked to a registered client");
-
-        const client = new Client({ ...data, status });
-        const result = await client.save();
-
-        res.status(201).send(result);
-
-    } catch (e) {
-        res.status(400).send(e.message)
-    }
-});
-// router.post("/clients", auth, async (req, res) => {
-
-//     try {
-//         const registro = Object.keys(req.body)
-//         // if(!comparar(registro)){
-//         //     return res.status(400).send({ error: "Body includes invalid properties..." });
-//         // }
-
-//         const data = req.body;
-//         const status = [1, "Pendiente"];
-//         // console.log('datos cliente', data)
-
-//         const existClient = await Client.findOne({ email: data.email });
-//         if (existClient) {
-//             throw new Error("The email is already linked to a registered client")
-//         }
-
-//         const client = new Client({ ...data, status });
-
-//         // console.log(client);
-//         const result = await client.save();
-
-//         res.status(201).send(result);
-
-//     } catch (e) {
-//         console.log(e + '')
-//         res.status(400).send(e + '')
-//     }
-// });
-
-router.get("/clients", authCouch, async (req, res) => {
-    try {
-        const match = {};
-        if (req.query.id) match._id = req.query.id;
-
-        const clientCollection = new ClientCollection();
-        // console.log(clientCollection)
-        const client = await clientCollection.find(match);
-        // console.log(client[0])
-
-        if (!client || client.length === 0) throw new Error("Not able to find the client");
-
-        // for (let i = 0; i < client.length; i++) {
-        //     const data = client[i];
-
-        //     if (data.user_id != undefined) {
-        //         const c1 = await data.populate('user_id', { veridoc: 1 }).execPopulate();
-        //         await c1.user_id.populate('veridoc', { frontImage: 1, backImage: 1, faceImage: 1, _id: 0 }).execPopulate()
-        //     }
-
-        //     await data.populate('guarantee').execPopulate();
-        //     await data.populate('guarantors').execPopulate();
-        //     await data.populate('references').execPopulate();
-        //     await data.populate('beneficiaries').execPopulate();
-        //     await data.populate('bankacc').execPopulate();
-        // }
-
-        res.status(200).send(client);
-
-    } catch (e) {
-        res.status(400).send(e.message);
-    }
-});
-// router.get("/clients", auth, async (req, res) => {
-
-//     const match = {};
-
-//     try {
-//         if (req.query.id) {
-//             match._id = req.query.id
-//         }
-
-//         const client = await Client.find(match);
-//         // console.log(client);
-//         if (!client || client.length === 0) {
-//             throw new Error("Not able to find the client");
-//         }
-
-//         for (let i = 0; i < client.length; i++) {
-//             const data = client[i];
-
-//             if (data.user_id != undefined) {
-//                 const c1 = await data.populate('user_id', { veridoc: 1 }).execPopulate();
-//                 await c1.user_id.populate('veridoc', { frontImage: 1, backImage: 1, faceImage: 1, _id: 0 }).execPopulate()
-//             }
-
-//             await data.populate('guarantee').execPopulate();
-//             await data.populate('guarantors').execPopulate();
-//             await data.populate('references').execPopulate();
-//             await data.populate('beneficiaries').execPopulate();
-//             await data.populate('bankacc').execPopulate();
-//         }
-
-//         res.status(200).send(client);
-
-//     } catch (e) {
-//         console.log(e)
-//         res.status(400).send(e + '');
-//     }
-// });
-
-router.get("/statusClients/:status", auth, async (req, res) => {
-
-    try {
-        const status = req.params.status;
-
-        const clients = await Client.find({ status: { $in: [parseInt(status)] } });
-        if (!clients || clients.length === 0) {
-            throw new Error("No records with this status");
-        }
-
-        res.status(200).send(clients);
-
-    } catch (e) {
-        //    console.log(e)
-        res.status(400).send(e + '');
-    }
-});
-
-router.patch("/clients/:id", auth, async (req, res) => {
-
-    try {
-        // const update = req.body;
-        // if(!comparar(update)){
-        //     return res.status(400).send({ error: "Body includes invalid properties..." });
-        // }
-
-        const _id = req.params.id;
-        const data = req.body;
-        const actualizar = Object.keys(data);
-
-        const client = await Client.findOne({ _id });
-        if (!client) {
-            throw new Error("Not able to find the client")
-        }
-
-        const user = await User.findOne({ client_id: mongoose.Types.ObjectId(_id) });
-        if (user != null) {
-            actualizar.forEach((valor) => (user[valor] = data[valor]));
-            await user.save()
-                .then((result) => {
-
-                })
-                .catch((e) => {
-                    throw new Error("Error updating user");
-                })
-        }
-
-        actualizar.forEach((valor) => (client[valor] = data[valor]));
-        await client.save();
-
-        res.status(200).send(client);
-
-    } catch (e) {
-        console.log(e + '');
-        res.status(400).send(e + '');
-    }
-
-});
-
-router.post('/checkHomonimos', async (req, res) => {
-    try {
-        const data = req.body;
-
-        const result = await Client.getHomonimoHF(data.name, data.lastname, data.second_lastname);
-
-        // return res.status(200).send(result);
-
-        if (result.length > 0) {
-            const finalResult = [];
-
-            for (let i = 0; i < result.length; i++) {
-                const person = result[i];
-                finalResult.push({
-                    id_persona: person.id,
-                    id_cliente: person.id_cliente ? person.id_cliente : 0,
-                    name: person.nombre,
-                    lastname: person.apellido_paterno,
-                    second_lastname: person.apellido_materno,
-                    curp: person.curp[0].trim(),
-                    dob: person.fecha_nacimiento,
-                    creation_date: person.fecha_registro
-                });
-            }
-
-            return res.status(200).send(finalResult);
-        }
-
-        throw new Error('No se encontraron homónimos para esta persona');
-
-    } catch (e) {
-        // console.log(e);
-        res.status(400).send(e + '');
-    }
-});
 
 
-router.get("/clients/hf", auth, async(req, res) => {
+router.get("/clients/hf", authorize, async(req, res) => {
 
     //  get the Client Data with identityNumber and externalId
     /* 
@@ -338,8 +118,12 @@ router.get("/clients/hf", auth, async(req, res) => {
                 business_start_date:''
             }
 
-            const   econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
-                    econActCap =  data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString(): '';
+            let econActId = 0, econActCap = ''
+            if( data.recordsets[7][0].id_actividad_economica ){
+                econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
+                econActCap =  data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString(): '';
+            }
+
             const   profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
                     profCap = data.recordsets[7][0].nombre_profesion? data.recordsets[7][0].nombre_profesion.toString() : '';
             const   occupId = perSet.id_occupation ? perSet.id_occupation : 0,
@@ -365,9 +149,9 @@ router.get("/clients/hf", auth, async(req, res) => {
                 second_lastname: perSet.second_lastname,
                 // email: req.user.email,
                 curp: curp ? curp.id_numero : "",
-                ine_clave: ife ? ife.id_numero : "",
-                ine_emision: ine_detalle ? ine_detalle.numero_emision: '',
-                ine_vertical_ocr: ine_detalle ? ine_detalle.numero_vertical_ocr : '',
+                clave_ine: ife ? ife.id_numero : "",
+                numero_emisiones: ine_detalle ? ine_detalle.numero_emision: '',
+                numero_vertical: ine_detalle ? ine_detalle.numero_vertical_ocr : '',
                 rfc: rfc ? rfc.id_numero : "",
                 dob: perSet.dob,
                 loan_cycle,
@@ -412,7 +196,7 @@ router.get("/clients/hf", auth, async(req, res) => {
     }
 });
 
-router.get('/clients/hf/getBalance', auth, async(req, res) => {
+router.get('/clients/hf/getBalance', authorize, async(req, res) => {
     
     try{
         const result = await Client.getBalanceById(req.query.idCliente);
@@ -422,7 +206,7 @@ router.get('/clients/hf/getBalance', auth, async(req, res) => {
     }
 });
 
-router.get('/clients/hf/accountstatement', auth, async (req, res)=> {
+router.get('/clients/hf/accountstatement', authorize, async (req, res)=> {
 
     const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
     const idContract = req.query.contractId;
@@ -521,7 +305,7 @@ router.post('/pruebaNotification/:id', async (req, res) => {
     }
 });
 
-router.post("/approveClient/:action/:id", auth, async (req, res) => {
+router.post("/approveClient/:action/:id", authorize, async (req, res) => {
 
     const _id = req.params.id;
     const action = req.params.action;//Para insertar o actualizar la persona
@@ -935,7 +719,7 @@ router.post("/approveClient/:action/:id", auth, async (req, res) => {
 
 });
 
-router.get('/clients/exits', auth, async (req, res)=>{
+router.get('/clients/exits', authorize, async (req, res)=>{
 
     try {
 
@@ -962,7 +746,7 @@ router.get('/clients/exits', auth, async (req, res)=>{
     }
 });
 
-router.post('/createClientHF/:id', auth, async (req, res) => {
+router.post('/createClientHF/:id', authorize, async (req, res) => {
     try {
 
         const _id = req.params.id
@@ -1166,7 +950,7 @@ router.post('/createClientHF/:id', auth, async (req, res) => {
     }
 })
 
-router.post('/sendsms', async (req, res) => {
+router.post('/sendsms', authorize, async (req, res) => {
     try {
 
         const data = req.body;
@@ -1182,7 +966,7 @@ router.post('/sendsms', async (req, res) => {
     }
 })
 
-router.get('/client/hf', auth, async (req, res) => {
+router.get('/client/hf', authorize, async (req, res) => {
 
     try {
 
@@ -1200,181 +984,172 @@ router.get('/client/hf', auth, async (req, res) => {
 
 });
 
-router.get('/person/hf', auth, async (req, res) => {
+// router.get('/person/hf', authorize, async (req, res) => {
 
-    try {
+//     try {
 
-        if (!req.query.curp) {
-            throw new Error('Some query parameters area mising...')
-        }
+//         if (!req.query.curp) {
+//             throw new Error('Some query parameters area mising...')
+//         }
 
-        const personHF = await Client.findPersonByCurp(req.query.curp);
+//         const personHF = await Client.findPersonByCurp(req.query.curp);
 
-        res.status(200).send(personHF);
+//         res.status(200).send(personHF);
 
-    } catch (e) {
-        res.status(400).send(e.message);
-    }
+//     } catch (e) {
+//         res.status(400).send(e.message);
+//     }
 
-});
+// });
 
-router.delete("/clients/:id", auth, async (req, res) => {
+// router.delete("/clients/:id", authorize, async (req, res) => {
 
-    try {
-        const _id = req.params.id;
+//     try {
+//         const _id = req.params.id;
 
-        const client = await Client.findOne({ _id });
-        if (!client) {
-            throw new Error("Not able to find the client");
-        }
+//         const client = await Client.findOne({ _id });
+//         if (!client) {
+//             throw new Error("Not able to find the client");
+//         }
 
-        const user = await User.findOne({ client_id: client._id });
-        if (user != null) {
-            const userDeleted = await user.delete();
-            if (!userDeleted) {
-                throw new Error("Error deleting user");
-            }
-        }
+//         const user = await User.findOne({ client_id: client._id });
+//         if (user != null) {
+//             const userDeleted = await user.delete();
+//             if (!userDeleted) {
+//                 throw new Error("Error deleting user");
+//             }
+//         }
 
-        const clientDeleted = await client.delete();
-        if (!clientDeleted) {
-            throw new Error("Error deleting client");
-        }
+//         const clientDeleted = await client.delete();
+//         if (!clientDeleted) {
+//             throw new Error("Error deleting client");
+//         }
 
-        res.status(200).send({
-            client,
-            message: 'Client successfully disabled'
-        });
+//         res.status(200).send({
+//             client,
+//             message: 'Client successfully disabled'
+//         });
 
-    } catch (e) {
-        res.status(400).send(e + '');
-    }
+//     } catch (e) {
+//         res.status(400).send(e + '');
+//     }
 
-});
+// });
 
-router.delete("/clientsBD", auth, async (req, res) => {
+// router.delete("/clientsBD", authorize, async (req, res) => {
 
-    try {
+//     try {
 
-        const match = {};
+//         const match = {};
 
-        if (req.query.id) {
-            match._id = req.query.id;
-        }
+//         if (req.query.id) {
+//             match._id = req.query.id;
+//         }
 
-        const client = await Client.find(match);
-        if (!client || client.length === 0) {
-            throw new Error("Not found any record");
-        }
+//         const client = await Client.find(match);
+//         if (!client || client.length === 0) {
+//             throw new Error("Not found any record");
+//         }
 
-        for (let i = 0; i < client.length; i++) {
-            const dataClient = client[i];
-            // console.log(dataClient._id)
-            const user = await User.findOne({ client_id: dataClient._id });
-            if (user != null) {
-                const userDeleted = await user.remove();
-                if (!userDeleted) {
-                    throw new Error("Error deleting user");
-                }
-            }
+//         for (let i = 0; i < client.length; i++) {
+//             const dataClient = client[i];
+//             // console.log(dataClient._id)
+//             const user = await User.findOne({ client_id: dataClient._id });
+//             if (user != null) {
+//                 const userDeleted = await user.remove();
+//                 if (!userDeleted) {
+//                     throw new Error("Error deleting user");
+//                 }
+//             }
 
-            const clientDeleted = await dataClient.remove();
-            if (!clientDeleted) {
-                throw new Error("Error deleting client");
-            }
-        }
+//             const clientDeleted = await dataClient.remove();
+//             if (!clientDeleted) {
+//                 throw new Error("Error deleting client");
+//             }
+//         }
 
-        res.status(200).send('Done!')
+//         res.status(200).send('Done!')
 
-    } catch (e) {
-        console.log(e)
-        res.status(400).send(e + '');
-    }
+//     } catch (e) {
+//         console.log(e)
+//         res.status(400).send(e + '');
+//     }
 
-});
+// });
 
-router.get("/clientsDeleted", async (req, res) => {
-    try {
+// router.get("/clientsDeleted", async (req, res) => {
+//     try {
 
-        const client = await Client.findDeleted()
-        if (!client || client.length === 0) {
-            throw new Error("Not able to find the client");
-        }
+//         const client = await Client.findDeleted()
+//         if (!client || client.length === 0) {
+//             throw new Error("Not able to find the client");
+//         }
 
-        res.status(200).send(client)
+//         res.status(200).send(client)
 
-    } catch (e) {
-        res.status(400).send(e + '')
-    }
-})
+//     } catch (e) {
+//         res.status(400).send(e + '')
+//     }
+// })
 
-router.post("/clients/restore/:id", auth, async (req, res) => {
+// router.post("/clients/restore/:id", auth, async (req, res) => {
 
-    try {
-        const _id = req.params.id;
+//     try {
+//         const _id = req.params.id;
 
-        const client = await Client.findOneDeleted({ _id });
-        if (!client) {
-            throw new Error("Not able to find the client");
-        }
+//         const client = await Client.findOneDeleted({ _id });
+//         if (!client) {
+//             throw new Error("Not able to find the client");
+//         }
 
-        const user = await User.findOneDeleted({ client_id: client._id });
-        if (user != null) {
-            const userRestore = await user.restore()
-            if (!userRestore) {
-                throw new Error("Error restoring user");
-            }
-        }
+//         const user = await User.findOneDeleted({ client_id: client._id });
+//         if (user != null) {
+//             const userRestore = await user.restore()
+//             if (!userRestore) {
+//                 throw new Error("Error restoring user");
+//             }
+//         }
 
-        const clientRestore = await client.restore()
-        if (!clientRestore) {
-            throw new Error("Error restore client");
-        }
+//         const clientRestore = await client.restore()
+//         if (!clientRestore) {
+//             throw new Error("Error restore client");
+//         }
 
-        res.status(200).send({
-            client,
-            message: 'Client successfully enabled'
-        });
+//         res.status(200).send({
+//             client,
+//             message: 'Client successfully enabled'
+//         });
 
-    } catch (e) {
-        res.status(400).send(e + '');
-    }
+//     } catch (e) {
+//         res.status(400).send(e + '');
+//     }
 
-});
+// });
 
 
 //------------Crear persona en HF
-router.post('/createPersonHF', auth, async (req, res) => {
-    try {
-        const result = await Client.createPersonHF(req.body, 'INSERTAR_PERSONA')
+// router.post('/createPersonHF', auth, async (req, res) => {
+//     try {
+//         const result = await Client.createPersonHF(req.body, 'INSERTAR_PERSONA')
 
-        res.status(201).send(result);
-    } catch (error) {
-        res.status(401).send(error.message)
-    }
-});
+//         res.status(201).send(result);
+//     } catch (error) {
+//         res.status(401).send(error.message)
+//     }
+// });
 
-// ------------------- Crear  cliente idividual en HF
-router.post('/clients/hf/create', auth, async (req, res) => { // FUNCIONA
-    try {
-        const result = await Client.createClientHF(req.body);
+// // ------------------- Crear  cliente idividual en HF
+// router.post('/clients/hf/create', auth, async (req, res) => { // FUNCIONA
+//     try {
+//         const result = await Client.createClientHF(req.body);
 
-        res.status(201).send(result, 1);
+//         res.status(201).send(result, 1);
 
-    } catch (error) {
-        res.status(401).send(error.message)
-    }
-});
+//     } catch (error) {
+//         res.status(401).send(error.message)
+//     }
+// });
 
-const removeAccents = (str) => {
-    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-};
-
-const comparar = (entrada) => {
-    const permitido = ["name", "lastname", "second_lastname", "email", "password", "curp", "ine_clave", "ine_duplicates", "ine_doc_number", "dob", "segmento", "loan_cicle", "client_type", "branch", "is_new", "bussiness_data", "gender", "scolarship", "address", "phones", "credit_circuit_data", "external_id", "status"];
-    const result = entrada.every(campo => permitido.includes(campo));
-    return result;
-}
 
 const getDates = (fecha) => {
     const date = moment.utc(fecha).format(formato)
