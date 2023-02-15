@@ -98,10 +98,18 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
         
         const identifierFreq = loan_application.periodicidad.slice(0,1);
         const frequency = productMaster.allowed_term_type.find( (i) => i.identifier === identifierFreq)
+        /// Uses the same loan application info, except some field, ei: id_solicitud,
+        /// and fecha Desembolso y Fecha primer pago
+        const fechaDesNew = new Date();
+        const fechaPPagoNew = new Date();
+
+        fechaDesNew.setDate(fechaDesNew.getDate() + 7);
+        fechaPPagoNew.setDate( fechaPPagoNew.getDate() + 14);
+
 
         const loan_app = {
             id_cliente: loan_application.id_cliente,
-            id_solicitud: loan_application.id_solicitud,
+            id_solicitud: 0,
             loan_officer: loan_application.id_oficial,
             branch: loan_application.id_oficina,
             id_producto: loan_application.id_producto,
@@ -110,8 +118,8 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
             approved_total: loan_application.monto_total_autorizado,
             term: loan_application.plazo,
             frequency: [frequency.identifier,frequency.value],
-            first_repay_date: loan_application.fecha_primer_pago,
-            disbursment_date: loan_application.fecha_entrega,
+            first_repay_date: fechaPPagoNew.toISOString(),
+            disbursment_date: fechaDesNew.toISOString(),
             disbursment_mean: loan_application.medio_desembolso.trim(),
             liquid_guarantee: loan_application.garantia_liquida,
             loan_cycle: loan_cycle.ciclo,
@@ -121,7 +129,7 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
             product: {
               external_id: productMaster.external_id,
               min_amount: productMaster.min_amount,
-              max_amount: productMaster.max_amount,
+              max_amount: (productMaster.max_amount)*(members.length),
               step_amount: productMaster.step_amount,
               min_term: productMaster.min_term,
               max_term: productMaster.max_term,

@@ -13,8 +13,6 @@ const sendSms = require("../sms/sendsms");
 const formatLocalCurrency = require('../utils/numberFormatter');
 
 
-
-
 router.get("/clients/hf", authorize, async(req, res) => {
 
     //  get the Client Data with identityNumber and externalId
