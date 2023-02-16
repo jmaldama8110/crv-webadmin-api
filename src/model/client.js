@@ -163,6 +163,7 @@ clientSchema.methods.toJSON = function(){
     return clientPublic
 }
 
+
 clientSchema.statics.passwordHashing = async(password) => {
     return bcrypt.hash(password, 8);
 };
@@ -216,6 +217,47 @@ clientSchema.statics.findPersonByCurp = async (curp) =>{
     }
     catch(error){
 
+    }
+}
+
+
+//// Obtiene los contratos por Id Cliente
+clientSchema.statics.getBalanceById = async (idClient) => {
+    try{
+        const pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+            .input('idCliente', sql.Int, idClient)
+            .execute('MOV_ObtenerSaldoClienteById');
+                    
+        
+        return result.recordsets
+    } catch (err) {
+        throw new Error(err);
+    }
+}
+
+clientSchema.statics.getObtenerEstadoCuentaPeriodo = async (idContract, fechaInicial, fechaFinal, anio, mes) => {
+
+    // -- DATOS DEL CONTRATO
+    // -- DATOS IFE, CURP, TELEFONO
+    // -- MONTO AUTORIZADO
+    // -- TABLA DE AMORTIZACION
+    // -- MOVIMIENTOS DEL PERIODO
+    
+    try{
+        const pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+            .input('idContrado', sql.Int, idContract)
+            .input('fechaInicial', sql.Date, fechaInicial)
+            .input('fechaFinal', sql.Date, fechaFinal)
+            .input('anio', sql.Int, anio)
+            .input('mes', sql.Int, mes)
+            .execute('MOV_ObtenerEstadoCuentaPeriodo');
+
+            return result.recordsets
+    } catch (err) {
+        console.log(err);
+        throw new Error(err);
     }
 }
 
