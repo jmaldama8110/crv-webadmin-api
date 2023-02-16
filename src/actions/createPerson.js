@@ -98,7 +98,7 @@ async function sortDataPerson(client, action) {
                 casa_situacion: dirDomi[0].ownership ? dirDomi[0].ownership === true ? 1 : 0 : 0, //No se guarda el ownership 0 => RENTADO / 1- => PROPIO
                 tiempo_habitado_inicio: dirDomi[0].start_date ? getDates(dirDomi[0].start_date) : "2022-06-22",
                 tiempo_habitado_final: dirDomi[0].end_date ? getDates(dirDomi[0].end_date) : "2022-06-20",
-                correo_electronico: client.email,
+                correo_electronico: client.email ? client.email : '',
                 num_interior: 0,
                 num_exterior: 0,
                 id_vialidad: dirDomi[0].road ? dirDomi[0].road[0] : 5,//vialidad
@@ -123,7 +123,7 @@ async function sortDataPerson(client, action) {
                 casa_situacion: dirIfe.length >= 1 ? dirIfe[0].ownership ? dirIfe[0].ownership === true ? 1 : 0 : 0 : (person.DIRECCIONES)[0].casa_situacion,
                 tiempo_habitado_inicio: dirIfe.length >= 1 && dirIfe[0].start_date ? getDates(dirIfe[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                 tiempo_habitado_final: dirIfe.length >= 1 && dirIfe[0].end_dat ? getDates(dirIfe[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final,
-                correo_electronico: client.email,
+                correo_electronico: client.email ? client.email : '',
                 num_interior: 0,
                 num_exterior: 0,
                 id_vialidad: 5,//vialidad
@@ -148,7 +148,7 @@ async function sortDataPerson(client, action) {
                 casa_situacion: dirRfc.length >= 1 ? dirRfc[0].ownership ? dirRfc[0].ownership === true ? 1 : 0 : 0 : (person.DIRECCIONES)[0].casa_situacion,
                 tiempo_habitado_inicio: dirRfc.length >= 1 && dirRfc[0].start_date ? getDates(dirRfc[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
                 tiempo_habitado_final: dirRfc.length >= 1 && dirRfc[0].end_dat ? getDates(dirRfc[0].end_date) : (person.DIRECCIONES)[0].tiempo_habitado_final,
-                correo_electronico: client.email,
+                correo_electronico: client.email ? client.email : '',
                 num_interior: 0,
                 num_exterior: 0,
                 id_vialidad: 5,
