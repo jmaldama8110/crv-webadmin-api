@@ -82,6 +82,17 @@ class DocumentCollection {
             throw new Error(error)
         }
     }
+
+    async delete(){
+        try {
+            const db = connCouch.use(process.env.COUCHDB_NAME);
+            const result = await db.destroy(this._id, this._rev);
+
+            return result;
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
 }
 
 module.exports = DocumentCollection;

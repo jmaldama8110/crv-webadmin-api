@@ -359,7 +359,7 @@ UDT_CLIE_TuHogarConConservaCoacreditado.columns.add('id_color_semaforo_fico_scor
 UDT_CLIE_TuHogarConConservaCoacreditado.columns.add('activo', SQL.Bit, { nullable: true });
 //#endregion
 
-//#region Columns UDT_CONT_DireccionContacto 
+//#region Columns UDT_CONT_DireccionContacto
 UDT_CONT_DireccionContacto.columns.add('id', SQL.Int, { nullable: true });
 UDT_CONT_DireccionContacto.columns.add('tipo', SQL.Char(12), { nullable: true });
 UDT_CONT_DireccionContacto.columns.add('id_pais', SQL.Int, { nullable: true });

@@ -32,7 +32,7 @@ async function sortDataPerson(client, action) {
         const phones = client.phones;
 
         const entidad_nac = dirDomi[0].province[0] ? dirDomi[0].province[0] : 5;
-        console.log({entidad_nac})
+        // console.log({entidad_nac})
         const province = await Document.findOne({ _id: entidad_nac, couchdb_type: 'PROVINCE' });
 
         person.DATOS_PERSONALES = [
@@ -70,7 +70,7 @@ async function sortDataPerson(client, action) {
                 id: IS_CREATE ? 0 : client.identities[0]._id,
                 id_entidad: IS_CREATE ? 0 : client.id_persona,
                 tipo_identificacion: "IFE",
-                id_numero: client.ine_clave.slice(0, 18)
+                id_numero: client.clave_ine.slice(0, 18) // ine_clave
             },
             {
                 id: IS_CREATE ? 0 : client.identities[1]._id,
@@ -159,8 +159,8 @@ async function sortDataPerson(client, action) {
         person.DATOS_IFE = [
             {
                 id: IS_CREATE ? 0 : client.ife_details.id,
-                numero_emision: client.ine_duplicates ? client.ine_duplicates.slice(0, 2) : "00",
-                numero_vertical_ocr: client.ine_doc_number ? client.ine_doc_number.slice(0, 13) : "0000000000000"
+                numero_emision: client.numero_emisiones ? client.numero_emisiones.slice(0, 2) : "00", //TODO ine_duplicates
+                numero_vertical_ocr: client.numero_vertical ? client.numero_vertical.slice(0, 13) : "0000000000000" // .numero_vertical
             }
         ]
 

@@ -15,7 +15,7 @@ class ClientCollection extends DocumentCollection {
         this._second_lastname = obj.lastname,
         this._email = obj.email,
         this._curp = obj.curp,
-        this._ine_clave = obj.ine_clave,
+        this._clave_ine = obj.clave_ine, // ine_clave
         this._ine_duplicates = obj.ine_duplicates,
         this._ine_doc_number = obj.ine_doc_number,
         this._dob = obj.dob,
@@ -55,7 +55,7 @@ class ClientCollection extends DocumentCollection {
 
     async findClientByExternalId(externalId) {
         try {
-    
+
             let pool = await sql.connect(sqlConfig);
             let result = await pool
                 .request()
