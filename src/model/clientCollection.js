@@ -12,8 +12,8 @@ class ClientCollection extends DocumentCollection {
         this._id_persona = obj.id_persona
         this._name = obj.name,
         this._lastname = obj.lastname,
-        this._second_lastname = obj.lastname,
-        this._email = obj.email,
+        this._second_lastname = obj.second_lastname,
+        this._email = obj.email || '',
         this._curp = obj.curp,
         this._clave_ine = obj.clave_ine, // ine_clave
         this._ine_duplicates = obj.ine_duplicates,
