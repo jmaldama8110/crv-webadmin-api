@@ -221,7 +221,7 @@ class ActionCollection extends DocumentCollection {
                 data["INDIVIDUAL"][0].econ_gastos_familiares,
                 data["INDIVIDUAL"][0].econ_gastos_transporte,
                 data["INDIVIDUAL"][0].credito_anteriormente, // 0/1 (NO/SI)
-                data["INDIVIDUAL"][0].mejorado_ingreso, // 0/1 (NO/SI) 
+                data["INDIVIDUAL"][0].mejorado_ingreso, // 0/1 (NO/SI)
                 data["INDIVIDUAL"][0].lengua_indigena, // 0/1 (NO/SI)
                 data["INDIVIDUAL"][0].habilidad_diferente, // 0/1 (NO/SI)
                 data["INDIVIDUAL"][0].utiliza_internet, // 0/1 (NO/SI)
@@ -312,6 +312,20 @@ class ActionCollection extends DocumentCollection {
         } catch (error) {
             console.log(error);
             throw new Error(error)
+        }
+    }
+
+    async getActionHF(){
+        try {
+            const pool = await sql.connect(sqlConfig);
+            const result = await pool
+            .request()
+                .query("SELECT * FROM MOVI_Acciones WHERE estatus = 'PENDIENTE'");
+
+            return result.recordset;
+        } catch (error) {
+            console.log(error);
+            throw new Error(error.message)
         }
     }
 }

@@ -13,7 +13,25 @@ class GroupCollection extends DocumentCollection {
             this._data = obj.data
     }
 
+    /**
+     *
+     * @param {number} idGroup Id_cliente de HF
+     * @returns {Array}
+     */
+    async getGroupById(idGroup) {
+        try {
+            const pool = await sql.connect(sqlConfig);
 
+            const result = await pool.request()
+                .input('id_grupo', sql.Int, idGroup)
+                .execute('MOV_ObtenerGrupoByID')
+
+            return result.recordset;
+        }
+        catch (error) {
+            throw new Error(error)
+        }
+    }
 }
 
 module.exports = GroupCollection;

@@ -3,6 +3,7 @@ require('./db/mongoose')
 // require('./db/connSQL')
 require('./db/populateData');
 require('./db/connCouch');
+require('./crons/cron');
 
 const userRouter = require('./routers/user');
 const productRouter =  require('./routers/product');
