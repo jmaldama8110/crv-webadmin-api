@@ -19,6 +19,7 @@ class LoanAppGroupCollection extends DocumentCollection {
             this._apply_amount = obj.apply_amount || 0,  // En caso de grupos es la suma total de monto de lo integrantes
             this._approved_total = obj.approved_total || 0,
             this._term = obj.term || 0,
+            this._renovation = obj.renovation || false,
             this._frequency = obj.frequency || ['S', 'Semana(s)'],
             this._first_replay_at = obj.first_replay_at || '', // type Date
             this._disburset_at = obj.disburset_at || '', // type Date
