@@ -117,24 +117,24 @@ async function assignMontoloanHF(data) {
             tbl.GrupoSolidario.rows.add(
                 data['GRUPO'].id,//data['SOLICITUD'][0].id_cliente,
                 // data['GRUPO'].name,
-                data['GRUPO'].name,
-                data['GRUPO'].address[0].id > 0 ? data['GRUPO'].address[0].id : 0,
+                data['GRUPO'].name, // name_group
+                data['GRUPO'].address[0].id > 0 ? data['GRUPO'].address[0].id : 0, // Falta
                 data['GRUPO'].weekday_meet,
                 data['GRUPO'].hour_meet
             );
 
             tbl.Direccion.rows.add(
-                data['GRUPO'].address[0].id > 0 ? data['GRUPO'].address[0].id : 0,
-                data['GRUPO'].address[0].address_line1,
-                getId(data['GRUPO'].address[0].country[0]),
+                data['GRUPO'].address[0].id > 0 ? data['GRUPO'].address[0].id : 0, // falta guardar id
+                data['GRUPO'].address[0].address_line1, // address_line2
+                getId(data['GRUPO'].address[0].country[0]), //Hace falta || 1
                 getId(data['GRUPO'].address[0].province[0]),
                 getId(data['GRUPO'].address[0].municipality[0]),
                 getId(data['GRUPO'].address[0].city[0]),
                 getId(data['GRUPO'].address[0].colony[0]),
-                data['GRUPO'].address[0].street_reference,
-                data['GRUPO'].address[0].ext_number,
-                data['GRUPO'].address[0].int_number,
-                data['GRUPO'].address[0].road
+                data['GRUPO'].address[0].street_reference, // FALTA
+                data['GRUPO'].address[0].ext_number, // numero_exterior
+                data['GRUPO'].address[0].int_number, // numero_interior
+                data['GRUPO'].address[0].road // road_type
             );
         }
 
@@ -486,6 +486,30 @@ async function sortLoanHFtoCouch(loan) {
 
     return loanCouch;
 }
+/**
+ *
+ * @param {Number} idClient
+ * @param {Number} idLoan
+ * @param {Number} idOfficer
+ * @param {Number} idOffice
+ * @returns Array [{0,0,0,0}]
+ */
+async function loanRenovation(idClient, idLoan, idOfficer, idOffice) {
+    try {
+        const pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+            .input('idCliente', sql.Int, idClient)
+            .input('idSolicitud', sql.Int, idLoan)
+            .input('idUsuario', sql.Int, 0)
+            .input('idOficial', sql.Int, idOfficer)
+            .input('idOficinaActual', sql.Int, idOffice)
+            .execute('MOV_InsertSolicitudGrupoSolidarioCredito');
+
+        return result.recordset[0].id_solicitud;
+    } catch (error) {
+        console.log(error.message);
+    }
+}
 
 // async function createLoanHF(data) {
 //     // try {
@@ -655,8 +679,21 @@ async function createLoanHF(data) {
         const isNewLoan = loan.id_solicitud == 0;
         const idBranch = loan.branch[0];
 
+        /*
+        if(loan.renovation && typeClient == 1) {
+            idOfficer = loan.loan_officer ? loan.loan_officer : 0;
+            const loanRenovation = loanRenovation(loan.id_cliente, loan.id_solicitud, idOfficer, idBranch);
+            if(!loanRenovation) {console.log('Error renovation loan'); return }
+            loan.id_solicitud = loanRenovatioon[0][1]
+        }
+         */
+        // console.log(typeClient)
+        const client = typeClient == 1 ? await Group.findOne({ _id: loan.apply_by }) : await Client.findOne({ _id: loan.apply_by });
+        if (!client) { console.log('Failed to find'); return };
+
         // CREAR LA SOLICITUD, SI ES SOLICITUD NUEVA
         if (isNewLoan) {
+            console.log('NUEVA SOLICITUD');
             const dataCreate = { idUsuario: 0, idOficina: idBranch, num: 1, typeClient: typeClient }
 
             const LoanHFCreated = await createLoanFromHF(dataCreate);
@@ -669,12 +706,25 @@ async function createLoanHF(data) {
             } else {
                 // TODO RENOVACIÓN
                 // OTOR_InsertSolicitudGrupoSolidarioCredito
+                // TODO Para hacer la renovacion el sub_estatus del loan debe ser PRESTAMO ACTIVO / PRESTAMO FINALIZADO / CANCELACION/ABANDONO
+                /* Hacer un if antes de esto y jejecutar el procedimiento
+                para obtener el nuevo id_solicitud,
+                */
             }
 
-        } else {
-            console.log(typeClient == 1 ? 'Grupo' : 'Individual')
-            const client = typeClient == 1 ? await Group.findOne({ _id: loan.apply_by }) : await Client.findOne({ _id: loan.apply_by });
-            if (!client) { console.log('Failed to find'); return };
+        } else if (loan.renovation && typeClient == 1) { // TODOelse if revobacion
+            console.log('RENOVACIÓN');
+
+            idOfficer = loan.loan_officer ? loan.loan_officer : 0;
+            const idLoanRenovation = await loanRenovation(loan.id_cliente, loan.id_solicitud, idOfficer, idBranch);
+            if (!idLoanRenovation) { console.log('Error renovation loan'); return }
+            console.log('idRenovation:', idLoanRenovation)
+            loan.id_solicitud = idLoanRenovation;
+            loan.renovation = false;
+        }else {
+            // console.log(typeClient == 1 ? 'Grupo' : 'Individual')
+            console.log('ACTUALIZACIÓN');
+
             loan.id_cliente = client.id_cliente;
         }
 
@@ -689,7 +739,7 @@ async function createLoanHF(data) {
 
         // TODO Cambiar todos los product. a loan.product.
         // TODO EJECUATR EL PROCEDIMIENTO CUANDO SEA ESTATUS "POR AUTORIZAR" MOV_CATA_CrearProducto
-        console.log(loan.frequency);
+        // console.log(loan.frequency);
         const dataMount = {
             SOLICITUD: [
                 {
@@ -715,7 +765,26 @@ async function createLoanHF(data) {
                     tipo_cliente: typeClient
                 }
             ],
-            GRUPO: typeClient == 1 ? loan.group : {},
+            GRUPO: typeClient == 1 ? {
+                id: client.id_cliente,
+                name: client.group_name,
+                weekday_meet: client.weekday_meet,
+                hour_meet: client.hour_meet,
+                address: [{
+                    id: client.address.id,
+                    address_line1: client.address.address_line1,
+                    country: ['COUNTRY|1', 'México'],
+                    province: client.address.province,
+                    municipality: client.address.municipality,
+                    city: client.address.city,
+                    colony: client.address.colony,
+                    street_reference: client.address.street_reference,
+                    ext_number: client.address.numero_exterior,
+                    int_number: client.address.numero_interior,
+                    road: client.address.road_type[0],
+
+                }]
+            } : {},
 
             INTEGRANTES: loan.members.map(member => {
                 return {
@@ -747,11 +816,8 @@ async function createLoanHF(data) {
             }),
             REFERENCIA: [] //TODO FALTA INSERTAR
         }
-        //     return dataMount;
-        // } catch (error) {
-        //     console.error(error)
-        //     return new Error(error.message);
-        // }
+            // return dataMount;
+
         if (isNewLoan) {
             for (let idx = 0; idx < dataMount['INTEGRANTES'].length; idx++) {
                 // Asignamos Cliente a Solicitud
@@ -793,4 +859,4 @@ async function createLoanHF(data) {
 }
 
 
-module.exports = { createLoanFromHF, assignClientLoanFromHF, assignMontoloanHF, createLoanHF, sortLoanHFtoCouch };
+module.exports = { createLoanFromHF, assignClientLoanFromHF, assignMontoloanHF, createLoanHF, sortLoanHFtoCouch, loanRenovation };

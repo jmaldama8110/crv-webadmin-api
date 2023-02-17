@@ -176,7 +176,7 @@ function sortDataClient(client) {
                 {
                     id: IS_CREATE ? 0 : client.data_company[0]["id_empresa"],
                     id_dir: IS_CREATE ? 0 : campo._id, //id de la dirección del negocio
-                    nombre: business_data.business_name ? business_data.business_name : "NEGOCIO",
+                    nombre: business_data.business_name ? business_data.business_name.trim() : "NEGOCIO",
                     calle: campo.address_line1 ? campo.address_line1 : "Calle ...",
                     referencia: campo.address_line1 ? campo.address_line1 : "Calle ...",
                     letra_exterior: "SN",
@@ -570,14 +570,14 @@ async function createClientHF(data) {
             .input('id_opcion', sql.Int, 0)
             .input('uid', sql.Int, 0)
             .execute('MOV_insertarInformacionClienteV2')
+            // .execute('MOV_TEST')
 
         if(!result) {console.log('Error create client')}
 
-        // console.log(result.recordset[0])
         cleanAllTables();
 
         const idClientCreated = result.recordset[0].id_cliente;
-            console.log('Client Created',idClientCreated)
+            console.log('Id Client',idClientCreated)
         //Creado el cliente agregamos sus datos del hf
         const dataHF = await getClientHFById(idClientCreated);
 

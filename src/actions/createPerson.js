@@ -189,6 +189,7 @@ async function createPersonHF(data) {
     try {
         const { _id } = data;
         const clientCouch = await Client.findOne({ _id });
+        if(!clientCouch) { console.log('Client not Foun in couch'); return }
 
         const dataSort = await sortDataPerson(clientCouch)
         const pool = await sql.connect(sqlConfig);
