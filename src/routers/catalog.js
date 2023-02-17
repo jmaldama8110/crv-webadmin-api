@@ -15,21 +15,21 @@ const CatalogCollection = require('../model/catalogCollection');
 router.get('/catalogs/sync', async (req,res) => {
     try{
         const catalogCollection = new CatalogCollection();
-        await catalogCollection.updateCatalogFromHF('CATA_ActividadEconomica',10000)
+        await catalogCollection.updateCatalogFromHF('CATA_ActividadEconomica',10000, true)
         await catalogCollection.updateCatalogFromHF('CATA_sexo',10000)
         await catalogCollection.updateCatalogFromHF('CATA_sector',10000)
         await catalogCollection.updateCatalogFromHF('CATA_escolaridad',10000)
         await catalogCollection.updateCatalogFromHF('CATA_estadoCivil',10000)
-        await catalogCollection.updateCatalogFromHF('CATA_nacionalidad',10000)
-        await catalogCollection.updateCatalogFromHF('CATA_ocupacion',10000)
+        await catalogCollection.updateCatalogFromHF('CATA_nacionalidad',10000, true)
+        // await catalogCollection.updateCatalogFromHF('CATA_ocupacion',10000)
         await catalogCollection.updateCatalogFromHF('CATA_parentesco',10000)
-        await catalogCollection.updateCatalogFromHF('CATA_profesion',10000)
+        await catalogCollection.updateCatalogFromHF('CATA_profesion',10000, true)
         await catalogCollection.updateCatalogFromHF('CATA_TipoRelacion',10000)
         await catalogCollection.updateCatalogFromHF('CATA_TipoPuesto',10000)
         await catalogCollection.updateCatalogFromHF('CATA_TipoVialidad',10000)
         await catalogCollection.updateCatalogFromHF('CATA_Ciudad_Localidad',10000)
         await catalogCollection.updateCatalogFromHF('CATA_destinoCredito',10000)
-        await catalogCollection.updateCatalogFromHF('CATA_ocupacionPLD',10000)
+        await catalogCollection.updateCatalogFromHF('CATA_ocupacionPLD',10000, true)
         await catalogCollection.updateCatalogFromHF('CATA_banco',10000)
         await catalogCollection.updateCatalogFromHF('CATA_TipoCuentaBancaria',10000)
 
@@ -54,7 +54,7 @@ router.get('/catalogs/sync', async (req,res) => {
 
 // router.get('/catalogs/sync', auth, async (req,res) => {
 //     try{
-            
+
 //         await Catalog.updateCatalogFromHF('CATA_ActividadEconomica',10000)
 //         await Catalog.updateCatalogFromHF('CATA_sexo',10000)
 //         await Catalog.updateCatalogFromHF('CATA_sector',10000)
@@ -110,7 +110,7 @@ router.get('/universalCatalog', authCouch, async(req, res) => {
 
 // router.get('/universalCatalog', auth, async(req, res) => {
 //     const match = {}
-    
+
 //     try{
 
 //         if (req.query.id){
@@ -153,7 +153,7 @@ router.get('/neighborhoodCatalog', async(req, res) => {
 
 // router.get('/neighborhoodCatalog', auth, async(req, res) => {
 //     const match = {}
-    
+
 //     try{
 
 //         if (req.query.id){
@@ -182,7 +182,7 @@ router.get('/cityCatalog', async(req, res) => {
 
         const catalog = await catalogCollection.find(match);
         if(!catalog || catalog.length == 0) throw new Error('No records found');
-        
+
         res.status(200).send(catalog);
 
     } catch(e){
@@ -192,7 +192,7 @@ router.get('/cityCatalog', async(req, res) => {
 
 // router.get('/cityCatalog', auth, async(req, res) => {
 //     const match = {}
-    
+
 //     try{
 
 //         if (req.query.id){
@@ -203,7 +203,7 @@ router.get('/cityCatalog', async(req, res) => {
 //         if(!catalog || catalog.length == 0){
 //             throw new Error('No records found');
 //         }
-        
+
 //         res.status(200).send(catalog);
 
 //     } catch(e){
@@ -219,7 +219,7 @@ router.get('/municipalityCatalog', authCouch, async(req, res) => {
 
         const catalog = await catalogCollection.find(match);
         if(!catalog || catalog.length == 0) throw new Error('No records found');
-        
+
         res.status(200).send(catalog);
 
     } catch(e){
@@ -229,7 +229,7 @@ router.get('/municipalityCatalog', authCouch, async(req, res) => {
 
 // router.get('/municipalityCatalog', auth, async(req, res) => {
 //     const match = {}
-    
+
 //     try{
 
 //         if (req.query.id){
@@ -240,7 +240,7 @@ router.get('/municipalityCatalog', authCouch, async(req, res) => {
 //         if(!catalog || catalog.length == 0){
 //             throw new Error('No records found');
 //         }
-        
+
 //         res.status(200).send(catalog);
 
 //     } catch(e){
@@ -259,7 +259,7 @@ router.get('/provinceCatalog', authCouch, async(req, res) => {
         const catalog = await catalogCollection.find(match);
         console.log({catalog})
         if(!catalog || catalog.length == 0) throw new Error('No records found');
-        
+
         res.status(200).send(catalog);
 
     } catch(e){
@@ -269,7 +269,7 @@ router.get('/provinceCatalog', authCouch, async(req, res) => {
 
 // router.get('/provinceCatalog', auth, async(req, res) => {
 //     const match = {}
-    
+
 //     try{
 
 //         if (req.query.id){
@@ -280,7 +280,7 @@ router.get('/provinceCatalog', authCouch, async(req, res) => {
 //         if(!catalog || catalog.length == 0){
 //             throw new Error('No records found');
 //         }
-        
+
 //         res.status(200).send(catalog);
 
 //     } catch(e){
@@ -298,7 +298,7 @@ router.get('/countryCatalog', async(req, res) => {
 
         const catalog = await catalogCollection.find(match);
         if(!catalog || catalog.length == 0) throw new Error('No records found');
-        
+
         res.status(200).send(catalog);
 
     } catch(e){
@@ -308,7 +308,7 @@ router.get('/countryCatalog', async(req, res) => {
 
 // router.get('/countryCatalog', auth, async(req, res) => {
 //     const match = {}
-    
+
 //     try{
 
 //         if (req.query.id){
@@ -319,7 +319,7 @@ router.get('/countryCatalog', async(req, res) => {
 //         if(!catalog || catalog.length == 0){
 //             throw new Error('No records found');
 //         }
-        
+
 //         res.status(200).send(catalog);
 
 //     } catch(e){

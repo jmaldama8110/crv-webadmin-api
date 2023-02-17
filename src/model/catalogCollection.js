@@ -28,7 +28,7 @@ class CatalogCollection extends DocumentCollection {
         this._tipo = obj.tipo
     }
 
-    async updateCatalogFromHF(name, chunk) {
+    async updateCatalogFromHF(name, chunk, filterActive) {
         try {
             const db = connCouch.use(process.env.COUCHDB_NAME);
             const docsDestroy = await db.find({ selector: { name }, limit: 100000 });
@@ -46,7 +46,11 @@ class CatalogCollection extends DocumentCollection {
                 const request = new sql.Request();
                 request.stream = true;//Activarlo al trabajar con varias filas
 
-                request.query(`select * from ${name}`);
+                if (filterActive) {
+                    request.query(`select * from ${name} where estatus_registro = \'ACTIVO\'`);
+                } else{
+                    request.query(`select * from ${name}`);
+                }
 
                 let rowData = [];
 
