@@ -13,7 +13,7 @@ cron.schedule('5 * * * * *', async () => {
     try {
         const tasks = await Action.find({ status: 'Pending' });
 
-        if (tasks.length == 0) console.log('Task not found');
+        // if (tasks.length == 0) console.log('Task not found');
         tasks.map(async (task) => {
             switch (task.name) {
                 case 'CREATE_UPDATE_CLIENT':

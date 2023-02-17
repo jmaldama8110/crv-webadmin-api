@@ -137,6 +137,8 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
               term_types: productMaster.allowed_term_type,
               rate: productMaster.rate,
               tax: productMaster.tax,
+              GL_financeable: false,
+              liquid_guarantee: 10,
             }
         }
 

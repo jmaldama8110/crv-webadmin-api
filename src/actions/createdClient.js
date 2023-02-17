@@ -194,7 +194,7 @@ function sortDataClient(client) {
                     casa_situacion: campo.ownership ? campo.ownership === true ? 1 : 0 : 0,
                     correo_electronico: client.email ? client.email : "",
                     id_vialidad: 1,
-                    nombre_oficina: business_data.business_name ? `OFICINA ${business_data.business_name}` : "OFICINA...", //Mandar el nombre del negocio concatenar 'Oficina'
+                    nombre_oficina: business_data.business_name ? `${business_data.business_name}` : "OFICINA...", //Mandar el nombre del negocio concatenar 'Oficina'
                     nombre_puesto: business_data.position ? business_data.position : "dueño",//PONER SOLO dueño //no actualizar
                     departamento: business_data.department ? business_data.department : "cobranza",
                     numero_empleados: business_data.employees ? business_data.employees : 10,
