@@ -19,6 +19,8 @@ class LoanAppGroupCollection extends DocumentCollection {
             this._apply_amount = obj.apply_amount || 0,  // En caso de grupos es la suma total de monto de lo integrantes
             this._approved_total = obj.approved_total || 0,
             this._term = obj.term || 0,
+            this._estatus = obj.estatus || 'TRAMITE',
+            this._sub_estatus = obj.sub_estatus || 'NUEVO TRAMITE',
             this._renovation = obj.renovation || false,
             this._frequency = obj.frequency || ['S', 'Semana(s)'],
             this._first_replay_at = obj.first_replay_at || '', // type Date
@@ -41,31 +43,31 @@ class LoanAppGroupCollection extends DocumentCollection {
             }, // TODO Buscar el extenal id en couch al sincronizar, Product Couch
             this._created_by = obj.created_by || 'promotor@grupoconserva.mx',
             this._status = obj.status || [1, 'Pendiente'],
-            this.group = obj.group || {
-                id: 0,
-                cicle: 0,
-                status: '',
-                sub_estatus: '',
-                name: '',
-                weekday_meet: '',
-                hour_meet: '',
-                address: [
-                    {
-                        id: 0,
-                        country: ['COUNTRY|1', 'México'],
-                        province: ['', ''],
-                        municipality: ['', ''],
-                        city: ['', ''],
-                        colony: ['', ''],
-                        address_line1: '',
-                        street_reference: '',
-                        road: 0, // vialidad,
-                        ext_num: '0',
-                        int_num: '0'
-                    }
-                ]
+            // this.group = obj.group || {
+            //     id: 0,
+            //     cicle: 0,
+            //     status: '',
+            //     sub_estatus: '',
+            //     name: '',
+            //     weekday_meet: '',
+            //     hour_meet: '',
+            //     address: [
+            //         {
+            //             id: 0,
+            //             country: ['COUNTRY|1', 'México'],
+            //             province: ['', ''],
+            //             municipality: ['', ''],
+            //             city: ['', ''],
+            //             colony: ['', ''],
+            //             address_line1: '',
+            //             street_reference: '',
+            //             road: 0, // vialidad,
+            //             ext_num: '0',
+            //             int_num: '0'
+            //         }
+            //     ]
 
-            },
+            // },
             this._members = obj.members || [{
                 client_id: '', // id client couch
                 id_cliente: 0, // id cliente/individual HF

@@ -87,8 +87,8 @@ async function assignMontoloanHF(data) {
             data['SOLICITUD'][0].monto_autorizado, // Monto_autorizado TODO: MANDAR EN 0 DESDE MÓVIL
             data['SOLICITUD'][0].periodicidad, // Meses/Quincena (Se obtiene de configuracionMaestro)
             data['SOLICITUD'][0].plazo, // 1, 2, 3, 6, 12, 24, etc.
-            'TRAMITE',// ESTATUS
-            'NUEVO TRAMITE',  // SUB_ESTATUS -> "POR AUTORIZAR"
+            data['SOLICITUD'][0].estatus ? data['SOLICITUD'][0].estatus :'TRAMITE',// ESTATUS
+            data['SOLICITUD'][0].sub_estatus ? data['SOLICITUD'][0].sub_estatus : 'NUEVO TRAMITE',// SUB_ESTATUS -> "POR AUTORIZAR"
             data['SOLICITUD'][0].fecha_primer_pago, // Ej. 2022-07-20
             data['SOLICITUD'][0].fecha_entrega, // Ej. 2022-07-20
             data['SOLICITUD'][0].medio_desembolso.trim(), // ORP -> Orden de pago / cheque
@@ -672,15 +672,6 @@ async function createLoanHF(data) {
         const isNewLoan = loan.id_solicitud == 0;
         const idBranch = loan.branch[0];
 
-        /*
-        if(loan.renovation && typeClient == 1) {
-            idOfficer = loan.loan_officer ? loan.loan_officer : 0;
-            const loanRenovation = loanRenovation(loan.id_cliente, loan.id_solicitud, idOfficer, idBranch);
-            if(!loanRenovation) {console.log('Error renovation loan'); return }
-            loan.id_solicitud = loanRenovatioon[0][1]
-        }
-         */
-        // console.log(typeClient)
         const client = typeClient == 1 ? await Group.findOne({ _id: loan.apply_by }) : await Client.findOne({ _id: loan.apply_by });
         if (!client) { console.log('Failed to find'); return };
 
@@ -695,14 +686,7 @@ async function createLoanHF(data) {
             loan.id_solicitud = LoanHFCreated[0].idSolicitud;
             if (typeClient == 1 && loan.id_cliente == 0) {
                 loan.id_cliente = LoanHFCreated[0].idCliente;
-                loan.group.id = 0;
-            } else {
-                // TODO RENOVACIÓN
-                // OTOR_InsertSolicitudGrupoSolidarioCredito
-                // TODO Para hacer la renovacion el sub_estatus del loan debe ser PRESTAMO ACTIVO / PRESTAMO FINALIZADO / CANCELACION/ABANDONO
-                /* Hacer un if antes de esto y jejecutar el procedimiento
-                para obtener el nuevo id_solicitud,
-                */
+                // loan.group.id = 0;
             }
 
         } else if (loan.renovation && typeClient == 1) { // TODOelse if revobacion
@@ -714,10 +698,9 @@ async function createLoanHF(data) {
             console.log('idRenovation:', idLoanRenovation)
             loan.id_solicitud = idLoanRenovation;
             loan.renovation = false;
-        }else {
+        } else {
             // console.log(typeClient == 1 ? 'Grupo' : 'Individual')
             console.log('ACTUALIZACIÓN');
-
             loan.id_cliente = client.id_cliente;
         }
 
@@ -742,6 +725,8 @@ async function createLoanHF(data) {
                     id_disposicion: disposition[0] ? disposition[0].IdDisposición : 0,
                     monto_solicitado: loan.apply_amount,
                     monto_autorizado: loan.approved_total || 0,
+                    estatus: loan.estatus ? loan.estatus : 'TRAMITE',
+                    sub_estatus: loan.sub_estatus ? loan.sub_estatus : 'NUEVO TRAMITE',
                     periodicidad: frecuencysCouchtoHF[loan.frequency[0]] || '',
                     plazo: loan.term || loan.product.min_term,
                     fecha_primer_pago: loan.first_replay_at != '' ? getDates(loan.first_replay_at) : '1999-01-01T00:00:00.000Z', //2023-02-02T00:00:00.000Z
@@ -811,7 +796,7 @@ async function createLoanHF(data) {
             }),
             REFERENCIA: [] //TODO FALTA INSERTAR
         }
-            // return dataMount;
+        // return dataMount;
 
         if (isNewLoan) {
             for (let idx = 0; idx < dataMount['INTEGRANTES'].length; idx++) {
@@ -830,7 +815,7 @@ async function createLoanHF(data) {
                 const asignClientLoan = await assignClientLoanFromHF(dataAssign);
                 console.log(asignClientLoan);
             }
-        }
+        };
 
         const MountAssigned = await assignMontoloanHF(dataMount);
         if (!MountAssigned) { console.log('Failed to assign mount'); return };
@@ -838,12 +823,29 @@ async function createLoanHF(data) {
         const detailLoan = await LoanApp.getDetailLoan(loan.id_solicitud, idBranch);
         if (!detailLoan) { console.log('Failed to in Loan'); return };
 
-        const sortDetailLoan = await sortLoanHFtoCouch(detailLoan);
+        // Actualizar ids en Couch con los creados en HF
+        if (typeClient == 1) {
+            loan.id_producto = detailLoan[0][0].id_producto;
+            if (isNewLoan) {
+                client.id_cliente = detailLoan[1][0].id;
+                client.address.id = detailLoan[2][0].id_direccion;
+                await new GroupCollection(client).save();
 
-        const keys = Object.keys(sortDetailLoan);
-        keys.forEach(key => (loan[key] = sortDetailLoan[key]));
+            }
+
+        }
+
+        for (let idx = 0; idx < detailLoan[4].length; idx++) {
+            loan.members[idx].insurance.id = detailLoan[5][idx].id
+        }
 
         await new LoanAppGroupCollection(loan).save();
+        // const sortDetailLoan = await sortLoanHFtoCouch(detailLoan);
+
+        // const keys = Object.keys(sortDetailLoan);
+        // keys.forEach(key => (loan[key] = sortDetailLoan[key]));
+
+        // await new LoanAppGroupCollection(loan).save();
 
         return MountAssigned[0][0];
 
