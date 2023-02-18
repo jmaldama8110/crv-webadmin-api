@@ -147,8 +147,8 @@ async function assignMontoloanHF(data) {
                 '', // Nombre
                 '', // Apellido paterno
                 '', // Apellido Materno
-                'TRAMITE', // ESTATUS
-                'LISTO PARA TRAMITE', // SUB_ESTATUS (LISTO PARA TRAMITE)
+                data['INTEGRANTES'][idx].estatus,//'TRAMITE', // ESTATUS
+                data['INTEGRANTES'][idx].sub_estatus,//'LISTO PARA TRAMITE', // SUB_ESTATUS (LISTO PARA TRAMITE)
                 data['INTEGRANTES'][idx].cargo, // CARGO || ''
                 data['INTEGRANTES'][idx].monto_solicitado,
                 data['INTEGRANTES'][idx].monto_sugerido, // TODO: Se establece cuando sea POR AUTORIZAR (WEB ADMIN)
@@ -178,13 +178,6 @@ async function assignMontoloanHF(data) {
                 0
             );
         }
-
-        // console.log('tbl1: ',tbl.UDT_Solicitud.rows)
-        // console.log('tbl1: ', tbl.Cliente.rows)
-        // console.log('tbl2: ', tbl.UDT_SolicitudDetalle.rows)
-        // console.log('tbl3: ', tbl.UDT_CLIE_DetalleSeguro.rows)
-        // console.log('tbl4: ', tbl.GrupoSolidario.rows)
-        // console.log('tbl4: ', tbl.GrupoSolidario.rows)
 
         // PARA EL TIPO DE PRESTAMO ESPECIAL ES NECESARIO 1 AVAL Y 2 REFERENCIAS
         // for (const idx in data['REFERENCIA']) {
@@ -410,7 +403,7 @@ async function sortLoanHFtoCouch(loan) {
         const obj = {
             client_id: "",
             id_cliente: loan[4][idx].id_individual,
-            id_persona: loan[4][idx].id,
+            id_member: loan[4][idx].id, // id_persona
             estatus: loan[4][idx].estatus.trim(),
             sub_estatus: loan[4][idx].sub_estatus.trim(),
             position: loan[4][idx].cargo.trim() == "" ? "Normal" : loan[4][idx].cargo.trim(),
@@ -790,6 +783,8 @@ async function createLoanHF(data) {
                 return {
                     id_individual: member.id_cliente,
                     id_persona: member.id_member, //Persona
+                    estatus: member.estatus,
+                    sub_estatus: member.sub_estatus,
                     cargo: member.position === 'Normal' ? '' : member.position,
                     monto_solicitado: member.apply_amount,
                     monto_sugerido: member.suggested_amount || 0,
