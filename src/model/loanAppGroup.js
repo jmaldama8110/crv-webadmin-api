@@ -43,6 +43,7 @@ class LoanAppGroupCollection extends DocumentCollection {
             }, // TODO Buscar el extenal id en couch al sincronizar, Product Couch
             this._created_by = obj.created_by || 'promotor@grupoconserva.mx',
             this._status = obj.status || [1, 'Pendiente'],
+            this._dropout = obj.dropout || [],
             // this.group = obj.group || {
             //     id: 0,
             //     cicle: 0,
