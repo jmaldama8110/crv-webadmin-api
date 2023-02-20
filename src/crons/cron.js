@@ -1,12 +1,14 @@
 const cron = require('node-cron');
 const TokenCollection = require('./../model/tokenCollection');
 const ActionCollection = require('../model/actionCollection');
+const DocumentCollection = require('../model/documentCollection');
 const Action = new ActionCollection();
 const Token = new TokenCollection();
+const Document = new DocumentCollection();
 
 const { sortDataPerson, createPersonHF } = require('./../actions/createPerson');
 const { sortDataClient, createClientHF } = require('./../actions/createdClient');
-const { createLoanHF, sortLoanHFtoCouch } = require('./../actions/createLoan');
+const { createLoanHF, sortLoanHFtoCouch, assignClientLoanFromHF } = require('./../actions/createLoan');
 
 
 cron.schedule('5 * * * * *', async () => {
@@ -35,6 +37,23 @@ cron.schedule('5 * * * * *', async () => {
                     task.status = 'Done';
                     await new ActionCollection(task).save();
                     console.log('Loan Done!', loan);
+                    break;
+                case 'MEMBER_DROPOUT':
+                    const { client_id, loan_id, dropout_type, reason_id } = task.data;
+                    if (!client_id && !loan_id && !dropout_type && !reason_id) { console.log(task.name, 'Incorrect data'); return }
+
+                    const dataAssign = {
+                        id_solicitud_prestamo: loan_id,
+                        id_cliente: client_id,
+                        etiqueta_opcion: "BAJA", // BAJA
+                        tipo_baja: dropout_type.trim(), // CASTIGADO/CANCELACION/RECHAZADO cata_tipoBaja
+                        id_motivo: reason_id, //CATA_id_motivo
+                        uid: 0
+                    }
+                    const result = await assignClientLoanFromHF(dataAssign);
+                    task.status = 'Done';
+                    await new ActionCollection(task).save();
+                    console.log('Member dropout Done!', result);
                     break;
 
                 default:

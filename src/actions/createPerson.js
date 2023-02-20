@@ -31,9 +31,10 @@ async function sortDataPerson(client, action) {
 
         const phones = client.phones;
 
-        const entidad_nac = dirDomi[0].province[0] ? dirDomi[0].province[0] : 5;
+        const entidad_nac = dirDomi[0].province[0] ? dirDomi[0].province[0] : 'PROVINCE|5';
         // console.log({entidad_nac})
         const province = await Document.findOne({ _id: entidad_nac, couchdb_type: 'PROVINCE' });
+        if (!province) {console.log('Province not found'); return }
 
         person.DATOS_PERSONALES = [
             {
