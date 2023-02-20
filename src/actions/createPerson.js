@@ -192,7 +192,11 @@ async function createPersonHF(data) {
         const clientCouch = await Client.findOne({ _id });
         if(!clientCouch) { console.log('Client not Foun in couch'); return }
 
-        const dataSort = await sortDataPerson(clientCouch)
+        const dataSort = await sortDataPerson(clientCouch);
+        if(!dataSort) {
+            console.log('data sort Error');
+            return
+        }
         const pool = await sql.connect(sqlConfig);
         const action2 = dataSort['DATOS_PERSONALES'][0].id > 0 ? 'ACTUALIZAR_PERSONA' : 'INSERTAR_PERSONA'
         // TODO ENVIAR LOS id´s CUANDO SE TENGA QUE ACTUALIZAR DE LO CONTRARIO ENVIAR 0
