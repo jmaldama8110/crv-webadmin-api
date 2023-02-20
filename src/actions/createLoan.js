@@ -297,7 +297,8 @@ const validateFrecuency = (value) => {
 const frecuencysCouchtoHF = {
     'S': 'SEMANAL',
     'Q': 'QUINCENAL',
-    'M': 'MENSUAL'
+    'M': 'MENSUAL',
+    'C': 'CATORCENAL'
 }
 
 const frecuencyHFToCouch = {
@@ -671,6 +672,11 @@ async function createLoanHF(data) {
         const typeClient = loan.members.length > 1 ? 1 : 2;
         const isNewLoan = loan.id_solicitud == 0;
         const idBranch = loan.branch[0];
+        const memberPosition = {
+            'Presidenta(e)': 'Presidenta(e)',
+            'Secretaria(o)': 'Secretaria(o)',
+            'Tesorera(o)': 'Tesorera(o)'
+        }
 
         const client = typeClient == 1 ? await Group.findOne({ _id: loan.apply_by }) : await Client.findOne({ _id: loan.apply_by });
         if (!client) { console.log('Failed to find'); return };
@@ -727,7 +733,7 @@ async function createLoanHF(data) {
                     monto_autorizado: loan.approved_total || 0,
                     estatus: loan.estatus ? loan.estatus : 'TRAMITE',
                     sub_estatus: loan.sub_estatus ? loan.sub_estatus : 'NUEVO TRAMITE',
-                    periodicidad: frecuencysCouchtoHF[loan.frequency[0]] || '',
+                    periodicidad: frecuencysCouchtoHF[loan.frequency[0]] || 'SEMANAL',
                     plazo: loan.term || loan.product.min_term,
                     fecha_primer_pago: loan.first_replay_at != '' ? getDates(loan.first_replay_at) : '1999-01-01T00:00:00.000Z', //2023-02-02T00:00:00.000Z
                     fecha_entrega: loan.disburset_at != '' ? getDates(loan.disburset_at) : '1999-01-01T00:00:00.000Z',
@@ -770,7 +776,8 @@ async function createLoanHF(data) {
                     id_persona: member.id_member, //Persona
                     estatus: member.estatus,
                     sub_estatus: member.sub_estatus,
-                    cargo: member.position === 'Normal' ? '' : member.position,
+                    cargo: member.position ? memberPosition[member.position] : '',
+                    // cargo: member.position === 'Normal' ? '' : member.position,
                     monto_solicitado: member.apply_amount,
                     monto_sugerido: member.suggested_amount || 0,
                     monto_autorizado: member.approved_amount || 0,
@@ -856,4 +863,4 @@ async function createLoanHF(data) {
 }
 
 
-module.exports = { createLoanFromHF, assignClientLoanFromHF, assignMontoloanHF, createLoanHF, sortLoanHFtoCouch, loanRenovation };
+module.exports = { createLoanFromHF, assignClientLoanFromHF, assignMontoloanHF, createLoanHF, sortLoanHFtoCouch, loanRenovation, assignClientLoanFromHF };
