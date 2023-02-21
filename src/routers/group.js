@@ -109,7 +109,7 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
 
         const loan_app = {
             id_cliente: loan_application.id_cliente,
-            id_solicitud: 0,
+            id_solicitud: loan_application.id, // uses the same Id of the previous one
             loan_officer: loan_application.id_oficial,
             branch: loan_application.id_oficina,
             id_producto: loan_application.id_producto,
@@ -123,8 +123,9 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
             disbursment_mean: loan_application.medio_desembolso.trim(),
             liquid_guarantee: loan_application.garantia_liquida,
             loan_cycle: loan_cycle.ciclo,
-            estatus: loan_application.estatus.trim(),
-            sub_status: loan_application.sub_estatus.trim(),
+            estatus: "TRAMITE", // para renovacion
+            sub_estatus: "NUEVO TRAMITE", /// 
+            renovation: true,
             members,
             product: {
               external_id: productMaster.external_id,
@@ -137,6 +138,8 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
               term_types: productMaster.allowed_term_type,
               rate: productMaster.rate,
               tax: productMaster.tax,
+              GL_financeable: false,
+              liquid_guarantee: 10,
             }
         }
 

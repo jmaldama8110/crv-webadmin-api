@@ -179,8 +179,8 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 personal_references: [],
                 guarantee: [],
                 ife_details: ineDetail,
-                data_company: data.recordsets[8][0],
-                data_efirma: data.recordsets[9][0],
+                data_company: [data.recordsets[8][0]],
+                data_efirma: [data.recordsets[9][0]],
                 
             };
             res.send(result);
