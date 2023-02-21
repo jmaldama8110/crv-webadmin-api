@@ -505,169 +505,12 @@ async function loanRenovation(idClient, idLoan, idOfficer, idOffice) {
     }
 }
 
-// async function createLoanHF(data) {
-//     // try {
-//         const { id_loan, fecha_primer_pago,  fecha_entrega, id_oficial} = data;
-//         let loan;
-//         loan = await LoanApp.findOne({ _id: id_loan });
-//         if (!loan){
-//             loan = await LoanAppGroup.findOne({ _id: id_loan })
-//         }else{
-//             console.log('Loan not found'); return
-//         };
-//         // if (!loan) return new Error('Loan not found');
-//     // console.log(loan)
-//         if (loan.status[0] != 1) { console.log('This loan is ready for processing...'); return };
-
-//         //CREAR O ACTUALIZAR
-//         const action = 1;
-//         // Buscamos el usuario que hizo la solicitud
-//         let client
-//         client = await Client.findOne({ _id: loan.apply_by });
-//         // console.log(client);
-//         if(!client){
-//             client = await Group.findOne({ _id: loan.apply_by })
-//         }else{
-//             console.log('Client of loan not found'); return
-//         };
-//         const client_id = parseInt(client.id_cliente);
-//         const person_id = parseInt(client.id_persona);
-//         const official_id = parseInt(id_oficial);
-
-//         //Buscamos el producto que solicitó
-//         const product = await Product.findOne({ _id: loan.product });
-//         if (!product) { console.log(`Product: ${loan.product} not found`); return };
-//         const product_id = product.external_id;
-
-//         //Validamos si el Cliente existe en HF
-//         const clientHF = await Client.findClientByExternalId(client_id);
-//         //TODO Comprobar que tienen la misma persona
-//         if (!clientHF) { console.log('The client is not registered in the HF system'); return};
-
-//         const id_branch = client.branch[0];
-//         let idLoanHF = loan.id_loan;
-
-//         if (idLoanHF == 0) {
-//             // Crear la solicitud
-//             console.log('Crear la solicitud');
-//             const LoanHFCreated = await createLoanFromHF({ idUsuario: 0, idOficina: id_branch, num: 1 });
-//             if (!LoanHFCreated) { console.log('Failed to create loan in HF'); return };
-
-//             idLoanHF = LoanHFCreated[0].idSolicitud
-
-//             // Asignamos Cliente a Solicitud
-//             const dataAssign = {
-//                 id_solicitud_prestamo: idLoanHF,
-//                 id_cliente: client_id,
-//                 etiqueta_opcion: "ALTA",
-//                 tipo_baja: "",
-//                 id_motivo: 0,
-//                 uid: 0
-//             }
-//             const asignClientLoan = await assignClientLoanFromHF(dataAssign);
-//             if(!asignClientLoan) { console.log('Failed to assign client to loan'); return };
-
-//             // Actualizar el id de loan con el de hf
-//             loan['id_loan'] = idLoanHF;
-//             loan.id_soliciutd = idLoanHF;
-//             await new LoanAppCollection(loan).save();
-//         }
-
-//         // Asignamos Monto a la solicitud
-//         const disposition = await getDisposicionByOffice(id_branch);
-//         if(!disposition) { console.log('Failed to get disposition'); return };
-
-//         const seguro = await getSeguroProducto(product_id);
-//         if(!seguro) { console.log('Failed to get insurance'); return};
-//         // console.log(seguro);
-
-
-//         const dataMount = {
-//             SOLICITUD: [
-//                 {
-//                     id: idLoanHF,
-//                     id_cliente: loan.id_cliente,
-//                     id_oficial: official_id != undefined ? official_id : 346928,
-//                     id_disposicion: disposition[0] ? disposition[0].IdDisposición : 26,
-//                     monto_solicitado: loan.apply_amount,
-//                     monto_autorizado: data.approved_amount || 0,
-//                     periodicidad: loan.frequency ? validateFrecuency(loan.frequency[0]).toUpperCase() : product.allowed_frequency[0].value.toUpperCase(),
-//                     plazo: loan.term ? loan.term : product.min_term,
-//                     fecha_primer_pago: getDates(fecha_primer_pago),
-//                     fecha_entrega: getDates(fecha_entrega),
-//                     medio_desembolso: "ORP",//Orden De Pago TODO: CAMBIAR DEPENDIENDO EL CLINTE
-//                     garantia_liquida: product.liquid_guarantee,
-//                     id_oficina: id_branch != undefined ? id_branch : 1,
-//                     garantia_liquida_financiable: product.GL_financeable === false ? 0 : 1,
-//                     id_producto: action === 1 ? 0 : loan.id_producto,
-//                     id_producto_maestro: product_id,
-//                     tasa_anual: product.rate ? product.rate : 0, //Checar cómo calcular esto, preguntar de que depende la tasa anual de cada loan
-//                     creacion: getDates(loan.apply_at)
-//                 }
-//             ],
-//             CLIENTE: loan.members.map((member) => {
-//                 return {
-//                     id: member.id_cliente,
-//                     id_persona: member.person_id != NaN ? member.person_id : 0,
-//                     tipo_cliente: loan.members.lenght > 1 ? 1 : 2 ,
-//                     id_oficina: id_branch
-//                 }
-//             }),
-//             // [ // TODO MEMBERS HACER UN MAP
-//             //     {
-//             //         id: client_id,
-//             //         id_persona: person_id == NaN ? person_id : 0,
-//             //         tipo_cliente: 2,//2 -> INDIVIDUAL, 1 -> Grupal
-//             //         ciclo: 0
-//             //         //id_oficina TODO FALTA EL id_oficina
-//             //     }
-//             // ],
-//             SEGURO: loan.insurance_members.map(member => {
-//                 return {
-//                     id: member.id_insurance,
-//                     id_individual: member.id_individual,
-//                     id_solicitud_prestamo: idLoanHF,
-//                     id_seguro_asignacion: seguro[0].id_seguro_asignacion,
-//                     id_seguro: seguro[0].id_seguro || 0,
-//                     nombre_beneficiario: member.fullname,
-//                     parentesco: member.relationship,
-//                     porcentaje: member.porcentage,
-//                     costo_seguro: 0, // FALTA CALCULAR
-//                     incluye_saldo_deudor: seguro[0].incluye_saldo_deudor
-//                 }
-//             }),
-//             // SEGURO: [
-//             //     {
-//             //         id: 0,
-//             //         id_seguro_asignacion: seguro[0].id_seguro_asignacion || 55,
-//             //         nombre_beneficiario: "OMAR MELENDEZ", // TODO FALTAN DATOS DINAMICOS
-//             //         parentesco: "CONOCIDO",
-//             //         porcentaje: 100.00,
-//             //         costo_seguro: 0.00,
-//             //         incluye_saldo_deudor: seguro[0] ? seguro[0].incluye_saldo_deudor === true ? 1 : 0 : 1
-//             //     }
-//             // ],
-//             REFERENCIA: [] //TODO FALTA INSERTAR
-//         }
-
-//         return dataMount;
-//     // console.log(dataMount)
-//         // console.log('id Loan: ', idLoanHF)
-
-//         // const MountAssigned = await assignMontoloanHF(dataMount);
-//         // if(!MountAssigned) throw new Error('Failed to assign mount');
-
-//         // return MountAssigned[0][0];
-//     // } catch (error) {
-//     //     throw new Error(error)
-//     // }
-// }
 async function createLoanHF(data) {
     try {
         const { id_loan } = data;
 
         const loan = await LoanAppGroup.findOne({ _id: id_loan });
-        if (!loan) { console.log('Loan not found'); return }
+        if (!loan) return new Error('Loan not found');
 
         const typeClient = loan.members.length > 1 ? 1 : 2;
         const isNewLoan = loan.id_solicitud == 0;
@@ -679,7 +522,7 @@ async function createLoanHF(data) {
         }
 
         const client = typeClient == 1 ? await Group.findOne({ _id: loan.apply_by }) : await Client.findOne({ _id: loan.apply_by });
-        if (!client) { console.log('Failed to find'); return };
+        if (!client) return new Error('Failed to find');
 
         // CREAR LA SOLICITUD, SI ES SOLICITUD NUEVA
         if (isNewLoan) {
@@ -687,7 +530,7 @@ async function createLoanHF(data) {
             const dataCreate = { idUsuario: 0, idOficina: idBranch, num: 1, typeClient: typeClient }
 
             const LoanHFCreated = await createLoanFromHF(dataCreate);
-            if (!LoanHFCreated) { console.log('Failed to create loan in HF'); return };
+            if (!LoanHFCreated) return new Error('Failed to create loan in HF');
 
             loan.id_solicitud = LoanHFCreated[0].idSolicitud;
             if (typeClient == 1 && loan.id_cliente == 0) {
@@ -700,28 +543,22 @@ async function createLoanHF(data) {
 
             idOfficer = loan.loan_officer ? loan.loan_officer : 0;
             const idLoanRenovation = await loanRenovation(loan.id_cliente, loan.id_solicitud, idOfficer, idBranch);
-            if (!idLoanRenovation) { console.log('Error renovation loan'); return }
+            if (!idLoanRenovation) return new Error('Renovation loan');
             console.log('idRenovation:', idLoanRenovation)
             loan.id_solicitud = idLoanRenovation;
             loan.renovation = false;
         } else {
-            // console.log(typeClient == 1 ? 'Grupo' : 'Individual')
             console.log('ACTUALIZACIÓN');
             loan.id_cliente = client.id_cliente;
         }
 
         const disposition = await getDisposicionByOffice(idBranch);
-        if (!disposition) { console.log('Failed to get disposition'); return };
-
-        // const product = await Product.findOne({ _id: loan.product }); TODO: product.external_id
-        // if (!product) { console.log('Product not found'); return };
+        if (!disposition) return new Error('Failed to get disposition');
 
         const seguro = await getSeguroProducto(loan.product.external_id);// parseInt(loan.product.external_id)
-        if (!seguro) { console.log('Failed to get insurance'); return };
+        if (!seguro) return new Error('Failed to get insurance');
 
-        // TODO Cambiar todos los product. a loan.product.
         // TODO EJECUATR EL PROCEDIMIENTO CUANDO SEA ESTATUS "POR AUTORIZAR" MOV_CATA_CrearProducto
-        // console.log(loan.frequency);
         const dataMount = {
             SOLICITUD: [
                 {
@@ -737,13 +574,13 @@ async function createLoanHF(data) {
                     plazo: loan.term || loan.product.min_term,
                     fecha_primer_pago: loan.first_replay_at != '' ? getDates(loan.first_replay_at) : '1999-01-01T00:00:00.000Z', //2023-02-02T00:00:00.000Z
                     fecha_entrega: loan.disburset_at != '' ? getDates(loan.disburset_at) : '1999-01-01T00:00:00.000Z',
-                    medio_desembolso: loan.disbursment_mean || "ORP",//Orden De Pago TODO: CAMBIAR DEPENDIENDO EL CLINTE
+                    medio_desembolso: loan.disbursment_mean || "ORP",
                     garantia_liquida: loan.product.liquid_guarantee || loan.liquid_guarantee,
                     id_oficina: idBranch != undefined ? idBranch : 1,
                     garantia_liquida_financiable: loan.product.GL_financeable === false ? 0 : 1,
                     id_producto: isNewLoan ? 0 : loan.id_producto, // Se crea cuando pasa a por autorizar
                     id_producto_maestro: loan.product.external_id,
-                    tasa_anual: loan.product.rate ? loan.product.rate : 0, //TODO Checar cómo calcular esto, preguntar de que depende la tasa anual de cada loan
+                    tasa_anual: loan.product.rate ? loan.product.rate : 0,
                     creacion: new Date(Date.now()).toISOString(), // getDates(loan.apply_at) NO SE USA, new Data().toString()
                     ciclo: loan.loan_cycle,//TODO typeClient == 1 ? loan.group.cicle : loan.members[0].cicle,
                     tipo_cliente: typeClient
@@ -777,7 +614,6 @@ async function createLoanHF(data) {
                     estatus: member.estatus,
                     sub_estatus: member.sub_estatus,
                     cargo: member.position ? memberPosition[member.position] : '',
-                    // cargo: member.position === 'Normal' ? '' : member.position,
                     monto_solicitado: member.apply_amount,
                     monto_sugerido: member.suggested_amount || 0,
                     monto_autorizado: member.approved_amount || 0,
@@ -801,9 +637,8 @@ async function createLoanHF(data) {
                     incluye_saldo_deudor: seguro[0].incluye_saldo_deudor
                 }
             }),
-            REFERENCIA: [] //TODO FALTA INSERTAR
+            REFERENCIA: []
         }
-        // return dataMount;
 
         if (isNewLoan) {
             for (let idx = 0; idx < dataMount['INTEGRANTES'].length; idx++) {
@@ -825,10 +660,10 @@ async function createLoanHF(data) {
         };
 
         const MountAssigned = await assignMontoloanHF(dataMount);
-        if (!MountAssigned) { console.log('Failed to assign mount'); return };
+        if (!MountAssigned) return new Error('Failed to assign mount');
 
         const detailLoan = await LoanApp.getDetailLoan(loan.id_solicitud, idBranch);
-        if (!detailLoan) { console.log('Failed to in Loan'); return };
+        if (!detailLoan) return new Error('Failed to in Loan');
 
         // Actualizar ids en Couch con los creados en HF
         if (typeClient == 1) {
@@ -837,9 +672,7 @@ async function createLoanHF(data) {
                 client.id_cliente = detailLoan[1][0].id;
                 client.address.id = detailLoan[2][0].id_direccion;
                 await new GroupCollection(client).save();
-
             }
-
         }
 
         for (let idx = 0; idx < detailLoan[4].length; idx++) {
@@ -847,17 +680,11 @@ async function createLoanHF(data) {
         }
 
         await new LoanAppGroupCollection(loan).save();
-        // const sortDetailLoan = await sortLoanHFtoCouch(detailLoan);
 
-        // const keys = Object.keys(sortDetailLoan);
-        // keys.forEach(key => (loan[key] = sortDetailLoan[key]));
-
-        // await new LoanAppGroupCollection(loan).save();
-
+        console.log(MountAssigned[0][0]);
         return MountAssigned[0][0];
 
     } catch (error) {
-        console.error(error)
         return new Error(error.message);
     }
 }

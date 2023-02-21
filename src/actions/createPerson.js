@@ -182,7 +182,7 @@ async function sortDataPerson(client, action) {
         return person;
     } catch (err) {
         console.log(err);
-        throw new Error(err.message)
+        return;
     }
 }
 
@@ -190,13 +190,11 @@ async function createPersonHF(data) {
     try {
         const { _id } = data;
         const clientCouch = await Client.findOne({ _id });
-        if(!clientCouch) { console.log('Client not Foun in couch'); return }
+        if(!clientCouch) return new Error('Client not Foun in couch');
 
         const dataSort = await sortDataPerson(clientCouch);
-        if(!dataSort) {
-            console.log('data sort Error');
-            return
-        }
+        if (!dataSort) return new Error('data sort Error');
+
         const pool = await sql.connect(sqlConfig);
         const action2 = dataSort['DATOS_PERSONALES'][0].id > 0 ? 'ACTUALIZAR_PERSONA' : 'INSERTAR_PERSONA'
         // TODO ENVIAR LOS id´s CUANDO SE TENGA QUE ACTUALIZAR DE LO CONTRARIO ENVIAR 0
@@ -309,7 +307,7 @@ async function createPersonHF(data) {
 
         return result.recordsets;
     } catch (err) {
-        console.log(err.message)
+        return new Error(err.message)
     }
 }
 

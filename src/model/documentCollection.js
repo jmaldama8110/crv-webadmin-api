@@ -3,10 +3,10 @@ const connCouch = require("./../db/connCouch");
 class DocumentCollection {
     constructor(obj = {}) {
         this._id = obj._id || Date.now().toString(),
-        this._rev = obj._rev,
+        this._rev = obj._rev
         // this._couchdb_type = couchdb_type,
-        this._createdAt = new Date(Date.now()).toISOString()
-        this._updatedAt = new Date(Date.now()).toISOString()
+        // this._createdAt = new Date(Date.now()).toISOString()
+        // this._updatedAt = new Date(Date.now()).toISOString()
     }
 
     getDataPrivate() {
