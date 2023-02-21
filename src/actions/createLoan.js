@@ -87,7 +87,7 @@ async function assignMontoloanHF(data) {
             data['SOLICITUD'][0].monto_autorizado, // Monto_autorizado TODO: MANDAR EN 0 DESDE MÓVIL
             data['SOLICITUD'][0].periodicidad, // Meses/Quincena (Se obtiene de configuracionMaestro)
             data['SOLICITUD'][0].plazo, // 1, 2, 3, 6, 12, 24, etc.
-            data['SOLICITUD'][0].estatus ? data['SOLICITUD'][0].estatus :'TRAMITE',// ESTATUS
+            data['SOLICITUD'][0].estatus ? data['SOLICITUD'][0].estatus : 'TRAMITE',// ESTATUS
             data['SOLICITUD'][0].sub_estatus ? data['SOLICITUD'][0].sub_estatus : 'NUEVO TRAMITE',// SUB_ESTATUS -> "POR AUTORIZAR"
             data['SOLICITUD'][0].fecha_primer_pago, // Ej. 2022-07-20
             data['SOLICITUD'][0].fecha_entrega, // Ej. 2022-07-20
@@ -509,10 +509,16 @@ async function createLoanHF(data) {
     try {
         const { id_loan } = data;
 
-        const loan = await LoanAppGroup.findOne({ _id: id_loan });
-        if (!loan) return new Error('Loan not found');
+        let typeClient;
+        let loan;
+        loan = await LoanAppGroup.findOne({ _id: id_loan });
+        typeClient = 1;
+        if (loan == undefined) {
+            loan = await LoanApp.findOne({ _id: id_loan });
+            typeClient = 2;
+        }
+        if (loan === undefined) return new Error('Loan not found');
 
-        const typeClient = loan.members.length > 1 ? 1 : 2;
         const isNewLoan = loan.id_solicitud == 0;
         const idBranch = loan.branch[0];
         const memberPosition = {
@@ -679,7 +685,7 @@ async function createLoanHF(data) {
             loan.members[idx].insurance.id = detailLoan[5][idx].id
         }
 
-        await new LoanAppGroupCollection(loan).save();
+        typeClient === 1 ? await new LoanAppGroupCollection(loan).save() : await new LoanAppCollection(loan).save();
 
         console.log(MountAssigned[0][0]);
         return MountAssigned[0][0];

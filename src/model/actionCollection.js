@@ -2,7 +2,6 @@ const DocumentCollection = require('./documentCollection');
 const { sqlConfig } = require("../db/connSQL");
 const sql = require("mssql");
 const tbl = require('../utils/TablesSQL');
-
 class ActionCollection extends DocumentCollection {
     constructor(obj = {}) {
         super()
@@ -11,6 +10,7 @@ class ActionCollection extends DocumentCollection {
             this._couchdb_type = 'ACTION',
             this._name = obj.name,
             this._data = obj.data,
+            this._created_by = obj.created_by,
             this._status = obj.status || 'Pending'
     }
 
@@ -326,6 +326,20 @@ class ActionCollection extends DocumentCollection {
         } catch (error) {
             console.log(error);
             throw new Error(error.message)
+        }
+    }
+
+    async updateActionHF(id_action, status){
+        try {
+            const pool = await sql.connect(sqlConfig);
+            const result = await pool
+            .request()
+                .query(`UPDATE MOVI_Acciones SET estatus = '${status}' WHERE id = '${id_action}'`);
+
+            return result.recordset;
+        } catch (error) {
+            console.log(error);
+            return new Error(error.message)
         }
     }
 }

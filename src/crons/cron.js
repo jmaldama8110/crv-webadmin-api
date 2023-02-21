@@ -2,10 +2,15 @@ const cron = require('node-cron');
 const TokenCollection = require('./../model/tokenCollection');
 const ActionCollection = require('../model/actionCollection');
 const DocumentCollection = require('../model/documentCollection');
+const LoanAppGroupCollection = require('../model/loanAppGroup');
+const LoanAppCollection = require('../model/loanAppCollection');
 const Action = new ActionCollection();
 const Token = new TokenCollection();
 const Document = new DocumentCollection();
+const LoanApp = new LoanAppCollection();
+const LoanAppGroup = new LoanAppGroupCollection();
 
+const { sendPaymentInformationLoanHF, sendReportActionError } = require('../emails/account');
 const { sortDataPerson, createPersonHF } = require('./../actions/createPerson');
 const { sortDataClient, createClientHF } = require('./../actions/createdClient');
 const { createLoanHF, sortLoanHFtoCouch, assignClientLoanFromHF } = require('./../actions/createLoan');
@@ -25,7 +30,8 @@ cron.schedule('5 * * * * *', async () => {
                     // Actualizar el status de Action
                     if (!personCreatedHF || !clientSaved || personCreatedHF instanceof Error || clientSaved instanceof Error) {
                         task.status = 'Error'
-                        console.log('Error :',{ personCreatedHF, clientSaved })
+                        Action.repostActionError(task.data);
+                        console.log('Error :', { personCreatedHF, clientSaved })
                     } else {
                         { task.status = 'Done' }
                     };
@@ -36,7 +42,13 @@ cron.schedule('5 * * * * *', async () => {
                     const loan = await createLoanHF(task.data);
                     // if (!loan) { console.log('Error to create Loan'); return };
 
-                    if(loan instanceof Error || !loan) {task.status = 'Error'; console.log(loan)}else { task.status = 'Done' };
+                    if (loan instanceof Error || !loan) {
+                        task.status = 'Error';
+                        sendReportActionError(task);
+                        console.log(loan)
+                    } else {
+                        task.status = 'Done'
+                    };
 
                     await new ActionCollection(task).save();
                     console.log(`>> Loan ${task.status}!`);
@@ -54,7 +66,23 @@ cron.schedule('5 * * * * *', async () => {
                         uid: 0
                     }
                     const result = await assignClientLoanFromHF(dataAssign);
-                    (!result) ? task.status = 'Error' : task.status = 'Done';
+                    if (!result) { task.status = 'Error'; sendReportActionError(task); }
+                        else { task.status = 'Done'; }
+
+                    await new ActionCollection(task).save();
+                    console.log('Member dropout Done!', result);
+                    break;
+                case 'MEMBER_JOIN':
+                    const data = {
+                        id_solicitud_prestamo: task.data.loan_id,
+                        id_cliente: task.data.client_id,
+                        etiqueta_opcion: "ALTA", // BAJA
+                        tipo_baja: '', // CASTIGADO/CANCELACION/RECHAZADO cata_tipoBaja
+                        id_motivo: '', //CATA_id_motivo
+                        uid: 0
+                    }
+                    const resultJoin = await assignClientLoanFromHF(data);
+                    if (!resultJoin) { task.status = 'Error'; sendReportActionError(task); } else {task.status = 'Done'};
 
                     await new ActionCollection(task).save();
                     console.log('Member dropout Done!', result);
@@ -64,6 +92,58 @@ cron.schedule('5 * * * * *', async () => {
                     break;
             }
         });
+
+        const actionsHF = await Action.getActionHF();
+
+        actionsHF.forEach(async action => {
+            switch (action.codigo.trim()) {
+                case 'PAGO':
+                    let statusAction = 'ERROR'
+                    let loan;
+                    loan = await LoanAppGroup.findOne({ id_solicitud: action.id_solicitud_prestamo });
+                    if (loan === undefined) loan = await LoanApp.findOne({ id_solicitud: action.id_solicitud_prestamo });
+
+                    if (loan !== undefined) {
+                        if (loan.email) sendPaymentInformationLoanHF(loan.email, loan.id_solicitud)
+                        if (loan.created_by) sendPaymentInformationLoanHF(loan.created_by, loan.id_solicitud)
+                        statusAction = 'HECHO';
+                    }
+
+                    await Action.updateActionHF(action.id, statusAction);
+
+                    console.log('PAGO', statusAction);
+                    break;
+                case 'GARANTIA':
+                    // console.log('GARANTIA');
+                    break;
+                case 'SOLICITUD':
+                    // console.log('SOLICITUD');
+                    break;
+
+                default:
+                    console.log('Estatus no reconocido');
+                    break;
+            }
+        })
+
+        // for (let idx = 0; idx < result.length; idx++) {
+        //     switch (result[idx].codigo.trim()) {
+        //         case 'PAGO':
+        //             console.log('PAGO');
+        //             break;
+        //         case 'GARANTIA':
+        //             console.log('GARANTIA');
+        //             break;
+        //         // case 'SOLICITUD':
+        //         //     console.log('SOLICITUD');
+        //         //     break;
+
+        //         default:
+        //             console.log('Estatus no reconocido');
+        //             break;
+        //     }
+        // }
+        // sendPaymentInformationLoanHF('omarmelendez638@gmail.com', 'Omar Melendez')
     } catch (err) {
         console.log(err.message);
     }

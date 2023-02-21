@@ -14,6 +14,7 @@ class ClientCollection extends DocumentCollection {
         this._lastname = obj.lastname,
         this._second_lastname = obj.second_lastname,
         this._email = obj.email || '',
+            this._created_by = obj.created_by || '',
         this._address = obj.address || [{}], // TODO
         this._branch = obj.branch || [],
         this._business_data = obj.business_data|| {economic_activity: [],profession: []},
