@@ -443,7 +443,7 @@ async function createClientHF(data) {
             dataSort["NEGOCIO"][0].id,
             dataSort["PERSONA"][0].id,
             id_oficina,
-            dataSort["NEGOCIO"][0].nombre_oficina,
+            dataSort["NEGOCIO"][0].nombre_oficina.slice(0,50), /// obligatorio menos de 50
             dataSort["NEGOCIO"][0].nombre_puesto,
             dataSort["NEGOCIO"][0].departamento,
             id_empresa,
