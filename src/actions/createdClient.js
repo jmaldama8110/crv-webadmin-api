@@ -296,10 +296,10 @@ async function createClientHF(data) {
     try {
         const { _id } = data;
         const clientCouch = await Client.findOne({ _id });
-        if (!clientCouch) { console.log('Client not found in Couch'); return };
+        if (!clientCouch) return new Error('Client not found in Couch');
 
         const dataSort = await sortDataClient(clientCouch);
-        if(!dataSort) {  console.log('Error sort data client'); return}
+        if(!dataSort) return new Error('Error sort data client');
 
         const pool = await sql.connect(sqlConfig);
         const value = dataSort["CLIENTE"][0].id_cliente == 0 ? 1 : 2;
@@ -570,9 +570,8 @@ async function createClientHF(data) {
             .input('id_opcion', sql.Int, 0)
             .input('uid', sql.Int, 0)
             .execute('MOV_insertarInformacionClienteV2')
-            // .execute('MOV_TEST')
 
-        if(!result) {console.log('Error create client')}
+        if(!result) return new Error('Error create client')
 
         cleanAllTables();
 
@@ -606,7 +605,7 @@ async function createClientHF(data) {
         //#endregion
     } catch (error) {
         console.log(error);
-        return;
+        return new Error(error.message);
     }
 }
 
