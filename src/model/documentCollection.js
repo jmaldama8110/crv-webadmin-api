@@ -5,8 +5,8 @@ class DocumentCollection {
         this._id = obj._id || Date.now().toString(),
         this._rev = obj._rev
         // this._couchdb_type = couchdb_type,
-        // this._createdAt = new Date(Date.now()).toISOString()
-        // this._updatedAt = new Date(Date.now()).toISOString()
+        this._created_at = new Date(Date.now()).toISOString()
+        this._updated_at = obj.updated_at || new Date(Date.now()).toISOString()
     }
 
     getDataPrivate() {

@@ -7,34 +7,79 @@ class LoanAppCollection extends DocumentCollection {
     constructor(obj = {}) {
         super()
         this._id = obj._id || Date.now().toString(),
-        this._rev = obj._rev,
-        this._couchdb_type = 'LOANAPP',
-        this._product = obj.product,
-        this._loan_app_code = obj.loan_app_code,
-        this._status = obj.status || [],
-        this._apply_by = obj.apply_by,
-        this._apply_at = obj.apply_at,
-        this._approved_at = obj.approved_at,
-        this._approved_by = obj.approved_by,
-        this._apply_amount = obj.apply_amount,
-        this._approved_amount = obj.approved_amount,
-        this._term = obj.term,
-        this._frequency = obj.frequency || [],
-        this._schedule = obj.schedule || [],
-        this._id_loan = obj.id_loan || 0,
-        this._id_oficial = obj.id_oficial,
-        this._id_producto = obj.id_producto,
-        this._id_contract = obj.id_contract,
-        this._loan_detail = obj.loan_detail || [],
-        this._seguro_detail = obj.seguro_detail || [],
-        this._general_checklist = obj.general_checklist || [],
-        this._committee_checklist = obj.committee_checklist || [],
-        this._coordinates = obj.coordinates || []
+            this._rev = obj._rev,
+            this._couchdb_type = 'LOANAPP',
+            this._apply_by = obj.apply_by,
+            this._id_solicitud = obj.id_solicitud || 0,
+            this._id_cliente = obj.id_cliente || 0,
+            this._loan_officer = obj.loan_officer || 0,
+            this._branch = obj.branch || [1, 'ORIENTE'],
+            this._id_producto = obj.id_producto || 0, // Product HF, Se crea cuando pasa a estatus Por Autorizar
+            this._id_disposicion = obj.id_disposicion || 0, // Se obtiene dependiendo el producto maestro
+            this._apply_amount = obj.apply_amount || 0,  // En caso de grupos es la suma total de monto de lo integrantes
+            this._approved_total = obj.approved_total || 0,
+            this._term = obj.term || 0,
+            this._estatus = obj.estatus || 'TRAMITE',
+            this._sub_estatus = obj.sub_estatus || 'NUEVO TRAMITE',
+            this._renovation = obj.renovation || false,
+            this._frequency = obj.frequency || ['S', 'Semana(s)'],
+            this._first_replay_at = obj.first_replay_at || '', // type Date
+            this._disburset_at = obj.disburset_at || '', // type Date
+            this._disbursment_mean = obj.disbursment_mean || 'ORP', // ORP/
+            this._liquid_guarantee = obj.liquid_guarantee || 0, // ORP/
+            this._product = obj.product || {
+                external_id: 1,
+                min_amount: 2000,
+                max_amount: 58000,
+                step_amount: 1000,
+                min_term: 8,
+                max_term: 24,
+                product_name: "CREDITO SOLIDARIO",
+                term_types: [],
+                rate: "91.21",
+                tax: "16",
+                GL_financeable: true,
+                liquid_guarantee: 10
+            }, // TODO Buscar el extenal id en couch al sincronizar, Product Couch
+            this._created_by = obj.created_by || 'promotor@grupoconserva.mx',
+            this._status = obj.status || [1, 'Pendiente'],
+            this._dropout = obj.dropout || [],
+            this._members = obj.members || [{
+                client_id: '', // id client couch
+                id_cliente: 0, // id cliente/individual HF
+                id_persona: 0,
+                estatus: '', // estatus HF
+                sub_estatus: '', // sub_estatus HF
+                position: '', // cargo
+                apply_amount: 0,
+                suggested_amount: 0,
+                approved_amount: 0,
+                id_activity_economic: 0,
+                previus_amount: 0,
+                // id_solicitud_prestamo: 0,
+                cicle: 0,
+                id_riesgo_pld: 0,
+                riesgo_pld: '',
+                id_cata_medio_desembolso: 2,
+                monto_garantia_financiable: 0,
+                insurance: {
+                    id_insurance: 0,
+                    id_individual: 0,
+                    id_seguro: 0,
+                    id_asignacion_seguro: 0,
+                    fullname: '',
+                    relationship: '',
+                    porcentage: 100,
+                    costo_seguro: 0,
+                    incluye_saldo_deudor: 1,
+                    activo: 1,
+                }
+            }]
     }
 
     createGenerallChecklist(){
         const loan = this;
-    
+
         loan.general_checklist = [
             {order:1, title: 'Autorización de consulta en Sociedad de Información Crediticia', checked: false},
             {order:2, title: 'Reporte de SIC y Score', checked: false},
@@ -54,8 +99,8 @@ class LoanAppCollection extends DocumentCollection {
 
     activateItemGeneralChecklist(title, checked_by, checked_at) {
         const loan = this;
-    
-        loan.general_checklist = loan.general_checklist.map((item) => 
+
+        loan.general_checklist = loan.general_checklist.map((item) =>
             item.title === title
             ? {
                 order: item.order,
@@ -70,14 +115,14 @@ class LoanAppCollection extends DocumentCollection {
                 checked: item.checked,
                 checked_by: item.checked_by,
                 checked_at: item.checked_at
-              }   
+              }
         );
-        
+
     }
 
     createCommitteeChecklist() {
         const loan = this;
-    
+
         loan.committee_checklist = [
             {order:1, title: 'Autorización de consulta en Sociedad de Información Crediticia', checked: []},
             {order:2, title: 'Reporte de SIC y Score', checked: []},
@@ -98,7 +143,7 @@ class LoanAppCollection extends DocumentCollection {
     async createLoanFromHF(data) {
         try {
             const { idUsuario, idOficina } = data;
-    
+
             const pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                 .input('idUsuario', sql.Int, idUsuario) // Creado por
@@ -108,7 +153,7 @@ class LoanAppCollection extends DocumentCollection {
                 .input('idServicioFinanciero', sql.Int, 1) // Es el unico que existe
                 .input('cantidad', sql.Int, 1) // Numero de solicitudes a hacer
                 .execute('MOV_InsertarSolicitudServicioFinanciero');
-    
+
             return result.recordset;
         } catch (err) {
             throw new Error(err)
@@ -125,9 +170,9 @@ class LoanAppCollection extends DocumentCollection {
                 id_motivo,
                 uid
             } = data;
-    
+
             const pool = await sql.connect(sqlConfig);
-    
+
             return new Promise((resolve, reject) => {
                 pool.request()
                     .input("id_solicitud_prestamo", sql.Int, id_solicitud_prestamo)
@@ -152,7 +197,7 @@ class LoanAppCollection extends DocumentCollection {
     static async assignMontoloanHF(data) {
         try {
             const pool = await sql.connect(sqlConfig);
-    
+
             tbl.UDT_Solicitud.rows.add(
                 data['SOLICITUD'][0].id,
                 data['CLIENTE'][0].id,
@@ -164,7 +209,7 @@ class LoanAppCollection extends DocumentCollection {
                 data['SOLICITUD'][0].periodicidad, // Meses/Quincena (Se obtiene de configuracionMaestro)
                 data['SOLICITUD'][0].plazo, // 1, 2, 3, 6, 12, 24, etc.
                 'TRAMITE',// ESTATUS
-                'NUEVO TRAMITE',  // SUB_ESTATUS 
+                'NUEVO TRAMITE',  // SUB_ESTATUS
                 data['SOLICITUD'][0].fecha_primer_pago, // Ej. 2022-07-20
                 data['SOLICITUD'][0].fecha_entrega, // Ej. 2022-07-20
                 data['SOLICITUD'][0].medio_desembolso, // ORP -> Orden de pago / cheque
@@ -176,7 +221,7 @@ class LoanAppCollection extends DocumentCollection {
                 data['SOLICITUD'][0].tasa_anual, // Se calcula dependiendo del plazo
                 0
             );
-    
+
             tbl.Cliente.rows.add(
                 data['CLIENTE'][0].id,
                 data['CLIENTE'][0].ciclo, // se obtiene del cliente
@@ -186,10 +231,10 @@ class LoanAppCollection extends DocumentCollection {
                 data['SOLICITUD'][0].id_oficina,
                 data['CLIENTE'][0].tipo_cliente // 0 TODO: Ver si se requiere en el procedimiento
             );
-    
+
             //tabla GrupoSolidario (SE MANDA VACIO)
             //tabla Direccion (SE MANDA VACIO)
-    
+
             tbl.UDT_SolicitudDetalle.rows.add(
                 data['CLIENTE'][0].id,
                 data['SOLICITUD'][0].id,
@@ -202,14 +247,14 @@ class LoanAppCollection extends DocumentCollection {
                 '', // CARGO
                 data['SOLICITUD'][0].monto_solicitado,
                 data['SOLICITUD'][0].monto_autorizado, // TODO: Se establece cuando sea POR AUTORIZAR (WEB ADMIN)
-                data['SOLICITUD'][0].monto_autorizado, // 0 -> desde Móvil, >0 desde WEB ADMIN 
+                data['SOLICITUD'][0].monto_autorizado, // 0 -> desde Móvil, >0 desde WEB ADMIN
                 0, // econ_id_actividad_economica // TODO: ver si lo ocupa el procedimiento
                 0, // CURP Fisica
                 0, // motivo
                 data['SOLICITUD'][0].medio_desembolso === "ORP" ? 2 : 1, //1->CHEQUE, 2->ORDEN DE PAGO, 3->TARJETA DE PAGO
                 0.00 // monto_garantia_financiable
             );
-    
+
             tbl.UDT_CLIE_DetalleSeguro.rows.add(
                 data['SEGURO'][0].id,
                 data['SOLICITUD'][0].id,
@@ -225,7 +270,7 @@ class LoanAppCollection extends DocumentCollection {
                 0,
                 0
             );
-    
+
             // PARA EL TIPO DE PRESTAMO ESPECIAL ES NECESARIO 1 AVAL Y 2 REFERENCIAS
             // for (const idx in data['REFERENCIA']) {
             //     tbl.UDT_CLIE_ReferenciasPersonales.rows.add(
@@ -239,19 +284,19 @@ class LoanAppCollection extends DocumentCollection {
             //         data['SEGURO'][0].eliminado // Eliminado
             //     );
             // }
-    
-    
+
+
             //TABLA GARANTIA PRENDARIA (SE MANDA VACIA PARA CREDITO ESPECIAL)
             //TABLA TU HOGAR CON CONSERVA (SE MANDA VACIA PARA CREDITO ESPECIAL)
             //TABLA COACREDITADO (SE MANDA VACIA PARA CREDITO ESPECIAL)
-    
+
             // return {
             //     solicitud: tbl.UDT_Solicitud.rows,
             //     cliente : tbl.Cliente.rows,
             //     soliDetale: tbl.UDT_SolicitudDetalle.rows,
             //     detalleSeguro: tbl.UDT_CLIE_DetalleSeguro.rows
             // };
-    
+
             const result = await pool.request()
                 .input('tablaSolicitud', tbl.UDT_Solicitud)
                 .input('tablaCliente', tbl.Cliente)
@@ -279,7 +324,7 @@ class LoanAppCollection extends DocumentCollection {
                 tbl.cleanTable(tbl.UDT_CLIE_TuHogarConConservaCoacreditado);
             }
             cleanAllTables();
-    
+
             return result.recordsets;
             // .execute('MOV_Prueba')
         } catch (err) {
@@ -291,12 +336,12 @@ class LoanAppCollection extends DocumentCollection {
     async getSeguroProducto(idProductoMaestro) {
         try{
         const pool = await sql.connect(sqlConfig);
-    
+
         const result = await pool.request()
             .input('id_producto', sql.Int, idProductoMaestro)
             .input('etiqueta_opcion', sql.VarChar, 'OBTENER_SEGURO_PRODUCTO')
             .execute('CLIE_ObtenerListaSegurosProducto')
-    
+
             return result.recordset;
         }
         catch (error) {
@@ -307,7 +352,7 @@ class LoanAppCollection extends DocumentCollection {
     async getDisposicionByOffice(idOffice) {
         try{
         const pool = await sql.connect(sqlConfig);
-    
+
         const result = await pool.request()
             .input('idTipoCliente', sql.Int, 0)
             .input('idServicioFinanciero', sql.Int, 1)
@@ -318,7 +363,7 @@ class LoanAppCollection extends DocumentCollection {
             .input('montoSolicitado', sql.Int, 0)
             .input('montoMaximoSolicitado', sql.Int, 0)
             .execute('FUND_ASIGNAR_DISPOSICION')
-    
+
             return result.recordsets[0];
         }
         catch (error) {
@@ -329,12 +374,12 @@ class LoanAppCollection extends DocumentCollection {
     async getDetailLoan(idLoan, idOffice) {
         try{
             const pool = await sql.connect(sqlConfig);
-    
+
             const result = await pool.request()
             .input('id_solicitud', sql.Int, idLoan)
             .input('id_oficina', sql.Int, idOffice)
             .execute('MOV_ObtenerSolicitudClienteServicioFinanciero_V2')
-    
+
             return result.recordsets;
         }
         catch (error) {
@@ -345,32 +390,32 @@ class LoanAppCollection extends DocumentCollection {
     async getStatusGLByLoan(idLoan) {
         try{
             const pool = await sql.connect(sqlConfig);
-    
+
             const detailLoan = await pool.request()
                 .input('id_solicitud', sql.Int, idLoan)
                 .input('id_oficina', sql.Int, 0)
                 .execute('MOV_ObtenerSolicitudClienteServicioFinanciero_V2');
-    
+
             const garantia = await pool.request()
                 .input('idSolicitudPrestamo', sql.Int, idLoan)
                 .input('opcion', sql.Int, 0)
                 .execute('CLIE_ObtenerGarantias');
-    
+
             const seguro = await pool.request()
                 .input('opcion', sql.VarChar, 'CONFIGURACION_SEGURO')
                 .input('busqueda', sql.VarChar, '')
                 .input('pagina', sql.Int, 0)
                 .input('id_oficina', sql.Int, 0)
                 .execute('HF_uspObtenerSeguros');
-            
+
             const montoSolicitado = detailLoan.recordsets[0][0].monto_total_solicitado;
             const glDepositado = garantia.recordset[0].montoGarantiaDadoAEmpresa;
-    
+
             // console.log(detailLoan.recordsets[4][0]);
             const porcentaje = detailLoan.recordsets[0][0].garantia_liquida / 100;
             const glFinanciable = detailLoan.recordsets[4][0].monto_garantia_financiable;
             const glObligatoria = montoSolicitado * porcentaje;
-            
+
             const diferenciaGL = glDepositado + glFinanciable - glObligatoria;
             var periodicidad = detailLoan.recordsets[0][0].periodicidad.toUpperCase();
             const plazo = detailLoan.recordsets[0][0].plazo;
@@ -390,12 +435,12 @@ class LoanAppCollection extends DocumentCollection {
                 case 'ANUAL': multiplicadorPeriodos = 48; break;
                 default: multiplicadorPeriodos = 0; break;
             }
-    
+
             if (multiplicadorPeriodos == 0) throw new Error('Error de periodicidad');
-    
+
             const montoPrimaNormal = plazo * multiplicadorPeriodos * primaSemanal;
             const montoPrimaSeguroDeudor = plazo * multiplicadorPeriodos * primaSemanalSaldoDeudor;
-            
+
             let data = {
                 plazo,
                 periodicidad,
@@ -407,9 +452,9 @@ class LoanAppCollection extends DocumentCollection {
                 'Financiada: ': glFinanciable,
                 estatus: ''
             }
-    
+
             // TODO: COMO SABER SI INCLUYE SALDO DEUDOR
-    
+
             if(diferenciaGL == 0){
                 data.estatus = 'G.L. COMPLETA.'
                 return data;
@@ -439,7 +484,7 @@ class LoanAppCollection extends DocumentCollection {
                 .input('idCoordinador', sql.Int, 0)
                 .input('idUsuario', sql.Int,0)
                 .execute('CLIE_getPrestamos');
-    
+
             return result.recordset
         } catch (error) {
             throw new Error(error);
@@ -449,7 +494,7 @@ class LoanAppCollection extends DocumentCollection {
     async createLoanFromHF(data) {
         try {
             const { idUsuario, idOficina } = data;
-    
+
             const pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                 .input('idUsuario', sql.Int, idUsuario) // Creado por
@@ -459,7 +504,7 @@ class LoanAppCollection extends DocumentCollection {
                 .input('idServicioFinanciero', sql.Int, 1) // Es el unico que existe
                 .input('cantidad', sql.Int, 1) // Numero de solicitudes a hacer
                 .execute('MOV_InsertarSolicitudServicioFinanciero');
-    
+
             return result.recordset;
         } catch (err) {
             throw new Error(err)
