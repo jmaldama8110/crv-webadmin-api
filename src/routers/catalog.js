@@ -43,6 +43,7 @@ router.get('/catalogs/sync', async (req,res) => {
         await catalogCollection.updateCatalogFromHFByRelationship('CATA_municipio',1000,'MUNICIPALITY', 'PROVINCE', 'estado');
         await catalogCollection.updateCatalogFromHFByRelationship('CATA_estado',1000,'PROVINCE', 'COUNTRY', 'pais');
         await catalogCollection.updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
+        await catalogCollection.createCouchDBTypeParams();
 
         res.status(201).send('Done!');
     }
