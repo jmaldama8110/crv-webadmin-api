@@ -3,16 +3,18 @@ const router = new express.Router();
 const authorize = require("../middleware/authorize");
 const nano = require('../db/connCouch');
 const Product = require('../model/product');
+const { sendReportActionError } = require('../emails/account')
 /////////// Routes for CouchDB /////
+
 
 router.get('/couchdb/getsomedata', authorize ,async(req,res)=>{
     
-        const db = nano.use(process.env.COUCHDB_NAME);
+      const db = nano.use(process.env.COUCHDB_NAME);
 
       try{
           const index = await db.createIndex({ index:{  fields:["couchdb_type"] }});
-          const data = await db.find( { selector: { couchdb_type: "PRODUCT"}});
-     
+          const data = await db.find( { selector: { couchdb_type: "PARAMS",name:"emails"}});
+          
           res.send(data.docs);
         }
         catch(e){
@@ -44,16 +46,19 @@ router.get('/couchdb/getsomedata', authorize ,async(req,res)=>{
 router.get('/couchdb/sample',authorize, async (req, res)=>{
   try {
 
-    const pool = await sql.connect(sqlConfig);
+    // const pool = await sql.connect(sqlConfig);
 
-    let data = await pool
-    .request()
-    .query(`SELECT  
-            [id]
-            ,[etiqueta]
-            ,[creado_por]
-            ,[fecha_registro]
-          FROM [HBMFS].[dbo].[CATA_MotivoBajaRechazado]`)
+    // let data = await pool
+    // .request()
+    // .query(`SELECT  
+    //         [id]
+    //         ,[etiqueta]
+    //         ,[creado_por]
+    //         ,[fecha_registro]
+    //       FROM [HBMFS].[dbo].[CATA_MotivoBajaRechazado]`)
+
+          await sendReportActionError({ name: 'SOME ACTION ID', _id:'id de prueba para el correo' })
+          res.status(200).send('Ok');
 
       /**
        * Update some partes of the data already created
@@ -137,10 +142,11 @@ router.get('/couchdb/sample',authorize, async (req, res)=>{
       console.log('Country: ',newData.length);
       */
 
-      res.status(200).send(data[0][0]);
+      
 
   } catch(error){
-      res.status(401).send(error.message);
+    console.log(error);
+    res.status(400).send(error.message);
   }
 
 })
