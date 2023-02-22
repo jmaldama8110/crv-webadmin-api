@@ -626,8 +626,8 @@ async function createLoanHF(data) {
                     econ_id_actividad_economica: 0, // TODO Se toma de los datos del cliente
                     curp_fisica: 0,
                     motivo: '',
-                    id_cata_medio_desembolso: member.id_cata_medio_desembolso,
-                    monto_garantia_financiable: member.monto_garantia_financiable,
+                    id_cata_medio_desembolso: member.disbursment_mean ? member.disbursment_mean : 2, // 1-> Cheque, 2->Orden de pago
+                    monto_garantia_financiable: member.monto_garantia_financiable ? member.monto_garantia_financiable : 0,
                 }
             }),
             SEGURO: loan.members.map(member => {
