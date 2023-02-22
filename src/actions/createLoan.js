@@ -544,7 +544,7 @@ async function createLoanHF(data) {
                 // loan.group.id = 0;
             }
 
-        } else if (loan.renovation && typeClient == 1) { // TODOelse if revobacion
+        } else if (loan.renovation) { // TODOelse if revobacion
             console.log('RENOVACIÓN');
 
             idOfficer = loan.loan_officer ? loan.loan_officer : 0;

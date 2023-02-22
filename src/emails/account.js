@@ -59,23 +59,27 @@ const sendPaymentInformationLoanHF = (email, loan_id) => {
 }
 
 const sendReportActionError = async (actionInfo) => {
-    const db = nano.use(process.env.COUCHDB_NAME);
-    
-        await db.createIndex({ index:{  fields:["couchdb_type"] }});
-        const dataRes = await db.find( { selector: { couchdb_type: "PARAMS", name: "emails"}});
-        
-        if( dataRes.docs.length !== 1) throw new Error('No esta definida la lista de correos');
+    try {
+        const db = nano.use(process.env.COUCHDB_NAME);
 
-        const emailParam = dataRes.docs[0];
-        
-        const msg = {
-            to: [emailParam.data.to], // replace these with your email addresses
-            from: `Andres Morales<${emailParam.data.from}>`,
-            subject: `Error al ${actionInfo.name}`,
-            text:  `Error Action:${actionInfo.name}, Detalle del ACTION: ${JSON.stringify(actionInfo)}`,
-        };
+            await db.createIndex({ index:{  fields:["couchdb_type"] }});
+            const dataRes = await db.find( { selector: { couchdb_type: "PARAMS", name: "emails"}});
 
-        await sgMail.sendMultiple(msg);
+            if( dataRes.docs.length !== 1) throw new Error('No esta definida la lista de correos');
+
+            const emailParam = dataRes.docs[0];
+
+            const msg = {
+                to: [emailParam.data.to], // replace these with your email addresses
+                from: `Andres Morales<${emailParam.data.from}>`,
+                subject: `Error al ${actionInfo.name}`,
+                text:  `Error Action:${actionInfo.name}, Detalle del ACTION: ${JSON.stringify(actionInfo)}`,
+            };
+
+            await sgMail.sendMultiple(msg);
+    } catch (error) {
+        console.log(error.message)
+    }
 
 }
 
