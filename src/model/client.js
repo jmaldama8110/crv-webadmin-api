@@ -673,7 +673,18 @@ clientSchema.statics.getHomonimoHF = async(nombre, apellidoPaterno, apellidoMate
         return error;
     }
 }
+clientSchema.statics.getSolicitudServicioFinanciero = async (loanAppId, branchId) => {
+    // MOV_ObtenerSolicitudClienteServicioFinanciero_V2
+    
+        const pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+            .input('id_solicitud', sql.Int, loanAppId)
+            .input('id_oficina', sql.Int, branchId)
+            .execute('CLIE_ObtenerSolicitudClienteServicioFinanciero_V2');
 
+            return result.recordsets;
+    
+}
 clientSchema.statics.updateCurpPersonaHF = async(idPerson, curpNueva) => {
     try {
         const pool = await sql.connect(sqlConfig);

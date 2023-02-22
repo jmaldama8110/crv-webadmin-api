@@ -204,6 +204,36 @@ router.get('/clients/hf/getBalance', authorize, async(req, res) => {
     }
 });
 
+router.get('/clients/hf/loanapps', authorize, async(req, res) => {
+    try{
+        if( !(req.query.branchId && req.query.applicationId) ){
+            throw new Error('Query parametrs branchId or groupName are missing!')
+        }
+        const data = await Client.getSolicitudServicioFinanciero(parseInt(req.query.applicationId),parseInt(req.query.branchId));
+        
+        /**
+         * resultsets[0] => Detalle de la solicitud
+         * resultsets[1] => Ciclo y estatus 
+         * resultsets[4] => Integrantes, cargo, etc (importe solicitado, autorizado, etc)
+         * resultsets[5] => Detalle Seguro (Costo, tipo seguro, Beneficiario, parentezco, etc)
+         * resultsets[7] => Avales (Costo, tipo seguro, Beneficiario, parentezco, etc)
+         */ 
+        const loan_application = data[0][0];
+        const loan_cycle = data[1][0];
+        const members = data[4];
+        const seguro = data[5];
+        const avales = data[7];
+
+        res.send(seguro)
+    }
+
+    catch(e){
+        console.log(err);
+        res.status(400).send(err);
+
+    }
+})
+
 router.get('/clients/hf/accountstatement', authorize, async (req, res)=> {
 
     const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
