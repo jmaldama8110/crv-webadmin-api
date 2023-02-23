@@ -59,7 +59,7 @@ const sendPaymentInformationLoanHF = (email, loan_id) => {
 }
 
 const sendReportActionError = async (actionInfo) => {
-    try {
+    
         const db = nano.use(process.env.COUCHDB_NAME);
 
             await db.createIndex({ index:{  fields:["couchdb_type"] }});
@@ -77,9 +77,7 @@ const sendReportActionError = async (actionInfo) => {
             };
 
             await sgMail.sendMultiple(msg);
-    } catch (error) {
-        console.log(error.message)
-    }
+    
 
 }
 

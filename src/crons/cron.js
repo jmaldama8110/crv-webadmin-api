@@ -121,7 +121,7 @@ cron.schedule('5 * * * * *', async () => {
                     break;
 
                 default:
-                    console.log('Estatus no reconocido');
+                    // console.log('Estatus no reconocido');
                     break;
             }
         })
