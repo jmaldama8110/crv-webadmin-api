@@ -12,6 +12,8 @@ class ActionCollection extends DocumentCollection {
             this._data = obj.data,
             this._created_by = obj.created_by,
             this._status = obj.status || 'Pending'
+        this._errors = obj.errors || [],
+            this._isOk = obj.isOk || false
     }
 
     async getClientHFById(externalId) {
@@ -315,11 +317,11 @@ class ActionCollection extends DocumentCollection {
         }
     }
 
-    async getActionHF(){
+    async getActionHF() {
         try {
             const pool = await sql.connect(sqlConfig);
             const result = await pool
-            .request()
+                .request()
                 .query("SELECT * FROM MOVI_Acciones WHERE estatus = 'PENDIENTE'");
 
             return result.recordset;
@@ -329,11 +331,11 @@ class ActionCollection extends DocumentCollection {
         }
     }
 
-    async updateActionHF(id_action, status){
+    async updateActionHF(id_action, status) {
         try {
             const pool = await sql.connect(sqlConfig);
             const result = await pool
-            .request()
+                .request()
                 .query(`UPDATE MOVI_Acciones SET estatus = '${status}' WHERE id = '${id_action}'`);
 
             return result.recordset;
@@ -341,6 +343,189 @@ class ActionCollection extends DocumentCollection {
             console.log(error);
             return new Error(error.message)
         }
+    }
+
+    validateDataLoan(data) {
+        const dataExample = {
+            apply_by: "1677107583323",
+            id_solicitud: 236699,
+            id_cliente: 333531,
+            loan_officer: 84432,
+            branch: [
+                1,
+                "ORIENTE"
+            ],
+            id_producto: 0,
+            id_disposicion: 26,
+            apply_amount: 62000,
+            approved_total: 62000,
+            term: 12,
+            estatus: "TRAMITE",
+            sub_estatus: "NUEVO TRAMITE",
+            renovation: false,
+            frequency: [
+                "C",
+                "Catorcena(s)"
+            ],
+            first_replay_at: "",
+            disburset_at: "",
+            disbursment_mean: "ORP",
+            liquid_guarantee: 10,
+            product: {
+                external_id: 3,
+                min_amount: "10000",
+                max_amount: 160000,
+                step_amount: "1000",
+                min_term: 4,
+                max_term: 36,
+                product_name: "CONSERVA TE ACTIVA",
+                term_types: [
+                    {
+                        _id: "63dbd8de41c0dca6f71775b8",
+                        identifier: "S",
+                        value: "Semana(s)",
+                        year_periods: "52.1429"
+                    },
+                    {
+                        _id: "63dbd8de41c0dca6f71775b9",
+                        identifier: "C",
+                        value: "Catorcena(s)",
+                        year_periods: "26"
+                    },
+                    {
+                        _id: "63dbd8de41c0dca6f71775ba",
+                        identifier: "M",
+                        value: "Mes(es)",
+                        year_periods: "12"
+                    }
+                ],
+                rate: "95.22",
+                tax: "16",
+                GL_financeable: false,
+                liquid_guarantee: 10
+            },
+            created_by: "lmijangos@grupoconserva.mx",
+            status: [
+                1,
+                "NUEVO TRAMITE"
+            ],
+            dropout: [],
+            members: [
+                {
+                    id_member: 136525,
+                    id_cliente: 133913,
+                    fullname: "ERICA NAJARRO SANCHEZ",
+                    estatus: "ACEPTADO",
+                    sub_estatus: "PRESTAMO ACTIVO",
+                    position: "",
+                    apply_amount: 31000,
+                    approved_amount: 31000,
+                    previous_amount: 31000,
+                    loan_cycle: 6,
+                    disbursment_mean: 2,
+                    insurance: {
+                        beneficiary: "RAMON NAJARRO SANCHEZ",
+                        relationship: "HIJO",
+                        percentage: 100,
+                        id: 1152395
+                    }
+                },
+                {
+                    id_member: 321397,
+                    id_cliente: 333813,
+                    fullname: "SONIA ISABEL NAVARRO DOMINGUEZ",
+                    estatus: "ACEPTADO",
+                    sub_estatus: "PRESTAMO ACTIVO",
+                    position: "Presidenta(e)",
+                    apply_amount: 31000,
+                    approved_amount: 31000,
+                    previous_amount: 31000,
+                    loan_cycle: 5,
+                    disbursment_mean: 2,
+                    insurance: {
+                        beneficiary: "ALFREDO DE JESUS GONZALEZ NAVARRO",
+                        relationship: "HIJO",
+                        percentage: 100,
+                        id: 1152396
+                    }
+                }
+            ]
+        }
+        let erros = [];
+
+        const keys = Object.keys(dataExample);
+        keys.forEach((item) => {
+            const valueOKExample = dataExample[item];
+            const valueCompareExample = data[item];
+            const typeDataOKEx = typeof valueOKExample == "object" && Array.isArray(valueOKExample) ? "array" : typeof valueOKExample;
+            const typeDataCoEx = typeof valueCompareExample == "object" && Array.isArray(valueCompareExample) ? "array" : typeof valueCompareExample;
+
+            if (typeDataOKEx == "object" && typeDataCoEx == "object") {
+                const keyItemArray = Object.keys(valueOKExample);
+                keyItemArray.forEach((key) => {
+                    const valueOK = valueOKExample[key];
+                    const valueCompare = valueCompareExample[key];
+                    const typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
+                    const typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare;
+
+                    if (typeDataOK != typeDataCompare) erros.push({
+                        property: `${item}.${key}`,
+                        ExpectedDataType: typeDataOK,
+                        givenDataType: typeDataCompare,
+                        example: valueOK
+                    })
+                })
+            }
+
+            if (typeDataOKEx == "array" && typeDataCoEx == "array" && typeof valueOKExample[1] == 'object') {
+                valueOKExample.forEach((obj, idx) => {
+                    const keyItemArray = Object.keys(obj);
+                    keyItemArray.forEach((key) => {
+                        if (valueCompareExample.lenght < idx) {
+                            const valueOK = obj[key] || '';
+                            const valueCompare = valueCompareExample[idx][key] ? valueCompareExample[idx][key] : undefined;
+
+                            // console.log(typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare)
+                            let typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
+                            let typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare || null;
+                            if (!typeDataCompare) console.log('pasa')
+                            // if (!typeDataCompare)
+
+                            if (typeDataOK != typeDataCompare || !typeDataCompare) erros.push({
+                                property: `address[${idx}].${key}`,
+                                ExpectedDataType: typeDataOK,
+                                givenDataType: typeDataCompare,
+                                example: valueOK
+                            })
+                        }
+
+                    })
+                })
+            }
+
+            if (typeDataOKEx != typeDataCoEx || !typeDataCoEx)
+                erros.push({
+                    property: item,
+                    ExpectedDataType: typeDataOKEx,
+                    givenDataType: typeDataCoEx,
+                    example: valueOKExample
+                });
+        });
+        let action_type;
+        if (data.renovation) {
+            action_type = 'RENOVATION LOAN';
+        } else if (data.id_solicitud === 0 && !data.renovation) {
+            action_type = 'CREATE LOAN';
+        } else {
+            action_type = 'UPDATE LOAN';
+        }
+
+        const info = {
+            client_id: data.id_cliente,
+            loan_id: data.id_solicitud,
+            action_type: action_type
+        }
+        return { info, erros };
     }
 }
 

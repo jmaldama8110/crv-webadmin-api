@@ -39,19 +39,19 @@ cron.schedule('5 * * * * *', async () => {
                     console.log(`>> Client ${task.status}!`);
                     break;
                 case 'CREATE_UPDATE_LOAN':
-                    const loan = await createLoanHF(task.data);
-                    // if (!loan) { console.log('Error to create Loan'); return };
+                    // const loan = await createLoanHF(task.data);
+                    // // if (!loan) { console.log('Error to create Loan'); return };
 
-                    if (loan instanceof Error || !loan) {
-                        task.status = 'Error';
-                        sendReportActionError(task);
-                        console.log(loan)
-                    } else {
-                        task.status = 'Done'
-                    };
+                    // if (loan instanceof Error || !loan) {
+                    //     task.status = 'Error';
+                    //     sendReportActionError(task);
+                    //     console.log(loan)
+                    // } else {
+                    //     task.status = 'Done'
+                    // };
 
-                    await new ActionCollection(task).save();
-                    console.log(`>> Loan ${task.status}!`);
+                    // await new ActionCollection(task).save();
+                    // console.log(`>> Loan ${task.status}!`);
                     break;
                 case 'MEMBER_DROPOUT':
                     const { client_id, loan_id, dropout_type, reason_id } = task.data;
