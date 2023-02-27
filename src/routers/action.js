@@ -28,7 +28,7 @@ router.post('/action', async (req, res) => {
     }
 });
 
-router.get('/actions/valide', async (req, res) => {
+router.get('/actions/validate', async (req, res) => {
     try {
         const { id } = req.query;
 
@@ -42,15 +42,16 @@ router.get('/actions/valide', async (req, res) => {
         if (loan == undefined) {
             loan = await LoanApp.findOne({ _id: id_loan });
         }
+
         if (loan === undefined) throw new Error('Loan not found');
 
         const result = await Action.validateDataLoan(loan);
 
-        if (result.erros.length == 0) {
+        if (result.errors.length == 0) {
             action.isOk = true
-            action.errors = result.erros;
+            action.errors = result.errors;
         } else {
-            action.errors = result.erros; //[{...Errors}]};
+            action.errors = result.errors; //[{...Errors}]};
             action.isOk = false;
         }
 

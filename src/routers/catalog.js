@@ -21,7 +21,7 @@ router.get('/catalogs/sync', async (req,res) => {
         await catalogCollection.updateCatalogFromHF('CATA_escolaridad',10000)
         await catalogCollection.updateCatalogFromHF('CATA_estadoCivil',10000)
         await catalogCollection.updateCatalogFromHF('CATA_nacionalidad',10000, true)
-        // await catalogCollection.updateCatalogFromHF('CATA_ocupacion',10000)
+        
         await catalogCollection.updateCatalogFromHF('CATA_parentesco',10000)
         await catalogCollection.updateCatalogFromHF('CATA_profesion',10000, true)
         await catalogCollection.updateCatalogFromHF('CATA_TipoRelacion',10000)

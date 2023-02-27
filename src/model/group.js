@@ -18,6 +18,7 @@ groupSchema.methods.toJSON = function(){
 }
 
 
+
 groupSchema.statics.searchGroupLoanByName = async(groupName, branchId) => {
     try {
         const pool = await sql.connect(sqlConfig);
@@ -45,7 +46,7 @@ groupSchema.statics.searchGroupLoanByName = async(groupName, branchId) => {
 }
 
 groupSchema.statics.getLoanApplicationById = async ( loanAppId, branchId ) => {
-    try{    
+    
         const pool = await sql.connect(sqlConfig);
         const result = await pool.request()
             .input('id_solicitud', sql.Int, loanAppId)
@@ -55,10 +56,6 @@ groupSchema.statics.getLoanApplicationById = async ( loanAppId, branchId ) => {
 
         return result.recordsets;
 
-    }
-    catch(err){
-        throw new Error(err)
-    }
 }
 
 const Group = mongoose.model('Group', groupSchema);

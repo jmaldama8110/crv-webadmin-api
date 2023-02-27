@@ -13,7 +13,7 @@ router.get('/couchdb/getsomedata', authorize ,async(req,res)=>{
 
       try{
           const index = await db.createIndex({ index:{  fields:["couchdb_type"] }});
-          const data = await db.find( { selector: { couchdb_type: "PARAMS",name:"emails"}});
+          const data = await db.find( { selector: { couchdb_type: "PARAMS"}});
           
           res.send(data.docs);
         }

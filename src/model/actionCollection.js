@@ -451,7 +451,7 @@ class ActionCollection extends DocumentCollection {
                 }
             ]
         }
-        let erros = [];
+        let errors = [];
 
         const keys = Object.keys(dataExample);
         keys.forEach((item) => {
@@ -468,7 +468,7 @@ class ActionCollection extends DocumentCollection {
                     const typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
                     const typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare;
 
-                    if (typeDataOK != typeDataCompare) erros.push({
+                    if (typeDataOK != typeDataCompare) errors.push({
                         property: `${item}.${key}`,
                         ExpectedDataType: typeDataOK,
                         givenDataType: typeDataCompare,
@@ -504,7 +504,7 @@ class ActionCollection extends DocumentCollection {
             }
 
             if (typeDataOKEx != typeDataCoEx || !typeDataCoEx)
-                erros.push({
+                errors.push({
                     property: item,
                     ExpectedDataType: typeDataOKEx,
                     givenDataType: typeDataCoEx,
@@ -525,7 +525,7 @@ class ActionCollection extends DocumentCollection {
             loan_id: data.id_solicitud,
             action_type: action_type
         }
-        return { info, erros };
+        return { info, errors };
     }
 }
 
