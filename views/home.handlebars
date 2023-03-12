@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Example App - Home</title>
+
+    <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+    </script>
+
+    <style>
+         body {
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            font-size: 12px;
+         }
+        
+         .header {
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #efefef;
+            border-radius: 5px;
+         }
+         .header div{
+            text-align: center;            
+            padding: 1rem;
+         }
+         .header p { margin: 0 0 ;}
+
+        .summary{ 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        .summary h3 {
+            grid-column: 1 / 3;
+        }
+
+        .summary .col {
+            margin: 0rem 1rem 0 1rem;            
+            max-width: 500px;
+        }
+        p {  margin: 0 0; }
+
+        .row { 
+            display: grid;
+            grid-template-columns: auto 150px;
+        }
+
+        .row-label { margin-right: 5px;}
+        .row-value { border-bottom: 1px solid black; text-align: right;}
+
+        .movs { padding: 1rem;}
+
+        .movs-header { 
+            background-color: gray;
+            display: flex;
+            justify-content: space-evenly;
+            text-align: left;
+        }
+        .movs-header p{ width: 100%; }
+        .movs-row {
+            display: flex;
+            justify-content: space-evenly;
+        }
+        .movs-row:nth-child(even) {
+            background-color: #efefef;
+        }
+
+        .movs-row p, .movs-row div { width: 100%; }
+
+        .movs-footer {
+            text-align: right;
+            border-top: 1px solid black;
+            display: flex;
+            justify-content: space-evenly;
+        }
+        .movs-footer p{
+            width: 100%;
+            text-align: left;
+        }
+
+        .plan-header p, .plan-footer p { font-weight: 600;}
+        .plan-header,.plan-row, .plan-footer{ 
+            display: flex;
+            justify-content: space-evenly;
+        }
+        .plan-row p,.plan-header p,.plan-footer p { width: 100%; }
+        .plan-row:nth-child(even) {
+            background-color: #efefef;
+        }
+        .logo-container { width: 250px;}
+         img { width: 100%; }        
+         .txt-center{ text-align: center;}
+         .fs-lg{ font-size: 18px;}
+         .fw-strong { font-weight: 400; }
+
+         .chart-container{ margin: 2rem 2rem; }
+         canvas {
+            width:100%;
+            max-width:700px;
+            margin:auto;  
+         }
+
+         .footer {
+            border: 1px solid gray;
+         }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-container">
+            <img src={{logoImageFilePath}} >
+        </div>
+        <div>
+            <p class="fs-lg fw-strong">CONSULTORES DE SERVICIOS VARIOS SA de CV SOFOM ENR</p>
+            <p>SUR ORIENTE, CUARTA ORIENTE SUR NÚMERO 1449, COLONIA OBRERA, TUXTLA GUTIÉRREZ, CHIAPAS, CÓDIGO POSTAL 29080, TELÉFONO: 9616110990</p>
+        </div>
+    </div>
+
+    <div class="summary">
+            <h3 class="txt-center">Estado de Cuenta del #03/08/2022# Al #12/09/2022#</h3>
+            <div class="col">
+                <div class="row"><p class="row-label">Número de Contrato:</p> <p class="row-value">268044</p></div>
+                <div class="row"><p class="row-label">Día y Hora de Reunión:</p> <p class="row-value">No Aplica</p></div>
+                <div class="row"><p class="row-label">Fecha de Contrato:</p> <p class="row-value">03/08/2022</p></div>
+                <div class="row"><p class="row-label">Monto de Crédito:</p> <p class="row-value">$45,000</p></div>
+                <div class="row"><p class="row-label">Saldo Inicial de Periodo:</p> <p class="row-value">$12,304.34</p></div>
+                <div class="row"><p class="row-label">Saldo Final de Periodo:</p> <p class="row-value">$11,234.87</p></div>
+                <div class="row"><p class="row-label">Fecha de Corte:</p> <p class="row-value">12/09/2022</p></div>
+                <div class="row"><p class="row-label">Nombre del Cliente:</p> <p class="row-value">OSCAR ROMAN DIAZ</p></div>
+                <div class="row"><p class="row-label">Oficial de Crédito:</p> <p class="row-value">ALFREDO KIM BALAM RAMIREZ</p></div>
+                <div class="row"><p class="row-label">Plazo:</p> <p class="row-value">48 Quincenas</p></div>
+                <div class="row"><p class="row-label">Fecha Limite de Pago**:</p> <p class="row-value">03/10/2022</p></div>
+            </div>
+            <div class="col">
+                <div class="row"><p class="row-label">CAT Sin IVA:</p><p class="row-value">41.3%</p></div>
+                <div class="row"><p class="row-label">Tasa Ordinaria Anual FIJA:</p> <p class="row-value">27.60%</p></div>
+                <div class="row"><p class="row-label">Tara Moratoria Anual:</p> <p class="row-value">55.20%</p></div>
+                <div class="row"><p class="row-label">Monto Total a Pagar en el Periodo:</p> <p class="row-value">$2,552.00</p></div>
+                <div class="row"><p class="row-label">Capital a Pagar:</p> <p class="row-value">$1,360.41</p></div>
+                <div class="row"><p class="row-label">Interés a Pagar:</p> <p class="row-value">$1,027.23</p></div>
+                <div class="row"><p class="row-label">IVA a Pagar:</p> <p class="row-value">$164.36</p></div>
+                <div class="row"><p class="row-label">Interés Moratorio a Pagar:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">IVA Interés Moratorio a Pagar:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">Saldo Insoluto del Capital:</p> <p class="row-value">$43,493.21</p></div>
+                <div class="row"><p class="row-label">Seguro de Vida:</p> <p class="row-value">$720.00</p></div>
+                <div class="row"><p class="row-label">Seguro Saldo Deudor:</p> <p class="row-value">$528.00</p></div>
+            </div>
+
+            <h3 class="txt-center">Totales a la Fecha de Corte</h3>
+            <div class="col">
+                <div class="row"><p class="row-label">Capital Vencido Pagado:</p> <p class="row-value">$1,360.41</p></div>
+                <div class="row"><p class="row-label">Interés Ordinario Pagado:</p> <p class="row-value">$1,094.15</p></div>
+                <div class="row"><p class="row-label">IVA Interés Ordinario Pagado:</p> <p class="row-value">$175.06</p></div>
+                <div class="row"><p class="row-label">Intereses Moratorios Pagados:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">IVA Intereses Moratorios Pagados:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">Total Pagado:</p> <p class="row-value">$2,629.62</p></div>
+                <div class="row"><p class="row-label">Saldo Actual:</p> <p class="row-value">$43,764.88</p></div>
+                <div class="row"><p class="row-label">Saldo Actual (Capital):</p> <p class="row-value">$43,493.21</p></div>
+                <div class="row"><p class="row-label">Intereses Ordinarios:</p> <p class="row-value">$234.22</p></div>
+                <div class="row"><p class="row-label">IVA de Intereses Ordinarios:</p> <p class="row-value">$37.45</p></div>
+                <div class="row"><p class="row-label">Intereses Moratorios:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">IVA de Intereses Moratorios:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">Comisiones:</p> <p class="row-value">No Aplica</p></div>
+            </div>
+            <div class="col">
+                <div class="row"><p class="row-label">Capital Vencido No Pagado:</p><p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">Interés Ordinario Vencido No Pagado:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">IVA Intereses Ordinarios Vencidos No Pagados:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">Intereses Moratorios Generados No Pagados:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">IVA Intereses Moratorios Generados No Pagados:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">Total Vencido No Pagado:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">DA (Días Atraso):</p> <p class="row-value">0</p></div>
+                <div class="row"><p class="row-label">DAA (Días Atraso Acumulados):</p> <p class="row-value">4</p></div>
+                <div class="row"><p class="row-label">Monto de Cargos Objetados o en Aclaración:</p> <p class="row-value">-</p></div>
+                <div class="row"><p class="row-label">Folio de Reporte de Aclaración:</p> <p class="row-value">98E932U98</p></div>
+            </div>
+        
+
+    </div>
+
+    <div class="movs">
+            <h3 class="txt-center">Movimientos del Periodo</h3>
+            <div class="movs-details">
+                <div class="movs-header">
+                    <p>No Transacción</p>
+                    <p>Tipo Movimiento</p>
+                    <p>Fecha</p>
+                    <p>Monto</p>
+                </div>
+                
+                <div class="movs-body">
+                    <div class="movs-row">
+                        <p>6437249</p>
+                        <div><p>Depósito en BANORTE 0645823239</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
+                        <p>22/08/2022</p>
+                        <div><p>$1,276.00</p><p>$675.70</p><p>$517.50</p><p>$82.80</p><p>-</p><p>-</p></div>
+                    </div>
+                    <div class="movs-row">
+                        <p>6437249</p>
+                        <div><p>Depósito en BANORTE 0645823239</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
+                        <p>22/08/2022</p>
+                        <div><p>$1,276.00</p><p>$675.70</p><p>$517.50</p><p>$82.80</p><p>-</p><p>-</p></div>
+                    </div>
+                    <div class="movs-row">
+                        <p>6437249</p>
+                        <div><p>Depósito en BANORTE 0645823239</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
+                        <p>22/08/2022</p>
+                        <div><p>$1,276.00</p><p>$675.70</p><p>$517.50</p><p>$82.80</p><p>-</p><p>-</p></div>
+                    </div>
+                    <div class="movs-row">
+                        <p>6437249</p>
+                        <div><p>Depósito en BANORTE 0645823239</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
+                        <p>22/08/2022</p>
+                        <div><p>$1,276.00</p><p>$675.70</p><p>$517.50</p><p>$82.80</p><p>-</p><p>-</p></div>
+                    </div>
+
+                </div>
+                <div class="pplan">
+                    <h3 class="txt-center">Tabla de Amortizaciones Actual</h3>
+                    <div class="plan">
+                        <div class="plan-header">
+                            <p>No</p><p>Fecha Inicio</p><p>Fecha Limite Pago</p><p>Fecha Pago</p><p>DA</p><p>DDA</p><p>Monto Base(1)</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Pago Total</p>
+                        </div>
+                        <div class="plan-row">
+                            <p>1</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
+                        </div>
+                        <div class="plan-row">
+                            <p>2</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
+                        </div>
+                        <div class="plan-row">
+                            <p>3</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
+                        </div>
+                        <div class="plan-row">
+                            <p>4</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
+                        </div>
+                        <div class="plan-row">
+                            <p>5</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plan-footer">
+                            <p>Totales</p><p></p><p></p><p></p><p></p><p></p><p></p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
+                </div>
+
+            </div>
+    </div>
+    {{!-- Pie Chart --}}
+    <div class="chart-container"><canvas id="myChart" ></canvas></div>
+    {{!------------}}
+
+    <div class="footer">
+        <div class="footer-note">
+            <p>* CONTRATAR CRÉDITOS QUE EXCEDAN SU CAPACIDAD DE PAGO AFECTAN SU HISTORIAL CREDITICIO.</p>
+            <p>* EL AVALISTA, OBLIGADO SOLIDARIO O COACREDITADO RESPONDERÁ COMO OBLIGADO PRINCIPAL POR EL TOTAL DEL PAGO FRENTE A CONSERVA.</p>
+            <p>**CUANDO LA FECHA CORRESPONDA A UN DÍA INHÁBIL BANCARIO, SE RECORRERÁ AL SIGUIENTE DÍA HÁBIL, SIN QUE PROCEDA EL COBRO DE COMISIONES O INTERESES MORATORIOS.</p>
+            <p>IMPORTANTE: Usted Cuenta con 90 días naturales contando a partir de la fecha de corte para aclaraciones ante la empresa: Consultores de Servicios Varios, S.A. de C.V. SOFOM E.N.R. recibe las consultas, reclamaciones o aclaraciones en su unidad especializada de atención a usuarios ubicada en: AVENIDA Palma Corozo No. 415, Colonia Las Palmas CP. 29040, Tuxtla Gutiérrez, Chiapas. Tel. 9611213168 y 9611213229, 9616179300 ext. 103 javila@grupoconserva.mx www.conserva.org.mx y por correo electrónico o teléfono. Así como en cualquiera de las sucursales u oficinas. En caso de no tener una respuesta satisfactoria, podrá acudir a CONDUSEF: número telefónico 55 53 400 999 o lada sin costo 800 999 80 80, dirección de internet www.condusef.gob.mx.</p>
+        </div>
+
+    </div>
+  
+<script>
+    var xValues = ["Capital Pendiente", "Capital Pagado", "Interes Pendiente", "Interes Pagado"];
+    var yValues = [55, 49, 44, 24];
+    var barColors = [
+    "#b91d47",
+    "#00aba9",
+    "#2b5797",
+    "#e8c3b9",
+    "#1e7145"
+    ];
+
+    new Chart("myChart", {
+    type: "pie",
+    data: {
+        labels: xValues,
+        datasets: [{
+        backgroundColor: barColors,
+        data: yValues
+        }]
+    },
+    options: {
+        title: {
+        display: true,
+        text: "Linea de Crédito"
+        }
+    }
+    });
+</script>
+</body>
+</html>

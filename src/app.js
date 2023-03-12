@@ -31,6 +31,9 @@ const coundbRouter = require('./routers/couchdb');
 const loanDestRouter = require('./routers/loanDest');
 const actionRouter = require('./routers/action');
 const groupsRouter = require('./routers/group');
+const docsRouter = require('./routers/docs');
+
+const { engine } = require('express-handlebars');
 
 const app = express()
 var corsOptions = {
@@ -40,6 +43,11 @@ var corsOptions = {
   
 app.use(cors(corsOptions));
 app.use(express.json({limit: '50mb'}))
+app.use(express.static("public"));
+app.engine('handlebars', engine() );
+app.set('view engine', 'handlebars');
+app.set('views', './views');
+
 app.use(userRouter)
 app.use(productRouter)
 app.use(clientRouter)
@@ -67,5 +75,6 @@ app.use(loanDestRouter);
 app.use(actionRouter);
 
 app.use(groupsRouter);
+app.use(docsRouter);
 
 module.exports = app
