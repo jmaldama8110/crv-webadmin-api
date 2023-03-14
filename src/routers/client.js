@@ -310,23 +310,47 @@ router.get('/clients/hf/loanapps', authorize, async(req, res) => {
 
 router.get('/clients/hf/accountstatement', authorize, async (req, res)=> {
 
-    const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-    const idContract = req.query.contractId;
-    const dateFrom = new Date(req.query.dateFrom);
-    const dateEnd = new Date(req.query.dateEnd);
-    const yearDate = dateEnd.getFullYear().toString();
-    const month = dateEnd.getMonth().toString();
-    
     try {
-        
+        const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+        const idContract = req.query.contractId;
+        const dateFrom = new Date(req.query.dateFrom);
+        const dateEnd = new Date(req.query.dateEnd);
+        const yearDate = dateEnd.getFullYear().toString();
+        const month = dateEnd.getMonth().toString();
         const monthDate = months[ month ];
-        data = await Client.getObtenerEstadoCuentaPeriodo(  parseInt(idContract),
-                                                            dateFrom,
-                                                            dateEnd,
-                                                            parseInt(yearDate),
-                                                            parseInt(monthDate) )
-        
-        res.send(data); 
+        const forceRefresh = !!parseInt(req.query.forceRefresh);
+        let data = {};
+
+        const db = nano.use(process.env.COUCHDB_NAME);
+        try{
+            data = await db.get(`CONTRACT|${idContract}`);   
+
+            const queryDate = new Date(data.query_at);
+            const now = new Date();
+            const timeDiff = now.getTime() - queryDate.getTime();
+            // converts miliseconds in hours, and calculate 6 hours for normal refresh
+            const hoursDiff = timeDiff / (1000 * 3600);
+            if( (hoursDiff > 12 || forceRefresh ) ){
+                throw error('not account statement found, thus continue on cached block')
+            }
+            // retrieves only the Record Set part of the document
+            res.send(data.rs);
+        }
+        catch(e) {
+            
+            let rs = await Client.getObtenerEstadoCuentaPeriodo(  parseInt(idContract),
+                                                                dateFrom,
+                                                                dateEnd,
+                                                                parseInt(yearDate),
+                                                                parseInt(monthDate) );
+            /// rs -> Result set of the account statement at the time being query
+            /// query_at -> timestamp when the query was last saved
+            const timeNow = new Date().toISOString();
+            /// Insert or Update document
+            await db.insert({ ...data,rs, query_at: timeNow, couchdb_type: "ACC_STATEMENT"}, `CONTRACT|${idContract}`);
+            res.send(rs); 
+        }
+
     }
     catch(error){
         console.log(error);

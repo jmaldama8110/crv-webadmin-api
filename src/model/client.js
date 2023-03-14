@@ -243,8 +243,6 @@ clientSchema.statics.getObtenerEstadoCuentaPeriodo = async (idContract, fechaIni
     // -- MONTO AUTORIZADO
     // -- TABLA DE AMORTIZACION
     // -- MOVIMIENTOS DEL PERIODO
-    
-    try{
         const pool = await sql.connect(sqlConfig);
         const result = await pool.request()
             .input('idContrado', sql.Int, idContract)
@@ -253,12 +251,7 @@ clientSchema.statics.getObtenerEstadoCuentaPeriodo = async (idContract, fechaIni
             .input('anio', sql.Int, anio)
             .input('mes', sql.Int, mes)
             .execute('MOV_ObtenerEstadoCuentaPeriodo');
-
-            return result.recordsets
-    } catch (err) {
-        console.log(err);
-        throw new Error(err);
-    }
+        return result.recordsets
 }
 
 //Crear persona Hf

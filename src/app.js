@@ -62,7 +62,7 @@ app.use(notificationRouter)
 app.use(paymentIntermediareRouter)
 app.use(attachedFileRouter)
 app.use(signUpRouter)
-// app.use(contractRouter)
+
 app.use(rccFycoRouter)
 app.use(guaranteeRouter)
 app.use(identityRouter)
