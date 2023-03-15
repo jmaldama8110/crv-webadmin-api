@@ -2,6 +2,7 @@ const express = require("express")
 const router = new express.Router();
 const Product = require("../model/product")
 const auth = require("../middleware/auth");
+const authorize = require("../middleware/authorize");
 const multer = require("multer"); // parar cargar imagenes
 const sharp = require("sharp");
 
@@ -92,7 +93,7 @@ router.post("/products", auth, async(req,res) => {
     }
 });
 
-router.get('/couch/products', async(req, res) => {    
+router.get('/couchdb/products', authorize, async(req, res) => {    
     try {
         const match = {};
 
@@ -109,28 +110,29 @@ router.get('/couch/products', async(req, res) => {
     }
 
 });
-router.get('/products', auth, async(req, res) => {
 
-    const match = {};
+// router.get('/products', auth, async(req, res) => {
 
-    try {
+//     const match = {};
 
-        if(req.query.id){
-            match._id = req.query.id
-        }
+//     try {
 
-        const product = await Product.find(match);
-        if (!product || product.length === 0) {
-            throw new Error("Not able to find the product(s)");
-        }
+//         if(req.query.id){
+//             match._id = req.query.id
+//         }
+
+//         const product = await Product.find(match);
+//         if (!product || product.length === 0) {
+//             throw new Error("Not able to find the product(s)");
+//         }
         
-        res.status(200).send(product);
+//         res.status(200).send(product);
 
-    } catch (e) {
-        res.status(400).send(e + '');
-    }
+//     } catch (e) {
+//         res.status(400).send(e + '');
+//     }
 
-});
+// });
 
 //TODO NO SE OCUPA
 router.get('/productsWebSite', async(req, res) => {

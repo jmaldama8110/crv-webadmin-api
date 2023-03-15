@@ -346,6 +346,8 @@ class ActionCollection extends DocumentCollection {
     }
 
     validateDataLoan(data) {
+        ///// VALIDAR QUE LOS DATOS PARA LA SOLICITUD QUE SE GENERARA EN EL HF ES CORRECTA
+        
         const dataExample = {
             apply_by: "1677107583323",
             id_solicitud: 236699,

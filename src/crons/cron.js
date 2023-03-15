@@ -15,7 +15,8 @@ const { sortDataPerson, createPersonHF } = require('./../actions/createPerson');
 const { sortDataClient, createClientHF } = require('./../actions/createdClient');
 const { createLoanHF, sortLoanHFtoCouch, assignClientLoanFromHF } = require('./../actions/createLoan');
 
-cron.schedule('5 * * * * *', async () => {
+//// CHEAR QUE TAN FRECUENTE ES CONVENIENTE
+cron.schedule('* */5 * * * *', async () => {
     try {
         const tasks = await Action.find({ status: 'Pending' });
 
