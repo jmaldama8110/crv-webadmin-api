@@ -22,7 +22,7 @@ router.get("/docs/html/account-statement", async (req, res) => {
 router.get("/docs/pdf/account-statement", async (req, res) => {
   try {
     // Create a browser instance
-    const browser = await puppeteer.launch({executablePath: '/usr/bin/chromium-browser'});
+    const browser = await puppeteer.launch({executablePath: '/usr/bin/chromium-browser'},{args: ['--no-sandbox', '--disable-setuid-sandbox']});
     // Create a new page
     const page = await browser.newPage();
 
