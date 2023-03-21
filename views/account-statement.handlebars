@@ -10,10 +10,10 @@
 
     <style>
          body {
-            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-family:Arial, Helvetica, sans-serif;
             max-width: 800px;
             margin: auto;
-            font-size: 12px;
+            font-size: 16px;
          }
         
          .header {
@@ -79,29 +79,41 @@
             width: 100%;
             text-align: left;
         }
-
+        .plan {font-size: 14px; }
         .plan-header p, .plan-footer p { font-weight: 600;}
         .plan-header,.plan-row, .plan-footer{ 
             display: flex;
-            justify-content: space-evenly;
+            justify-content: space-between;
         }
-        .plan-row p,.plan-header p,.plan-footer p { width: 100%; }
+        
         .plan-row:nth-child(even) {
             background-color: #efefef;
         }
-        .logo-container { width: 250px;}
+        
+        .logo-container { width: 400px;}
          img { width: 100%; }        
          .txt-center{ text-align: center;}
+         .txt-rigth{ text-align: right;}
          .fs-lg{ font-size: 18px;}
-         .fw-strong { font-weight: 400; }
-
+         .fs-sm{ font-size: 12px;}
+         .wd5 { max-width: 5px;}
+         .wd10 { width: 10px;}
+         .wd15 { width: 15px;}
+         .wd20 { width: 20px;}
+         .wd30 { width: 30px;}
+         .wd40 { width: 40px;}
+         .wd50 { width: 50px;}
+         .wd75 { width: 75px;}
+         .wd100 { width: 100px;}
+         .wd150 { width: 150px;}
+         .wd250 { width: 250px;}
+         .fw-bold { font-weight: bolder;}
          .chart-container{ margin: 2rem 2rem; }
          canvas {
             width:100%;
             max-width:700px;
             margin:auto;  
          }
-
          .footer {
             border: 1px solid gray;
          }
@@ -114,70 +126,77 @@
             <img src={{logoImageFilePath}} >
         </div>
         <div>
-            <p class="fs-lg fw-strong">CONSULTORES DE SERVICIOS VARIOS SA de CV SOFOM ENR</p>
+            <p class="fs-lg fw-bold">CONSULTORES DE SERVICIOS VARIOS SA de CV SOFOM ENR</p>
             <p>SUR ORIENTE, CUARTA ORIENTE SUR NÚMERO 1449, COLONIA OBRERA, TUXTLA GUTIÉRREZ, CHIAPAS, CÓDIGO POSTAL 29080, TELÉFONO: 9616110990</p>
         </div>
     </div>
 
     <div class="summary">
-            <h3 class="txt-center">Estado de Cuenta del #03/08/2022# Al #12/09/2022#</h3>
+            {{#with summaryA}}
+            <h3 class="txt-center">Estado de Cuenta del {{fechaInicial}} Al {{fechaFinal}}</h3>
             <div class="col">
-                <div class="row"><p class="row-label">Número de Contrato:</p> <p class="row-value">268044</p></div>
-                <div class="row"><p class="row-label">Día y Hora de Reunión:</p> <p class="row-value">No Aplica</p></div>
-                <div class="row"><p class="row-label">Fecha de Contrato:</p> <p class="row-value">03/08/2022</p></div>
-                <div class="row"><p class="row-label">Monto de Crédito:</p> <p class="row-value">$45,000</p></div>
-                <div class="row"><p class="row-label">Saldo Inicial de Periodo:</p> <p class="row-value">$12,304.34</p></div>
-                <div class="row"><p class="row-label">Saldo Final de Periodo:</p> <p class="row-value">$11,234.87</p></div>
-                <div class="row"><p class="row-label">Fecha de Corte:</p> <p class="row-value">12/09/2022</p></div>
-                <div class="row"><p class="row-label">Nombre del Cliente:</p> <p class="row-value">OSCAR ROMAN DIAZ</p></div>
-                <div class="row"><p class="row-label">Oficial de Crédito:</p> <p class="row-value">ALFREDO KIM BALAM RAMIREZ</p></div>
-                <div class="row"><p class="row-label">Plazo:</p> <p class="row-value">48 Quincenas</p></div>
-                <div class="row"><p class="row-label">Fecha Limite de Pago**:</p> <p class="row-value">03/10/2022</p></div>
+                    <div class="row"><p class="row-label">Número de Contrato:</p> <p class="row-value">{{numeroContrato}}</p></div>
+                    <div class="row"><p class="row-label">Día y Hora de Reunión:</p> <p class="row-value">{{diaHoraReunion}}</p></div>
+                    <div class="row"><p class="row-label">Fecha de Contrato:</p> <p class="row-value">{{fechaContrato}}</p></div>
+                    <div class="row"><p class="row-label">Monto de Crédito:</p> <p class="row-value">{{montoCredito}}</p></div>
+                    <div class="row"><p class="row-label">Saldo Inicial de Periodo:</p> <p class="row-value">{{saldoInicialPeriodo}}</p></div>
+                    <div class="row"><p class="row-label">Saldo Final de Periodo:</p> <p class="row-value">{{saldoFinalPeriodo}}</p></div>
+                    <div class="row"><p class="row-label">Fecha de Corte:</p> <p class="row-value">{{fechaCorte}}</p></div>
+                    <div class="row"><p class="row-label">Nombre del Cliente:</p> <p class="row-value">{{nombreCliente}}</p></div>
+                    <div class="row"><p class="row-label">Oficial de Crédito:</p> <p class="row-value">{{nombreOficial}}</p></div>
+                    <div class="row"><p class="row-label">Plazo:</p> <p class="row-value">{{plazoCredito}}</p></div>
+                    <div class="row"><p class="row-label">Fecha límite de Pago**:</p> <p class="row-value">{{fechaLimitePago}}</p></div>
             </div>
-            <div class="col">
-                <div class="row"><p class="row-label">CAT Sin IVA:</p><p class="row-value">41.3%</p></div>
-                <div class="row"><p class="row-label">Tasa Ordinaria Anual FIJA:</p> <p class="row-value">27.60%</p></div>
-                <div class="row"><p class="row-label">Tara Moratoria Anual:</p> <p class="row-value">55.20%</p></div>
-                <div class="row"><p class="row-label">Monto Total a Pagar en el Periodo:</p> <p class="row-value">$2,552.00</p></div>
-                <div class="row"><p class="row-label">Capital a Pagar:</p> <p class="row-value">$1,360.41</p></div>
-                <div class="row"><p class="row-label">Interés a Pagar:</p> <p class="row-value">$1,027.23</p></div>
-                <div class="row"><p class="row-label">IVA a Pagar:</p> <p class="row-value">$164.36</p></div>
-                <div class="row"><p class="row-label">Interés Moratorio a Pagar:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">IVA Interés Moratorio a Pagar:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">Saldo Insoluto del Capital:</p> <p class="row-value">$43,493.21</p></div>
-                <div class="row"><p class="row-label">Seguro de Vida:</p> <p class="row-value">$720.00</p></div>
-                <div class="row"><p class="row-label">Seguro Saldo Deudor:</p> <p class="row-value">$528.00</p></div>
-            </div>
+            {{/with}}
 
+            <div class="col">
+                {{#with summaryB}}
+                    <div class="row"><p class="row-label fw-bold">CAT Sin IVA:</p> <p class="row-value fw-bold">{{cat}}</p></div>
+                    <div class="row"><p class="row-label fw-bold">Tasa Ordinaria Anual FIJA:</p> <p class="row-value fw-bold">{{tasaInteres}}</p></div>
+                    <div class="row"><p class="row-label fw-bold">Tasa Moratoria Anual:</p> <p class="row-value fw-bold">{{tasaMoratoriaAnual}}</p></div>
+                    <div class="row"><p class="row-label fw-bold">Monto Total a Pagar en el Periodo:</p> <p class="row-value fw-bold">{{montoTotalPagarEnPeriodo}}</p></div>
+                    <div class="row"><p class="row-label">Capital a Pagar:</p> <p class="row-value">{{capitalAPagar}}</p></div>
+                    <div class="row"><p class="row-label">Interés a Pagar:</p> <p class="row-value">{{interesAPagar}}</p></div>
+                    <div class="row"><p class="row-label">IVA a Pagar:</p> <p class="row-value">{{impuestaAPagar}}</p></div>
+                    <div class="row"><p class="row-label">Interés Moratorio a Pagar:</p> <p class="row-value">{{interesMoratorioAPagar}}</p></div>
+                    <div class="row"><p class="row-label">IVA Interés Moratorio a Pagar:</p> <p class="row-value">{{impuestoInteresMoratorioAPagar}}</p></div>
+                    <div class="row"><p class="row-label">Saldo Insoluto del Capital:</p> <p class="row-value">{{saldoInsolutoCapital}}</p></div>
+                    <div class="row"><p class="row-label">Seguro de Vida:</p> <p class="row-value">{{seguroVida}}</p></div>
+                    <div class="row"><p class="row-label">Seguro saldo deudor:</p> <p class="row-value">{{seguroSaldoDeudor}}</p></div>
+                {{/with}}
+            </div>
             <h3 class="txt-center">Totales a la Fecha de Corte</h3>
             <div class="col">
-                <div class="row"><p class="row-label">Capital Vencido Pagado:</p> <p class="row-value">$1,360.41</p></div>
-                <div class="row"><p class="row-label">Interés Ordinario Pagado:</p> <p class="row-value">$1,094.15</p></div>
-                <div class="row"><p class="row-label">IVA Interés Ordinario Pagado:</p> <p class="row-value">$175.06</p></div>
-                <div class="row"><p class="row-label">Intereses Moratorios Pagados:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">IVA Intereses Moratorios Pagados:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">Total Pagado:</p> <p class="row-value">$2,629.62</p></div>
-                <div class="row"><p class="row-label">Saldo Actual:</p> <p class="row-value">$43,764.88</p></div>
-                <div class="row"><p class="row-label">Saldo Actual (Capital):</p> <p class="row-value">$43,493.21</p></div>
-                <div class="row"><p class="row-label">Intereses Ordinarios:</p> <p class="row-value">$234.22</p></div>
-                <div class="row"><p class="row-label">IVA de Intereses Ordinarios:</p> <p class="row-value">$37.45</p></div>
-                <div class="row"><p class="row-label">Intereses Moratorios:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">IVA de Intereses Moratorios:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">Comisiones:</p> <p class="row-value">No Aplica</p></div>
+                {{#with summaryC}}
+                    <div class="row"><p class="row-label">Capital Vencido Pagado:</p> <p class="row-value">{{capitalVencidoPagado}}</p></div>
+                    <div class="row"><p class="row-label">Interés Ordinario Pagado:</p> <p class="row-value">{{interesOrdinarioPagado}}</p></div>
+                    <div class="row"><p class="row-label">IVA Interés Ordinario Pagado:</p> <p class="row-value">{{impuestoInteresOrdinarioPagado}}</p></div>
+                    <div class="row"><p class="row-label">Intereses Moratorios Pagado:</p> <p class="row-value">{{interesesMoratoriosPagados}}</p></div>
+                    <div class="row"><p class="row-label">IVA Intereses Moratorios Pagado:</p> <p class="row-value">{{impuestoInteresesMoratoriosPagados}}</p></div>
+                    <div class="row"><p class="row-label fw-bold">Total Pagado:</p> <p class="row-value fw-bold">{{totalPagado}}</p></div>
+                    <div class="row"><p class="row-label">Saldo Actual:</p> <p class="row-value">{{saldoActual}}</p></div>
+                    <div class="row"><p class="row-label fw-bold">Saldo Actual (Capital):</p> <p class="row-value fw-bold">{{saldoActualCapital}}</p></div>
+                    <div class="row"><p class="row-label">Intereses Ordinarios:</p> <p class="row-value">{{interesesOrdinarios}}</p></div>
+                    <div class="row"><p class="row-label">IVA de Intereses Ordinarios:</p> <p class="row-value">{{impuestoInteresesOrdinarios}}</p></div>
+                    <div class="row"><p class="row-label">Intereses Moratorios:</p> <p class="row-value">{{interesesMoratorios}}</p></div>
+                    <div class="row"><p class="row-label">IVA de Intereses Moratorios:</p> <p class="row-value">{{impuestoInteresesMoratorios}}</p></div>
+                    <div class="row"><p class="row-label">Comisiones:</p> <p class="row-value">{{comisiones}}</p></div>
+                {{/with}}
             </div>
             <div class="col">
-                <div class="row"><p class="row-label">Capital Vencido No Pagado:</p><p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">Interés Ordinario Vencido No Pagado:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">IVA Intereses Ordinarios Vencidos No Pagados:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">Intereses Moratorios Generados No Pagados:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">IVA Intereses Moratorios Generados No Pagados:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">Total Vencido No Pagado:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">DA (Días Atraso):</p> <p class="row-value">0</p></div>
-                <div class="row"><p class="row-label">DAA (Días Atraso Acumulados):</p> <p class="row-value">4</p></div>
-                <div class="row"><p class="row-label">Monto de Cargos Objetados o en Aclaración:</p> <p class="row-value">-</p></div>
-                <div class="row"><p class="row-label">Folio de Reporte de Aclaración:</p> <p class="row-value">98E932U98</p></div>
+                {{#with summaryD}}
+                    <div class="row"><p class="row-label">Capital Vencido No Pagado:</p> <p class="row-value">{{capitalVencidoNoPagado}}</p></div>
+                    <div class="row"><p class="row-label">Interés Ordinario Vencido No pagado:</p> <p class="row-value">{{interesOrdinarioVencidoNoPagado}}</p></div>
+                    <div class="row"><p class="row-label">IVA Intereses Ordinarios Vencido No Pagado:</p> <p class="row-value">{{impuestoInteresOrdinarioVencidoNoPagado}}</p></div>
+                    <div class="row"><p class="row-label">Intereses Moratorios Generados No Pagado:</p> <p class="row-value">{{interesesMoratoriosGeneradosNoPagados}}</p></div>
+                    <div class="row"><p class="row-label">IVA Intereses Moratorios Generados No Pagado:</p> <p class="row-value">{{impuestoInteresesMoratoriosGeneradosNoPagados}}</p></div>
+                    <div class="row"><p class="row-label">Total Vencido No Pagado:</p> <p class="row-value">{{totalVencidoNoPagado}}</p></div>
+                    <div class="row"><p class="row-label fw-bold">DA (Días Atraso):</p> <p class="row-value">{{DA}}</p></div>
+                    <div class="row"><p class="row-label fw-bold">DAA (Días Atraso Acumulados):</p> <p class="row-value">{{DAA}}</p></div>
+                    <div class="row"><p class="row-label">Monto de Cargos Objetados o en Aclaración:</p> <p class="row-value">{{montoCargosObjetadosAclaracion}}</p></div>
+                    <div class="row"><p class="row-label">Folio de Reporte de Aclaración:</p> <p class="row-value">{{folioReporteAclaracion}}</p></div>
+                {{/with}}
             </div>
-        
 
     </div>
 
@@ -191,66 +210,59 @@
                     <p>Monto</p>
                 </div>
                 
-                <div class="movs-body">
+                {{#each movs}}
                     <div class="movs-row">
-                        <p>6437249</p>
-                        <div><p>Depósito en BANORTE 0645823239</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
-                        <p>22/08/2022</p>
-                        <div><p>$1,276.00</p><p>$675.70</p><p>$517.50</p><p>$82.80</p><p>-</p><p>-</p></div>
+                    <p>{{this.no}}</p>
+                    <div><p>{{this.origen}}</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
+                    <p>{{this.fecha}}</p>
+                    <div class="txt-rigth"><p>{{this.total}}</p><p>{{this.Capital}}</p><p>{{this.Interes}}</p><p>{{this.Impuesto}}</p><p>{{this.Interes_Moratorio}}</p><p>{{this.IVA_Interes_Moratorio}}</p></div>
                     </div>
-                    <div class="movs-row">
-                        <p>6437249</p>
-                        <div><p>Depósito en BANORTE 0645823239</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
-                        <p>22/08/2022</p>
-                        <div><p>$1,276.00</p><p>$675.70</p><p>$517.50</p><p>$82.80</p><p>-</p><p>-</p></div>
-                    </div>
-                    <div class="movs-row">
-                        <p>6437249</p>
-                        <div><p>Depósito en BANORTE 0645823239</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
-                        <p>22/08/2022</p>
-                        <div><p>$1,276.00</p><p>$675.70</p><p>$517.50</p><p>$82.80</p><p>-</p><p>-</p></div>
-                    </div>
-                    <div class="movs-row">
-                        <p>6437249</p>
-                        <div><p>Depósito en BANORTE 0645823239</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Interés Moratorio</p><p>IVA Interés Moratorio</p></div>
-                        <p>22/08/2022</p>
-                        <div><p>$1,276.00</p><p>$675.70</p><p>$517.50</p><p>$82.80</p><p>-</p><p>-</p></div>
-                    </div>
-
+                {{/each}}
+                     
                 </div>
-                <div class="pplan">
-                    <h3 class="txt-center">Tabla de Amortizaciones Actual</h3>
-                    <div class="plan">
-                        <div class="plan-header">
-                            <p>No</p><p>Fecha Inicio</p><p>Fecha Limite Pago</p><p>Fecha Pago</p><p>DA</p><p>DDA</p><p>Monto Base(1)</p><p>Capital</p><p>Interés</p><p>IVA</p><p>Pago Total</p>
-                        </div>
-                        <div class="plan-row">
-                            <p>1</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
-                        </div>
-                        <div class="plan-row">
-                            <p>2</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
-                        </div>
-                        <div class="plan-row">
-                            <p>3</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
-                        </div>
-                        <div class="plan-row">
-                            <p>4</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
-                        </div>
-                        <div class="plan-row">
-                            <p>5</p><p>01/01/2000</p><p>08/01/2022</p><p>10/10/2022</p><p>0</p><p>0</p><p>$9,999.99</p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
-                        </div>
-                    </div>
-                </div>
-
-                <div class="plan-footer">
-                            <p>Totales</p><p></p><p></p><p></p><p></p><p></p><p></p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
-                </div>
-
+    <div class="pplan">
+        <h3 class="txt-center">Tabla de Amortizaciones Actual</h3>
+        <div class="plan">
+            <div class="plan-header">
+                <p class="wd30">No</p>
+                <p class="wd100">Fecha Inicio</p>
+                <p class="wd100">Fecha Limite Pago</p>
+                <p class="wd100">Fecha Pago</p>
+                <p class="wd30">DA</p>
+                <p class="wd40">DDA</p>
+                <p class="wd100">Monto Base(1)</p>
+                <p class="wd100">Capital</p>
+                <p class="wd100">Interés</p>
+                <p class="wd100">IVA</p>
+                <p class="wd75">Pago Total</p>
             </div>
+                {{#each pplan}}
+                <div class="plan-row">
+                    <p class="wd30">{{this.no}}</p>
+                    <p class="wd100">{{this.fecha_inicio}}</p>
+                    <p class="wd100">{{this.fecha_vencimiento}}</p>
+                    <p class="wd100">{{this.fecha_pago}}</p>
+                    <p class="wd30">{{this.dias_atraso}}</p>
+                    <p class="wd40">{{this.dias_atraso_acumulados}}</p>
+                    <p class="wd100">{{this.saldo_insoluto}}</p>
+                    <p class="wd100">{{this.capital}}</p>
+                    <p class="wd100">{{this.interes}}</p>
+                    <p class="wd100">{{this.impuesto}}</p>
+                    <p class="wd75">{{this.total}}</p>                            
+                </div>
+                {{/each}}
+            </div>
+        </div>
+            <div class="plan-footer">
+                    <p>Totales</p><p></p><p></p><p></p><p></p><p></p><p></p><p>$9,999.99</p><p>$999.99</p><p>$99.99</p><p>$1,999.99</p>                            
+            </div>
+        </div>
     </div>
     {{!-- Pie Chart --}}
     <div class="chart-container"><canvas id="myChart" ></canvas></div>
     {{!------------}}
+QUE PENDIENTE TERMINAR FORMATO Y TOTALES
+- CHECAR EXPRESIONES ENVIADAS POR FABIAN
 
     <div class="footer">
         <div class="footer-note">
@@ -265,14 +277,7 @@
 <script>
     var xValues = ["Capital Pendiente", "Capital Pagado", "Interes Pendiente", "Interes Pagado"];
     var yValues = [55, 49, 44, 24];
-    var barColors = [
-    "#b91d47",
-    "#00aba9",
-    "#2b5797",
-    "#e8c3b9",
-    "#1e7145"
-    ];
-
+    var barColors = ["#b91d47","#00aba9","#2b5797","#e8c3b9","#1e7145"];    
     new Chart("myChart", {
     type: "pie",
     data: {

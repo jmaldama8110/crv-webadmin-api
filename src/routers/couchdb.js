@@ -6,7 +6,6 @@ const Product = require('../model/product');
 const { sendReportActionError } = require('../emails/account')
 /////////// Routes for CouchDB /////
 
-
 router.get('/couchdb/getsomedata', authorize ,async(req,res)=>{
     
       const db = nano.use(process.env.COUCHDB_NAME);
