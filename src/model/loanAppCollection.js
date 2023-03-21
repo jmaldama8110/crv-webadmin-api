@@ -23,8 +23,8 @@ class LoanAppCollection extends DocumentCollection {
             this._sub_estatus = obj.sub_estatus || 'NUEVO TRAMITE',
             this._renovation = obj.renovation || false,
             this._frequency = obj.frequency || ['S', 'Semana(s)'],
-            this._first_replay_at = obj.first_replay_at || '', // type Date
-            this._disburset_at = obj.disburset_at || '', // type Date
+            this._first_repay_date = obj.first_repay_date || '', // type Date
+            this._disbursment_date = obj.disbursment_date || '', // type Date
             this._disbursment_mean = obj.disbursment_mean || 'ORP', // ORP/
             this._liquid_guarantee = obj.liquid_guarantee || 0, // ORP/
             this._product = obj.product || {

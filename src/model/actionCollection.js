@@ -369,8 +369,8 @@ class ActionCollection extends DocumentCollection {
                 "C",
                 "Catorcena(s)"
             ],
-            first_replay_at: "",
-            disburset_at: "",
+            first_repay_date: "",
+            disbursment_date: "",
             disbursment_mean: "ORP",
             liquid_guarantee: 10,
             product: {
@@ -528,6 +528,37 @@ class ActionCollection extends DocumentCollection {
             action_type: action_type
         }
         return { info, errors };
+    }
+
+    async validateAction(id_action,type = "VALIDATE") {
+        let response =
+            {
+                status:"FAIL",
+                message: "The transaction was done successfully",
+                action: null
+            };
+        try {
+
+            const Action = new ActionCollection();
+            const action = await Action.findOne({ _id: id_action });
+
+            if (!action){
+                response.message = 'Action not found';
+                return response;
+            }
+
+            if (action.status !== 'Pending' && type == 'EXEC'){
+                response.message = 'Action is not pending, current status is "'+action.status+'"';
+                return response;
+            }
+
+            response.status = "OK";
+            response.action = action;
+            return response;
+        } catch (error) {
+            response.message = error.message;
+            return response;
+        }
     }
 }
 

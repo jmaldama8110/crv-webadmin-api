@@ -32,32 +32,43 @@ router.get('/actions/validate', async (req, res) => {
     try {
         const { id } = req.query;
 
-        const action = await Action.findOne({ _id: id });
-        if (!action) throw new Error('Action not found')
+        const response = await Action.validateAction(id,"VALIDATE");
 
-        let loan;
-        const { id_loan } = action.data;
+        if(response.status !== "OK")
+            throw new Error(response.message);
 
-        loan = await LoanAppGroup.findOne({ _id: id_loan });
-        if (loan == undefined) {
-            loan = await LoanApp.findOne({ _id: id_loan });
+        const action = response.action;
+
+        switch (action.name){
+            case 'CREATE_UPDATE_LOAN':
+                let loan;
+                const { id_loan } = action.data;
+
+                loan = await LoanAppGroup.findOne({ _id: id_loan });
+
+                if (loan == undefined) {
+                    loan = await LoanApp.findOne({ _id: id_loan });
+                }
+
+                if (loan === undefined) throw new Error('Loan not found');
+
+                const result = await Action.validateDataLoan(loan);
+
+                if (result.errors.length == 0) {
+                    action.isOk = true
+                    action.errors = result.errors;
+                } else {
+                    action.errors = result.errors; //[{...Errors}]};
+                    action.isOk = false;
+                }
+
+                await new ActionCollection(action).save();
+
+                res.status(201).send(result);
+                break;
+            default:
+                throw new Error('Action "'+action.name+'" is not supported')
         }
-
-        if (loan === undefined) throw new Error('Loan not found');
-
-        const result = await Action.validateDataLoan(loan);
-
-        if (result.errors.length == 0) {
-            action.isOk = true
-            action.errors = result.errors;
-        } else {
-            action.errors = result.errors; //[{...Errors}]};
-            action.isOk = false;
-        }
-
-        await new ActionCollection(action).save();
-
-        res.status(201).send(result);
     } catch (err) {
         res.status(400).send(err.message)
     }
@@ -67,25 +78,37 @@ router.get('/actions/exec', async (req, res) => {
     try {
         const { id } = req.query;
 
-        const action = await Action.findOne({ _id: id });
+        const response = await Action.validateAction(id,"EXEC");
 
-        if (!action.isOk) throw new Error('Invalid data loan');
+        if(response.status !== "OK")
+            throw new Error(response.message);
 
-        const loan = await createLoanHF(action.data);
-        // if (!loan) { console.log('Error to create Loan'); return };
+        const action = response.action;
 
-        if (loan instanceof Error || !loan) {
-            action.status = 'Error';
-            // sendReportActionError(task);
-            console.log(loan)
-        } else {
-            action.status = 'Done'
-        };
+        switch (action.name){
+            case 'CREATE_UPDATE_LOAN':
+                if (!action.isOk) throw new Error('Invalid data loan');
 
-        await new ActionCollection(action).save();
-        console.log(`>> Loan ${action.status}!`);
+                const loan = await createLoanHF(action.data);
+                // if (!loan) { console.log('Error to create Loan'); return };
 
-        res.status(201).send('Done');
+                if (loan instanceof Error || !loan) {
+                    action.status = 'Error';
+                    // sendReportActionError(task);
+                    console.log(loan)
+                } else {
+                    action.status = 'Done'
+                };
+
+                await new ActionCollection(action).save();
+                console.log(`>> Loan ${action.status}!`);
+
+                res.status(201).send('Done');
+
+                break;
+            default:
+                throw new Error('Action "'+action.name+'" is not supported')
+        }
     } catch (err) {
         res.status(400).send(err.message)
     }
