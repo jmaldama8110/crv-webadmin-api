@@ -81,7 +81,7 @@ class CatalogCollection extends DocumentCollection {
                     rowData = [];
                     request.resume();
 
-                    console.log("Dones Catalog", name, "!!", result);
+                    console.log("Catalog Done!", name, "!!", result);
                 });
             })
         } catch (e) {

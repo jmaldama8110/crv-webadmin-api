@@ -358,6 +358,24 @@ router.get('/clients/hf/accountstatement', authorize, async (req, res)=> {
     }
 })
 
+router.get('/clients/createReference', authorize, async(req, res) => {
+    try {
+        //TODO: typeReference: 1 -> id: Crédito por id_cliente (NO USAR)
+        //      typeReference: 2 -> id: Garantía Líquida por id_cliente
+        //      typeReference: 3 -> id: Pago de moratorios por id_cliente
+        //      typeReference: 6 -> id: Pago de crédito por id_contrato
+
+        const {typeReference, id, idIntermediario} = req.query;
+        const result = await Client.createReference(typeReference, id);
+        const data = idIntermediario ? result.filter( (i) => i.id_intermerdiario == idIntermediario ) : result
+    
+        res.status(200).send(data);
+    } catch (error) {
+        res.status(401).send(error.message);
+    }
+})
+
+
 router.patch('/updateCurp/:id', async (req, res) => {
 
     try {

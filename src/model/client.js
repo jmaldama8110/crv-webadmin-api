@@ -649,6 +649,16 @@ clientSchema.statics.createClientHF = async(data, value) => {
     }
 }
 
+clientSchema.statics.createReference = async(typeReference, idClient) => {
+        const pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+            .input('tipoEvento', sql.Int, typeReference)
+            .input('id_cliente', sql.Int, idClient)
+            .execute('MARE_ObtenerReferenciaIntermediario');
+
+        return result.recordset;
+}
+
 clientSchema.statics.getHomonimoHF = async(nombre, apellidoPaterno, apellidoMaterno) => {
     try{
 

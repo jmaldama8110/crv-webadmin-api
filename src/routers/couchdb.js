@@ -1,7 +1,10 @@
 const express = require("express");
 const router = new express.Router();
 const authorize = require("../middleware/authorize");
+const { sqlConfig } = require("../db/connSQL");
+const sql = require("mssql");
 const nano = require('../db/connCouch');
+
 const Product = require('../model/product');
 const { sendReportActionError } = require('../emails/account')
 /////////// Routes for CouchDB /////
@@ -42,22 +45,24 @@ router.get('/couchdb/getsomedata', authorize ,async(req,res)=>{
 });
 
 
-router.get('/couchdb/sample',authorize, async (req, res)=>{
+router.get('/couchdb/datadump',authorize, async (req, res)=>{
   try {
 
-    // const pool = await sql.connect(sqlConfig);
+    const pool = await sql.connect(sqlConfig);
 
-    // let data = await pool
-    // .request()
-    // .query(`SELECT  
-    //         [id]
-    //         ,[etiqueta]
-    //         ,[creado_por]
-    //         ,[fecha_registro]
-    //       FROM [HBMFS].[dbo].[CATA_MotivoBajaRechazado]`)
+    let data = await pool
+    .request()
+    .query(`select * from CATA_Intermediario  where estatus_registro = \'ACTIVO\'`);
 
-          await sendReportActionError({ name: 'SOME ACTION ID', _id:'id de prueba para el correo' })
-          res.status(200).send('Ok');
+    res.send(data.recordsets[0]);
+
+  
+          /**
+           * How to send and email to various destinations
+           * 
+           * await sendReportActionError({ name: 'SOME ACTION ID', _id:'id de prueba para el correo' })
+           * res.status(200).send('Ok');
+           */
 
       /**
        * Update some partes of the data already created
