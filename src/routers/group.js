@@ -5,6 +5,7 @@ const Group = require('../model/group');
 const nano = require('../db/connCouch');
 
 router.get('/clients/hf/search', authorize, async(req, res) => {
+    
     try{
 
         if( !(req.query.branchId && req.query.clientName) ){
