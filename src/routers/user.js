@@ -418,13 +418,6 @@ router.post("/users/login", async (req, res) => {
 
 router.post("/users/hf/login", async (req, res) => {
 
-  /***
-   * Test credentials
-   * JuanMorgado / jcmorgado
-   * LlenyMijangos / lmijangos
-   * LeonardoMendez / lmendez
-   */
-
     try {
     
       const user = await User.findUserByCredentialsHF(

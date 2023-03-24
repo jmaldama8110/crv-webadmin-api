@@ -26,7 +26,8 @@ const authorize = async (req, res, next) => {
         next()
 
     }
-    catch(error) { 
+    catch(error) {
+        console.log(error);
         res.status(401).send('No authorization!' )
     }
 

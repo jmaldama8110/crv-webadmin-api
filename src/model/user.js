@@ -258,31 +258,36 @@ userSchema.statics.findUserByCredentialsHF = async function (user, password) {
   }
 
   const loanOfficerRes = 
-  await sql.query`SELECT Plantilla.id_persona as id_oficial
-    ,Persona.nombre as name
-    ,Persona.apellido_paterno as lastname
-    ,Persona.apellido_materno as second_lastname
-		,Oficina.nombre as nombre_oficina
-		,Plantilla.id_padre as id_padre
-		,Plantilla.id_oficina
-		FROM COMM_PlantillaSucursal Plantilla
-		INNER JOIN CORP_Empleado Empleado
-		ON Empleado.id=Plantilla.id_empleado
-		AND Empleado.activo=1
-		INNER JOIN CATA_Puesto Puesto
-		ON Puesto.id=Empleado.id_puesto
-		INNER JOIN CATA_RolSucursal rol
-		ON rol.id=Plantilla.id_rol_sucursal
-		AND rol.activo=1
-		INNER JOIN CONT_Personas Persona
-		ON Persona.id=Plantilla.id_persona
-		INNER JOIN CORP_OficinasFinancieras Oficina
-		On Oficina.id= Plantilla.id_oficina
-		WHERE rol.codigo='PROM'
-		AND Plantilla.estatus='ACTIVO'
-		AND Plantilla.activo=1
-		AND Persona.id=${userCredentials.id_persona}`;
-
+  await sql.query`SELECT 
+  Plantilla.id_persona as id_oficial
+  ,Persona.nombre as name
+  ,Persona.apellido_paterno as lastname
+  ,Persona.apellido_materno as second_lastname
+  ,Oficina.nombre as nombre_oficina
+  ,Plantilla.id_padre as id_padre
+  ,Plantilla.id_oficina
+  ,CATA_NivelPuesto.id AS id_nivel_puesto
+  ,COALESCE(CATA_NivelPuesto.etiqueta,'') AS nivel_puesto
+  FROM COMM_PlantillaSucursal Plantilla
+  INNER JOIN CORP_Empleado Empleado
+  ON Empleado.id=Plantilla.id_empleado
+  AND Empleado.activo=1
+  INNER JOIN CATA_Puesto Puesto
+  ON Puesto.id=Empleado.id_puesto
+  INNER JOIN CATA_RolSucursal rol
+  ON rol.id=Plantilla.id_rol_sucursal
+  AND rol.activo=1
+  INNER JOIN CONT_Personas Persona
+  ON Persona.id=Plantilla.id_persona
+  INNER JOIN CORP_OficinasFinancieras Oficina
+  On Oficina.id= Plantilla.id_oficina
+  LEFT JOIN CATA_NivelPuesto ON Empleado.id_nivel_puesto = CATA_NivelPuesto.id
+  AND CATA_NivelPuesto.activo = 1
+  WHERE rol.codigo='PROM'
+  AND Plantilla.estatus='ACTIVO'
+  AND Plantilla.activo=1
+  AND Persona.id=${userCredentials.id_persona}`
+  
   if (!loanOfficerRes.recordsets.length) {
     throw new Error("No loan officer associated...");
   }
@@ -295,7 +300,8 @@ userSchema.statics.findUserByCredentialsHF = async function (user, password) {
     name: loanOfficerData.name,
     lastname: loanOfficerData.lastname,
     second_lastname: loanOfficerData.second_lastname,
-    branch: [loanOfficerData.id_oficina,loanOfficerData.nombre_oficina]    
+    branch: [loanOfficerData.id_oficina,loanOfficerData.nombre_oficina],
+    officer_rank: [loanOfficerData.id_nivel_puesto, loanOfficerData.nivel_puesto]
   };
   return userReponse;
 };
