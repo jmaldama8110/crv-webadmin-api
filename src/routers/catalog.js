@@ -37,7 +37,6 @@ router.get('/catalogs/sync', async (req,res) => {
         await catalogCollection.updateCatalogFromHF('CATA_MotivoBajaCancelacion',10000)
         await catalogCollection.updateCatalogFromHF('CATA_MotivoBajaRechazado',10000)
 
-
         await catalogCollection.updateCatalogFromHFByRelationship('CATA_asentamiento',1000,'NEIGHBORHOOD', 'CITY', 'ciudad_localidad' );
         await catalogCollection.updateCatalogFromHFByRelationship('CATA_ciudad_localidad',1000,'CITY', 'MUNICIPALITY', 'municipio');
         await catalogCollection.updateCatalogFromHFByRelationship('CATA_municipio',1000,'MUNICIPALITY', 'PROVINCE', 'estado');

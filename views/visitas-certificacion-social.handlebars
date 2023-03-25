@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitas de Ceritifacion Social</title>
+
+<style>
+         body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            font-size: 14px;
+            line-height: 1.2rem;
+         }
+        
+         .header {
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #efefef;
+            border-radius: 5px;
+         }
+         .header div{
+            text-align: center;            
+            padding: 1rem;
+         }
+         .header p { margin: 0 0 ;}
+         .det{
+            boder: 1px solid red;
+         }
+
+        .logo-container { width: 200px;}
+         img { width: 100%; }        
+         .txt-center{ text-align: center;}
+         .txt-rigth{ text-align: right;}
+         .fs-lg{ font-size: 18px;}
+         .fs-sm{ font-size: 12px;}
+         .wd5 { max-width: 5px;}
+         .wd10 { width: 10px;}
+         .wd15 { width: 15px;}
+         .wd20 { width: 20px;}
+         .wd30 { width: 30px;}
+         .wd40 { width: 40px;}
+         .wd50 { width: 50px;}
+         .wd75 { width: 75px;}
+         .wd100 { width: 100px;}
+         .wd150 { width: 150px;}
+         .wd250 { width: 250px;}
+         .wd300 { width: 300px;}
+         .wd350 { width: 350px;}
+         .wd400 { width: 400px;}
+         .fw-bold { font-weight: bolder;}
+</style>
+
+</head>
+<body>
+    <header class="header">
+        <div class="logo-container">
+            <img src={{logoImageFilePath}} >
+        </div>
+        <div>
+            <h3>CONSULTORES DE SERVICIOS VARIOS SA de CV SOFOM ENR</h3>
+            <p>Reporte de Visitas de Certificacion Social</p>
+        </div>
+    </header>
+    <div class="det">
+        {{#each queryData}}
+        <p>{{this.created_by}}</p>
+        <p>{{this.created_at}}</p>
+        <p>{{this.coords_lat}},{{this.coords_lng}}</p>
+        {{/each}}
+    </div>
+    
+</body>
+</html>

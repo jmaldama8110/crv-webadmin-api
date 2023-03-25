@@ -3,36 +3,9 @@ const router = new express.Router();
 const Product = require("../model/product")
 const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
-const multer = require("multer"); // parar cargar imagenes
-const sharp = require("sharp");
 
 const ProductCollection = require("../model/productCollection");
 
-const upload = multer({
-    limits: {
-      fileSize: 1000000, // 1,0 megabytes z
-    },
-    fileFilter(req, file, cb) {
-      // cb -> callback function
-        if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
-        // Expresion regular-> checar regex101.com
-        return cb(new Error("Not a valid image.. use only PNG, JPEG, JPG"));
-      }
-  
-      cb(undefined, true);
-    },
-});
-
-const convertToBuffer = async(img) => {
-    return await sharp(img.buffer)
-    .resize({ width: 250, height: 250 })
-    .png()
-    .toBuffer();
-
-    // return buffer;
-}
-
-const images = upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'avatar', maxCount: 1 }])
 
 router.post("/couch/products", async(req,res) => {
     try{
@@ -106,6 +79,7 @@ router.get('/couchdb/products', authorize, async(req, res) => {
         res.status(200).send(product);
 
     } catch (e) {
+        console.log(e)
         res.status(400).send(e.message);
     }
 

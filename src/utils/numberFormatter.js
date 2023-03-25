@@ -1,5 +1,6 @@
 const formatLocalCurrency = (numero) => {
-
+    
+    if( !numero ) return '-'
     const formmatter = new Intl.NumberFormat('es-MX', {
         style: 'currency',
         currency: 'MXN'
@@ -16,4 +17,10 @@ const formatLocalCurrency = (numero) => {
     return numberString;
 }
 
-module.exports = formatLocalCurrency;
+const getRounded = (data) => {
+    const factor = 100;
+    return Math.round( (data + Number.EPSILON) * factor ) / factor
+
+}
+
+module.exports = {formatLocalCurrency, getRounded};

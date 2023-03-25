@@ -64,7 +64,6 @@ class DocumentCollection {
     }
 
     async find(data) {
-        try {
             let selector = { couchdb_type: { "$eq": this._couchdb_type } };
 
             for (const [key, value] of Object.entries(data)) {
@@ -78,9 +77,7 @@ class DocumentCollection {
 
             return codeFounds.docs;
 
-        } catch (error) {
-            throw new Error(error)
-        }
+    
     }
 
     async delete(){

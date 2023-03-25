@@ -32,6 +32,8 @@ const coundbRouter = require('./routers/couchdb');
 const loanDestRouter = require('./routers/loanDest');
 const actionRouter = require('./routers/action');
 const groupsRouter = require('./routers/group');
+const intermediaryRouter = require('./routers/intermediary');
+
 const docsRouter = require('./routers/docs');
 
 const { engine } = require('express-handlebars');
@@ -78,5 +80,6 @@ app.use(actionRouter);
 
 app.use(groupsRouter);
 app.use(docsRouter);
+app.use(intermediaryRouter);
 
 module.exports = app
