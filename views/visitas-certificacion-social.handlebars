@@ -14,6 +14,9 @@
             font-size: 14px;
             line-height: 1.2rem;
          }
+         * {
+            margin: 0;
+         }
         
          .header {
             display: flex;
@@ -25,10 +28,20 @@
             text-align: center;            
             padding: 1rem;
          }
-         .header p { margin: 0 0 ;}
-         .det{
-            boder: 1px solid red;
-         }
+         .det{ padding: 0.5rem }
+        .det-row{
+            display: flex;
+            border-bottom: 1px solid #B6B6B6;
+        }
+        .det-row-item{ 
+            display: flex;
+            
+        }
+        .det-row .info{ width: 400px; }
+        .det-row .info-title { width: 150px; }
+         
+         .img-collage img {  max-width: 150px; }
+        .img-collage{  display: flex; padding: 0.2rem;}
 
         .logo-container { width: 200px;}
          img { width: 100%; }        
@@ -66,10 +79,25 @@
     </header>
     <div class="det">
         {{#each queryData}}
-        <p>{{this.created_by}}</p>
-        <p>{{this.created_at}}</p>
-        <p>{{this.coords_lat}},{{this.coords_lng}}</p>
-        {{/each}}
+        <div class="det-row">
+            <div class="info">
+                <div class="det-row-item"><p class="info-title">Registrado por:</p><p>{{this.created_by}}</p></div>
+                <div class="det-row-item"><p class="info-title">Registro el:</p><p>{{this.created_at}}</p></div>
+                <div class="det-row-item"><p class="info-title">Coords:</p><a href={{this.mapLink}}>Ver Mapa</a></div>
+                <div class="det-row-item"><p class="info-title">Grupo/Cliente:</p><p>{{this.nombreCliente}}</p></div>
+                <div class="det-row-item"><p class="info-title">Sucursal:</p><p>{{this.sucursal}}</p></div>
+                <div class="det-row-item"><p class="info-title">Ciclo:</p><p>{{this.ciclo}}</p></div>
+                <div class="det-row-item"><p class="info-title">Monto Credito:</p><p>{{this.montoTotalAutorizado}}</p></div>
+            </div>
+            <div class="img-collage">
+                {{#each this.visits_pics}} 
+                    <img src='data:image/jpeg;base64,{{base64str}}'>
+                {{/each}}
+            </div>
+        </div>
+        
+        {{/each}}        
+
     </div>
     
 </body>

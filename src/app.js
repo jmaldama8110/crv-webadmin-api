@@ -36,9 +36,14 @@ const intermediaryRouter = require('./routers/intermediary');
 
 const docsRouter = require('./routers/docs');
 
-const { engine } = require('express-handlebars');
+/** Handlebars initialization */
+const { create } = require('express-handlebars');
+const hbs = create();
+/** Registre Global Helper Functions */
+require('./helpers/handlebars').register(hbs.handlebars);
 
 const app = express()
+
 var corsOptions = {
     origin: '*',
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
@@ -48,7 +53,7 @@ app.use(cors(corsOptions));
 app.use(express.json({limit: '50mb'}))
 app.use(apiRouter)
 app.use(express.static("public"));
-app.engine('handlebars', engine() );
+app.engine('handlebars', hbs.engine );
 app.set('view engine', 'handlebars');
 app.set('views', './views');
 

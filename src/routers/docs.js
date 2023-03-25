@@ -193,24 +193,36 @@ router.get('/docs/html/visitas-certificacion-social', async(req, res) =>{
     const db = nano.use(process.env.COUCHDB_NAME);
     await db.createIndex({ index: { fields: ["couchdb_type"]}});
     const queryVisits = await db.find( { selector: { couchdb_type: "VISIT" }});
-    const queryData = queryVisits.docs.map( i =>{
+    const queryContracts = await db.find( { selector: { couchdb_type: "CONTRACT" }})
+    
+    const queryData = queryVisits.docs.map( i => {
+      
+      const contractData = queryContracts.docs.find( x => x._id === i.contract_id )
       return {
         created_by: i.created_by,
         created_at: i.created_at,
-        coords_lat: i.coordinates[0],
-        coords_lng: i.coordinates[1],
+        contract_id: i.contract_id,
+        mapLink: `https://www.google.com/maps/@?api=1&map_action=map&zoom=18&center=${i.coordinates[0]}%2C${i.coordinates[1]}`,
         internalArrears: i.internalArrears,
         completePayment: i.completePayment,
-        visitQuiz: i.visitQuiz,
+        nombreOficialCredito: contractData.nombreOficialCredito,
+        nombreCliente: contractData.nombreCliente,
+        visitQuiz: i.visitQuiz ? 'Si': 'No',
+        visits_pics: i.visits_pics,
+        sucursal: contractData.branch[1],
+        ciclo: contractData.Ciclo,
+        montoTotalAutorizado: contractData.montoTotalAutorizado,
+
       }
-    })
+    }).filter( (w) => w.visitQuiz == 'Si' ) // visitQuiz TRUE only
     
     const logoBase64 = fs.readFileSync('./public/logo-cnsrv-light.png', { encoding: 'base64'});
-    const hbs = new ExpressHandlebars({ extname:".handlebars"});
-    
+    const hbs = new ExpressHandlebars({ extname:".handlebars" });
+
     const data = await hbs.render('views/visitas-certificacion-social.handlebars', {
         logoImageFilePath: `data:image/jpeg;base64,${logoBase64}`,
         queryData,
+
      });
       res.send(data);
 
