@@ -186,6 +186,41 @@ const  {formatLocalCurrency, getRounded}  = require('../utils/numberFormatter');
 //   }
 // });
 
+router.get('/docs/html/visitas-certificacion-social', async(req, res) =>{
+
+  try{
+
+    const db = nano.use(process.env.COUCHDB_NAME);
+    await db.createIndex({ index: { fields: ["couchdb_type"]}});
+    const queryVisits = await db.find( { selector: { couchdb_type: "VISIT" }});
+    const queryData = queryVisits.docs.map( i =>{
+      return {
+        created_by: i.created_by,
+        created_at: i.created_at,
+        coords_lat: i.coordinates[0],
+        coords_lng: i.coordinates[1],
+        internalArrears: i.internalArrears,
+        completePayment: i.completePayment,
+        visitQuiz: i.visitQuiz,
+      }
+    })
+    
+    const logoBase64 = fs.readFileSync('./public/logo-cnsrv-light.png', { encoding: 'base64'});
+    const hbs = new ExpressHandlebars({ extname:".handlebars"});
+    
+    const data = await hbs.render('views/visitas-certificacion-social.handlebars', {
+        logoImageFilePath: `data:image/jpeg;base64,${logoBase64}`,
+        queryData,
+     });
+      res.send(data);
+
+  }
+  catch(error){
+    res.status(400).send(error.message);
+  }
+
+})
+
 router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   try {
     
