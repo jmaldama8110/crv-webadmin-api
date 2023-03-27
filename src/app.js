@@ -2,11 +2,12 @@
 const express = require('express');
 const cors = require('cors');
 require('./db/mongoose')
-// require('./db/connSQL')
+//require('./db/connSQL')
 require('./db/populateData');
 require('./db/connCouch');
 require('./crons/cron');
 
+const apiRouter = require('./routers/api');
 const userRouter = require('./routers/user');
 const productRouter =  require('./routers/product');
 const clientRouter = require('./routers/client');
@@ -50,6 +51,7 @@ var corsOptions = {
   
 app.use(cors(corsOptions));
 app.use(express.json({limit: '50mb'}))
+app.use(apiRouter)
 app.use(express.static("public"));
 app.engine('handlebars', hbs.engine );
 app.set('view engine', 'handlebars');

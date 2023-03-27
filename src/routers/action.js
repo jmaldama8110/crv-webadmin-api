@@ -30,34 +30,47 @@ router.post('/action', async (req, res) => {
 
 router.get('/actions/validate', async (req, res) => {
     try {
+        // Validate action
         const { id } = req.query;
+        const response = await Action.validateAction(id,"VALIDATE");
 
-        const action = await Action.findOne({ _id: id });
-        if (!action) throw new Error('Action not found')
+        if(response.status !== "OK")
+            throw new Error(response.message);
 
-        let loan;
-        const { id_loan } = action.data;
+        let action = response.action;
+        let RSP_Result;
+        switch (action.name)
+        {
+            case 'CREATE_UPDATE_LOAN':
+                // Get data
+                let loan;
+                const { id_loan } = action.data;
+                loan = await LoanAppGroup.findOne({ _id: id_loan });
+                if (loan === undefined) loan = await LoanApp.findOne({ _id: id_loan });
+                if (loan === undefined) throw new Error('Loan not found');
 
-        loan = await LoanAppGroup.findOne({ _id: id_loan });
-        if (loan == undefined) {
-            loan = await LoanApp.findOne({ _id: id_loan });
+                //Validate data
+                RSP_Result = await Action.validateDataLoan(loan);
+                break;
+            case 'CREATE_UPDATE_CLIENT':
+                // Get data
+                let client;
+                const { _id } = action.data;
+                client = await Client.findOne({ _id });
+                if (client === undefined) throw new Error('Client not found');
+
+                //Validate data
+                RSP_Result = await Action.validateDataClient(client);
+                break;
+            default:
+                throw new Error('Action "'+action.name+'" is not supported')
         }
 
-        if (loan === undefined) throw new Error('Loan not found');
+        //Save validation
+        RSP_Result = await Action.saveValidation(RSP_Result,action);
+        RSP_Result.action = action;
+        res.status(201).send(RSP_Result);
 
-        const result = await Action.validateDataLoan(loan);
-
-        if (result.errors.length == 0) {
-            action.isOk = true
-            action.errors = result.errors;
-        } else {
-            action.errors = result.errors; //[{...Errors}]};
-            action.isOk = false;
-        }
-
-        await new ActionCollection(action).save();
-
-        res.status(201).send(result);
     } catch (err) {
         res.status(400).send(err.message)
     }
@@ -65,27 +78,51 @@ router.get('/actions/validate', async (req, res) => {
 
 router.get('/actions/exec', async (req, res) => {
     try {
+        // Validate action
         const { id } = req.query;
+        const response = await Action.validateAction(id,"EXEC");
 
-        const action = await Action.findOne({ _id: id });
+        if(response.status !== "OK")
+            throw new Error(response.message);
 
-        if (!action.isOk) throw new Error('Invalid data loan');
+        const action = response.action;
 
-        const loan = await createLoanHF(action.data);
-        // if (!loan) { console.log('Error to create Loan'); return };
-
-        if (loan instanceof Error || !loan) {
-            action.status = 'Error';
-            // sendReportActionError(task);
-            console.log(loan)
-        } else {
-            action.status = 'Done'
-        };
-
+        switch (action.name){
+            case 'CREATE_UPDATE_LOAN':
+                if (!action.isOk) throw new Error('Invalid data loan');
+                // Crate loan
+                const loan = await createLoanHF(action.data);
+                // Validate creation of loan
+                if (loan instanceof Error || !loan) {
+                    action.status = 'Error';
+                    // sendReportActionError(task);
+                    console.log(loan)
+                } else {
+                    action.status = 'Done'
+                };
+                break;
+            case 'CREATE_UPDATE_CLIENT':
+                if (!action.isOk) throw new Error('Invalid data client');
+                // Create person and client
+                const personCreatedHF = await createPersonHF(action.data);
+                const clientSaved = await createClientHF(action.data);
+                // Validate creation person and
+                if (!personCreatedHF || !clientSaved || personCreatedHF instanceof Error || clientSaved instanceof Error) {
+                    action.status = 'Error'
+                    Action.repostActionError(action.data);
+                    console.log('Error :', { personCreatedHF, clientSaved })
+                } else {
+                    { action.status = 'Done' }
+                };
+                break;
+            default:
+                throw new Error('Action "'+action.name+'" is not supported')
+        }
+        //Save execution
         await new ActionCollection(action).save();
-        console.log(`>> Loan ${action.status}!`);
-
+        console.log(`>> ${action.name} ${action.status}!`);
         res.status(201).send('Done');
+
     } catch (err) {
         res.status(400).send(err.message)
     }

@@ -344,10 +344,74 @@ class ActionCollection extends DocumentCollection {
             return new Error(error.message)
         }
     }
+    async validateModel(model,data)
+    {
+        //Valida la estructura del modelo vs el que viene en la data
+        let errors = [];
+        const keys = Object.keys(model);
+        keys.forEach((item) => {
+            const valueOKExample = model[item];
+            const valueCompareExample = data[item];
+            const typeDataOKEx = typeof valueOKExample == "object" && Array.isArray(valueOKExample) ? "array" : typeof valueOKExample;
+            const typeDataCoEx = typeof valueCompareExample == "object" && Array.isArray(valueCompareExample) ? "array" : typeof valueCompareExample;
 
-    validateDataLoan(data) {
+            if (typeDataOKEx == "object" && typeDataCoEx == "object") {
+                const keyItemArray = Object.keys(valueOKExample);
+                keyItemArray.forEach((key) => {
+                    const valueOK = valueOKExample[key];
+                    const valueCompare = valueCompareExample[key];
+                    const typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
+                    const typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare;
+
+                    if (typeDataOK != typeDataCompare) errors.push({
+                        property: `${item}.${key}`,
+                        ExpectedDataType: typeDataOK,
+                        givenDataType: typeDataCompare,
+                        example: valueOK
+                    })
+                })
+            }
+
+            if (typeDataOKEx == "array" && typeDataCoEx == "array" && typeof valueOKExample[1] == 'object') {
+                valueOKExample.forEach((obj, idx) => {
+                    const keyItemArray = Object.keys(obj);
+                    keyItemArray.forEach((key) => {
+                        if (valueCompareExample.lenght < idx) {
+                            const valueOK = obj[key] || '';
+                            const valueCompare = valueCompareExample[idx][key] ? valueCompareExample[idx][key] : undefined;
+
+                            // console.log(typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare)
+                            let typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
+                            let typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare || null;
+                            if (!typeDataCompare) console.log('pasa')
+                            // if (!typeDataCompare)
+
+                            if (typeDataOK != typeDataCompare || !typeDataCompare) erros.push({
+                                property: `address[${idx}].${key}`,
+                                ExpectedDataType: typeDataOK,
+                                givenDataType: typeDataCompare,
+                                example: valueOK
+                            })
+                        }
+
+                    })
+                })
+            }
+
+            if (typeDataOKEx != typeDataCoEx || !typeDataCoEx)
+                errors.push({
+                    property: item,
+                    ExpectedDataType: typeDataOKEx,
+                    givenDataType: typeDataCoEx,
+                    example: valueOKExample
+                });
+        });
+        return errors;
+    }
+
+    async validateDataLoan(data) {
         ///// VALIDAR QUE LOS DATOS PARA LA SOLICITUD QUE SE GENERARA EN EL HF ES CORRECTA
-        
+
         const dataExample = {
             apply_by: "1677107583323",
             id_solicitud: 236699,
@@ -369,8 +433,8 @@ class ActionCollection extends DocumentCollection {
                 "C",
                 "Catorcena(s)"
             ],
-            first_replay_at: "",
-            disburset_at: "",
+            first_repay_date: "",
+            disbursment_date: "",
             disbursment_mean: "ORP",
             liquid_guarantee: 10,
             product: {
@@ -454,65 +518,7 @@ class ActionCollection extends DocumentCollection {
             ]
         }
         let errors = [];
-
-        const keys = Object.keys(dataExample);
-        keys.forEach((item) => {
-            const valueOKExample = dataExample[item];
-            const valueCompareExample = data[item];
-            const typeDataOKEx = typeof valueOKExample == "object" && Array.isArray(valueOKExample) ? "array" : typeof valueOKExample;
-            const typeDataCoEx = typeof valueCompareExample == "object" && Array.isArray(valueCompareExample) ? "array" : typeof valueCompareExample;
-
-            if (typeDataOKEx == "object" && typeDataCoEx == "object") {
-                const keyItemArray = Object.keys(valueOKExample);
-                keyItemArray.forEach((key) => {
-                    const valueOK = valueOKExample[key];
-                    const valueCompare = valueCompareExample[key];
-                    const typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
-                    const typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare;
-
-                    if (typeDataOK != typeDataCompare) errors.push({
-                        property: `${item}.${key}`,
-                        ExpectedDataType: typeDataOK,
-                        givenDataType: typeDataCompare,
-                        example: valueOK
-                    })
-                })
-            }
-
-            if (typeDataOKEx == "array" && typeDataCoEx == "array" && typeof valueOKExample[1] == 'object') {
-                valueOKExample.forEach((obj, idx) => {
-                    const keyItemArray = Object.keys(obj);
-                    keyItemArray.forEach((key) => {
-                        if (valueCompareExample.lenght < idx) {
-                            const valueOK = obj[key] || '';
-                            const valueCompare = valueCompareExample[idx][key] ? valueCompareExample[idx][key] : undefined;
-
-                            // console.log(typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare)
-                            let typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
-                            let typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare || null;
-                            if (!typeDataCompare) console.log('pasa')
-                            // if (!typeDataCompare)
-
-                            if (typeDataOK != typeDataCompare || !typeDataCompare) erros.push({
-                                property: `address[${idx}].${key}`,
-                                ExpectedDataType: typeDataOK,
-                                givenDataType: typeDataCompare,
-                                example: valueOK
-                            })
-                        }
-
-                    })
-                })
-            }
-
-            if (typeDataOKEx != typeDataCoEx || !typeDataCoEx)
-                errors.push({
-                    property: item,
-                    ExpectedDataType: typeDataOKEx,
-                    givenDataType: typeDataCoEx,
-                    example: valueOKExample
-                });
-        });
+        errors = await this.validateModel(dataExample, data)
         let action_type;
         if (data.renovation) {
             action_type = 'RENOVATION LOAN';
@@ -527,7 +533,232 @@ class ActionCollection extends DocumentCollection {
             loan_id: data.id_solicitud,
             action_type: action_type
         }
+        return {info, errors};
+    }
+
+    async validateDataClient(data) {
+        ///// VALIDAR QUE LOS DATOS de CLIENTE
+        const dataExample = {
+            _id: "1679723948863",
+            _rev: "1-2f83cbfb8a5e9950d00940d1cf8a55d7",
+            address: [
+                {
+                    _id: "1679723842324",
+                    type: "DOMICILIO",
+                    address_line1: "CALLE 25",
+                    country: [
+                        "COUNTRY|1",
+                        "México"
+                    ],
+                    province: [
+                        "PROVINCE|5",
+                        "Chiapas"
+                    ],
+                    municipality: [
+                        "MUNICIPALITY|33",
+                        "Reforma"
+                    ],
+                    city: [
+                        "CITY|1970",
+                        "carlos salinas de gortari"
+                    ],
+                    colony: [
+                        "NEIGHBORHOOD|113",
+                        "carlos salinas de gortari"
+                    ],
+                    post_code: "29500"
+                },
+                {
+                    _id: "1679723842324",
+                    type: "DOMICILIO",
+                    address_line1: "CALLE 25",
+                    country: [
+                        "COUNTRY|1",
+                        "México"
+                    ],
+                    province: [
+                        "PROVINCE|5",
+                        "Chiapas"
+                    ],
+                    municipality: [
+                        "MUNICIPALITY|33",
+                        "Reforma"
+                    ],
+                    city: [
+                        "CITY|1970",
+                        "carlos salinas de gortari"
+                    ],
+                    colony: [
+                        "NEIGHBORHOOD|113",
+                        "carlos salinas de gortari"
+                    ],
+                    post_code: "29500"
+                }
+            ],
+            branch: [
+                1,
+                "ORIENTE"
+            ],
+            business_data: {
+                economic_activity: [
+                    1,
+                    "AGRICULTURA"
+                ],
+                profession: [
+                    48,
+                    "Diseñador de Productos Industriales y Comerciales"
+                ],
+                business_start_date: "2021-01-19T23:58:00-06:00",
+                business_name: "NEGOCIO 1",
+                business_owned: false,
+                business_phone: "1234567890"
+            },
+            client_type: [
+                2,
+                "INDIVIDUAL"
+            ],
+            coordinates: [
+                0,
+                0
+            ],
+            couchdb_type: "CLIENT",
+            country_of_birth: [
+                "COUNTRY|1",
+                "México"
+            ],
+            curp: "OEAF771012HMCRGR09",
+            data_company: [
+                {}
+            ],
+            data_efirma: [
+                {}
+            ],
+            dob: "1977-10-12",
+            education_level: [
+                10,
+                "Posgrado"
+            ],
+            id_cliente: 0,
+            id_persona: 0,
+            ife_details: [
+                {
+                    id_identificacion_oficial: "123456789012365",
+                    numero_emision: "2",
+                    numero_vertical_ocr: "1234567890"
+                }
+            ],
+            clave_ine: "123456789012365",
+            numero_vertical: "1234567890",
+            numero_emisiones: "2",
+            email: "",
+            lastname: "MORALES",
+            loan_cycle: 0,
+            marital_status: [
+                2,
+                "Casada(o)"
+            ],
+            name: "JUAN PLABLO",
+            nationality: [
+                0,
+                ""
+            ],
+            not_bis: false,
+            ocupation: [
+                28,
+                "PROMOTORA DE VENTAS (VENTAS POR CATALOGO)"
+            ],
+            phones: [
+                {
+                    _id: 1,
+                    type: "Móvil",
+                    phone: "1234567891",
+                    company: "Desconocida",
+                    validated: false
+                }
+            ],
+            identities: [],
+            province_of_birth: [
+                "PROVINCE|15",
+                "México"
+            ],
+            rfc: "RFCRFC",
+            second_lastname: "RODRIGUEZ",
+            sex: [
+                4,
+                "Hombre"
+            ],
+            status: [
+                1,
+                "Pendiente"
+            ],
+            tributary_regime: [
+                "1",
+                "Persona Fisica AE"
+            ],
+            comment: "",
+            identity_pics: [],
+            comprobante_domicilio_pics: []
+        }
+        let errors = [];
+        errors = await this.validateModel(dataExample,data)
+        let action_type;
+        action_type = 'CREATE_UPDATE_CLIENT';
+        const info = {
+            client_id: data.id_cliente,
+            loan_id: data.id_solicitud,
+            action_type: action_type
+        }
         return { info, errors };
+    }
+
+    async validateAction(id_action,type = "VALIDATE") {
+        let response =
+            {
+                status:"FAIL",
+                message: "The transaction was done successfully",
+                action: null
+            };
+        try {
+
+            const Action = new ActionCollection();
+            const action = await Action.findOne({ _id: id_action });
+
+            if (!action){
+                response.message = 'Action not found';
+                return response;
+            }
+
+            if (action.status !== 'Pending' && type == 'EXEC'){
+                response.message = 'Action is not pending, current status is "'+action.status+'"';
+                return response;
+            }
+
+            response.status = "OK";
+            response.action = action;
+            return response;
+        } catch (error) {
+            response.message = error.message;
+            return response;
+        }
+    }
+
+    async saveValidation(result,action)
+    {
+        if (action.status === 'Pending')
+        {
+            if (result.errors.length == 0)
+            {
+                action.isOk = true
+                action.errors = result.errors;
+            }
+            else
+            {
+                action.errors = result.errors;
+                action.isOk = false;
+            }
+        }
+        await new ActionCollection(action).save();
+        return result;
     }
 }
 

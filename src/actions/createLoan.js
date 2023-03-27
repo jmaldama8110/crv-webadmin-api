@@ -339,8 +339,8 @@ async function sortLoanHFtoCouch(loan) {
         approved_total: "",
         term: "",
         frequency: ["S", "Semana(s)"],
-        first_repay_at: "",
-        disburset_at: "",
+        first_repay_date: "",
+        disbursment_date: "",
         disbursment_mean: "",
         liquid_guarantee: 0,
         loan_cycle: "",
@@ -363,8 +363,8 @@ async function sortLoanHFtoCouch(loan) {
     loanCouch.approved_total = loan[0][0].monto_total_autorizado || 0;
     loanCouch.term = loan[0][0].plazo;
     loanCouch.frequency = frecuencyHFToCouch[loan[0][0].periodicidad];
-    loanCouch.first_repay_at = loan[0][0].fecha_primer_pago;
-    loanCouch.disburset_at = loan[0][0].fecha_entrega;
+    loanCouch.first_repay_date = loan[0][0].fecha_primer_pago;
+    loanCouch.disbursment_date = loan[0][0].fecha_entrega;
     loanCouch.disbursment_mean = loan[0][0].medio_desembolso;
     loanCouch.liquid_guarantee = loan[0][0].garantia_liquida;
     // loanCouch.loan_cycle = ""; // PREGUNTAR
@@ -578,8 +578,8 @@ async function createLoanHF(data) {
                     sub_estatus: loan.sub_estatus ? loan.sub_estatus : 'NUEVO TRAMITE',
                     periodicidad: frecuencysCouchtoHF[loan.frequency[0]] || 'SEMANAL',
                     plazo: loan.term || loan.product.min_term,
-                    fecha_primer_pago: loan.first_replay_at != '' ? getDates(loan.first_replay_at) : '1999-01-01T00:00:00.000Z', //2023-02-02T00:00:00.000Z
-                    fecha_entrega: loan.disburset_at != '' ? getDates(loan.disburset_at) : '1999-01-01T00:00:00.000Z',
+                    fecha_primer_pago: loan.first_repay_date != '' ? getDates(loan.first_repay_date) : '1999-01-01T00:00:00.000Z', //2023-02-02T00:00:00.000Z
+                    fecha_entrega: loan.disbursment_date != '' ? getDates(loan.disbursment_date) : '1999-01-01T00:00:00.000Z',
                     medio_desembolso: loan.disbursment_mean || "ORP",
                     garantia_liquida: loan.product.liquid_guarantee || loan.liquid_guarantee,
                     id_oficina: idBranch != undefined ? idBranch : 1,
