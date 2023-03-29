@@ -20,20 +20,6 @@ router.get('/clients/hf/search', authorize, async(req, res) => {
     }
 })
 
-router.get('/groups/hf/tmp', authorize, async(req, res) =>{
-
-    try{
-        
-        const data = await Group.getLoanApplicationById( 233123, 1 );
-        res.send(data)
-    }
-    catch(e){
-        console.log(e);
-        res.status(400).send(e.message)
-    }
-});
-
-
 router.get('/groups/hf/loanapps', authorize, async(req, res) => {
     try{
 
@@ -159,6 +145,7 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
 
 
         res.status(200).send( { group_data, loan_app}  );
+        
 
     } catch(err){
         console.log(err);

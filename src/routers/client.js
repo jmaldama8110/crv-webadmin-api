@@ -113,7 +113,9 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 economic_activity:[], 
                 profession:[],
                 business_name: '',
-                business_start_date:''
+                business_start_date:'',
+                business_owned: false,
+                business_phone: ""
             }
 
             let econActId = 0, econActCap = ''
@@ -132,7 +134,9 @@ router.get("/clients/hf", authorize, async(req, res) => {
                     economic_activity: [ econActId,econActCap],
                     profession: [profId, profCap],
                     business_name: data.recordsets[7][0].nombre_negocio,
-                    business_start_date: data.recordsets[7][0].econ_fecha_inicio_act_productiva
+                    business_start_date: data.recordsets[7][0].econ_fecha_inicio_act_productiva,
+                    business_owned: false,
+                    business_phone: ""    
                 }
             }
 
@@ -145,7 +149,7 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 name: perSet.name,
                 lastname: perSet.lastname,
                 second_lastname: perSet.second_lastname,
-                // email: req.user.email,
+                email: `${perSet.second_lastname}_${perSet.lastname}_${perSet.name}_${perSet.gender}@conserva.org.mx`,
                 curp: curp ? curp.id_numero : "",
                 clave_ine: ife ? ife.id_numero : "",
                 numero_emisiones: ine_detalle ? ine_detalle.numero_emision: '',
@@ -160,7 +164,8 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 address,
                 phones,
                 tributary_regime: [],
-
+                not_bis: false,
+                client_type: [2,'INDIVIDUAL'],
                 nationality: [perSet.id_nationality, perSet.nationality],
                 province_of_birth: [
                     `PROVINCE|${perSet.id_province_of_birth}`,
@@ -1111,17 +1116,12 @@ router.post('/sendsms', authorize, async (req, res) => {
 })
 
 router.get('/client/hf', authorize, async (req, res) => {
-
     try {
-
         if (!req.query.id) {
             throw new Error('Some query parameters area mising...')
         }
-
         const dataHF = await Client.findClientByExternalId(req.query.id);
-
         res.status(200).send(dataHF);
-
     } catch (e) {
         res.status(400).send(e.message);
     }
