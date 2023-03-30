@@ -72,8 +72,8 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
                     id_member: i.id,
                     id_cliente: i.id_individual,
                     fullname: `${i.nombre} ${i.apellido_paterno} ${i.apellido_materno}`,
-                    estatus: 'TRAMITE',
-                    sub_estatus: 'NUEVO TRAMITE',
+                    estatus: i.estatus.trim(),
+                    sub_estatus: i.sub_estatus.trim(),
                     position: i.cargo.trim(),
                     apply_amount: i.monto_solicitado,
                     approved_amount: i.monto_autorizado,
@@ -99,13 +99,6 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
         const identifierFreq = loan_application.periodicidad.slice(0,1);
         const frequency = productMaster.allowed_term_type.find( (i) => i.identifier === identifierFreq)
         /// Uses the same loan application info, except some field, ei: id_solicitud,
-        /// and fecha Desembolso y Fecha primer pago
-        const fechaDesNew = new Date();
-        const fechaPPagoNew = new Date();
-
-        fechaDesNew.setDate(fechaDesNew.getDate() + 7);
-        fechaPPagoNew.setDate( fechaPPagoNew.getDate() + 14);
-
 
         const loan_app = {
             id_cliente: loan_application.id_cliente,
@@ -118,14 +111,13 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
             approved_total: loan_application.monto_total_autorizado,
             term: loan_application.plazo,
             frequency: [frequency.identifier,frequency.value],
-            first_repay_date: fechaPPagoNew.toISOString(),
-            disbursment_date: fechaDesNew.toISOString(),
+            first_repay_date: loan_application.fecha_primer_pago,
+            disbursment_date: loan_application.fecha_entrega,
             disbursment_mean: loan_application.medio_desembolso.trim(),
             liquid_guarantee: loan_application.garantia_liquida,
             loan_cycle: loan_cycle.ciclo,
-            estatus: "TRAMITE", // para renovacion
-            sub_estatus: "NUEVO TRAMITE", /// 
-            renovation: true,
+            estatus: loan_application.estatus.trim(), // para renovacion
+            sub_estatus: loan_application.sub_estatus.trim(), /// 
             members,
             product: {
               external_id: productMaster.external_id,
@@ -139,10 +131,9 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
               rate: productMaster.rate,
               tax: productMaster.tax,
               GL_financeable: false,
-              liquid_guarantee: 10,
+              liquid_guarantee: loan_application.garantia_liquida
             }
         }
-
 
         res.status(200).send( { group_data, loan_app}  );
         

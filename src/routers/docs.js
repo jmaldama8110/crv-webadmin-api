@@ -186,6 +186,27 @@ const  {formatLocalCurrency, getRounded}  = require('../utils/numberFormatter');
 //   }
 // });
 
+router.get('/docs/img', async (req, res) =>{
+/// server images based on the _id
+  const id = req.query.id;
+
+  try{
+    if( !id ) throw new Error('No img id supplied..')
+    const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
+    const data = await db.get(id);
+    const img = Buffer.from(data.base64str,'base64');
+    res.writeHead(200,{
+      'Content-Type': 'image/jpg',
+      'Content-Length': img.length
+    });
+    res.end(img);
+  }
+  catch(e){
+    console.log(e)
+    res.status(400).send(e.message);
+  }
+
+})
 router.get('/docs/html/visitas-certificacion-social', async(req, res) =>{
 
   try{
