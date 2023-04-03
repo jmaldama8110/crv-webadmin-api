@@ -90,15 +90,17 @@ router.get('/actions/exec', async (req, res) => {
         switch (action.name){
             case 'CREATE_UPDATE_LOAN':
                 if (!action.isOk) throw new Error('Invalid data loan');
-                // Crate loan
+                // Create loan
                 const loan = await createLoanHF(action.data);
                 // Validate creation of loan
                 if (loan instanceof Error || !loan) {
                     action.status = 'Error';
+                    action.errors = [loan.message];
                     // sendReportActionError(task);
                     console.log(loan)
                 } else {
-                    action.status = 'Done'
+                    action.errors = [];
+                    action.status = 'Done';
                 };
                 break;
             case 'CREATE_UPDATE_CLIENT':
@@ -109,10 +111,12 @@ router.get('/actions/exec', async (req, res) => {
                 // Validate creation person and
                 if (!personCreatedHF || !clientSaved || personCreatedHF instanceof Error || clientSaved instanceof Error) {
                     action.status = 'Error'
-                    Action.repostActionError(action.data);
+                    action.errors = [personCreatedHF.message, clientSaved.message];
+                    //Action.repostActionError(action.data);
                     console.log('Error :', { personCreatedHF, clientSaved })
                 } else {
-                    { action.status = 'Done' }
+                    action.status = 'Done';
+                    action.errors = [];
                 };
                 break;
             default:
@@ -120,8 +124,8 @@ router.get('/actions/exec', async (req, res) => {
         }
         //Save execution
         await new ActionCollection(action).save();
-        console.log(`>> ${action.name} ${action.status}!`);
-        res.status(201).send('Done');
+        let RSP_Action = { name: action.name, status : action.status, action:action  }
+        res.status(201).send(RSP_Action);
 
     } catch (err) {
         res.status(400).send(err.message)

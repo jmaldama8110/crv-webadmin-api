@@ -180,9 +180,9 @@ async function sortDataPerson(client, action) {
         )
 
         return person;
-    } catch (err) {
-        console.log(err);
-        return;
+    } catch (error) {
+        console.log(error);
+        return new Error(error.stack);
     }
 }
 
@@ -306,8 +306,9 @@ async function createPersonHF(data) {
         await new ClientCollection(clientCouch).save();
 
         return result.recordsets;
-    } catch (err) {
-        return new Error(err.message)
+    } catch (error) {
+        console.log(error);
+        return new Error(error.stack);
     }
 }
 
