@@ -370,11 +370,11 @@ router.get('/clients/createReference', authorize, async(req, res) => {
         //      typeReference: 3 -> id: Pago de moratorios por id_cliente
         //      typeReference: 6 -> id: Pago de crédito por id_contrato
 
-        const {typeReference, id, idIntermediario} = req.query;
-        const result = await Client.createReference(typeReference, id);
-        const data = idIntermediario ? result.filter( (i) => i.id_intermerdiario == idIntermediario ) : result
-    
-        res.status(200).send(data);
+        const { typeReference, contractId, clientId} = req.query;
+        const id = typeReference === '2' ? clientId : contractId;
+        const sqlRes = await Client.createReference(typeReference, id);
+        
+        res.status(200).send(sqlRes);
     } catch (error) {
         res.status(401).send(error.message);
     }

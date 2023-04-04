@@ -16,7 +16,11 @@
             font-size: 14px;
             line-height: 1.2rem;
          }
-        
+        @media print {
+            .summary,.movs, .pplan {
+                break-inside: avoid;
+            }
+        }
          .header {
             display: flex;
             justify-content: space-between;
@@ -32,6 +36,7 @@
         .summary{ 
             display: grid;
             grid-template-columns: 1fr 1fr;
+            
         }
         .summary h3 {
             grid-column: 1 / 3;
@@ -151,13 +156,13 @@
 <body>
     <div class="header">
         <div class="logo-container">
-            <img src={{logoImageFilePath}} >
+            <img src='{{serverHost}}/docs/img?id=logo-cnsrv-light.png' >
         </div>
         <div>
             {{#with condusefTexto}}
             <p class="fs-lg fw-bold">CONSULTORES DE SERVICIOS VARIOS SA de CV SOFOM ENR</p>
             <p>{{nombreSucursal}}, {{direccionSucursal}}, TELÉFONO: {{telefonoSucursal}}</p>
-            {{/with}}
+            {{/with}}            
         </div>
     </div>
 

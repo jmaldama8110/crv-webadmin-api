@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjeton Digital CONSERVA</title>
+    <script
+        src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"
+    >
+
+    </script>
+
+<style>
+         body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 1050px;
+            margin: auto;
+            font-size: 12px;
+            line-height: 1.2rem;
+         }
+         * {
+            margin: 0;
+         }
+        @media print {
+        .card {
+            break-inside: avoid;
+        }
+        }
+        /* Contenido principal**/
+         .content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            
+         }
+         /****/
+
+         /*** Titulos alto contraste ***/
+         .title-black { background-color: black; padding: 0.5rem 0.5rem; }
+         .title-black h3, .title-black p { 
+            color:white;
+            text-align: center;
+            
+         }
+         /* */
+
+        /** Recuardos izquierdo y derecho**/
+         .card{ 
+            border: 1px solid #9E9E9E;  
+            width: 450px;
+            margin: 0.2rem; 
+            padding: 0.5rem;
+        }
+
+        .card-reference {
+            text-align: center;
+            padding: 0.5rem;
+            
+        }
+        .card-brandlogos {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .card-row{
+            display: flex;
+            justify-content: space-between;
+        }
+        .card-row .caption{
+            width: 150px;
+        }
+        .card-row .val {
+            width: 100%;
+            font-weight: bolder;
+        }
+
+        .card-banks {
+            padding: 0.5rem;
+            margin: auto; 
+        }
+        .tabla1 {
+            display: grid;
+            grid-template-columns: 150px 290px;            
+        }
+        .tabla1 div {
+            border: 1px solid #9E9E9E;
+            padding: 0.3rem;
+        }
+        
+        .tabla2 {
+            display: grid;
+            grid-template-columns: 100px 150px 190px;            
+        }
+        .tabla2 div {
+            border: 1px solid #9E9E9E;
+            padding: 0.3rem;
+        }
+        .tabla2 div p { font-weight: bolder;}
+
+        .logo-container { width: 90px; padding: 0.1rem }
+         img { width: 100%;} 
+        .pt-sm { padding-top: 0.5rem; }
+        .pd-nm { padding: 1rem; }
+        .fw-bold { font-weight: bolder;}
+        .margin-top { margin-top: 0.5rem}
+        .text-center { text-align: center; }
+        .fs-sm { font-size: 8px; }
+ 
+</style>
+
+</head>
+<body>
+
+    <div class="content">
+
+        <div class="card">
+            <div class="card-row">
+                <div class="logo-container caption">
+                    <img src="{{serverHost}}/docs/img?id=paycash-logo.png"/>
+                </div>
+                <div class="title-black val">
+                    <p>TARJETÓN DE REFERENCIAS</p>
+                    <h3>{{payCashInfo.tipo_evento}}</h3>
+                </div>
+            </div>
+            <div>
+                <div class="card-row"><p class="caption">ID del Cliente</p> <p class="val">{{clientId}}</p></div>
+                <div class="card-row"><p class="caption">Nombre Cliente</p> <p class="val">{{payCashInfo.nombre_cliente}}</p></div>
+                <div class="card-row"><p class="caption">Tipo Deposito</p> <p class="val">{{payCashInfo.tipo_evento}}</p></div>
+            </div>
+            
+            <div class="card-reference">
+                <svg id="barcode"></svg>
+                <h3>{{payCashInfo.referencia}}</h3>
+                <p>Escribir la referencia en caso de fallo del codigo. Puede realizar su depósito de <strong>{{payCashInfo.tipo_evento}}</strong> en los establecimientos:</p>
+
+            </div>
+
+            <div class="card-brandlogos">
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=sams-logo.png" /></div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=soriana-logo.png" /></div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=bodega-logo.png" /></div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=yza-logo.png" /></div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=extra-logo.png" /></div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=walmart-logo.png" /></div>                
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=seven-logo.png" /></div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=superama-logo.png" /></div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=merza-logo.png" /></div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=circlek-logo.png" /> </div>
+                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=cityclub-logo.png" /></div>
+            </div>
+           
+            <div class="card-banks text-center">
+                <h2>BANCOS AFILIADOS A PayCash</h2>
+
+                <div class="tabla1">
+                    <div> <p class="fw-bold">Intermediario</p> </div>
+                    <div> <p class="fw-bold">CONVENIO CIE</p></div>
+                </div>
+                <div class="tabla1">
+                    <div> <img src="{{serverHost}}/docs/img?id=banorte-logo.jpg" /></div><div><h2>3724</h2></div>   
+                    <div> <img src="{{serverHost}}/docs/img?id=bbva-logo.jpg" /></div><div><h2>1420712</h2></div>   
+                    <div> <img src="{{serverHost}}/docs/img?id=fbienestar-logo.jpg" /></div><div><h2>3724</h2></div>
+                    <div> <img src="{{serverHost}}/docs/img?id=santander-logo.png" /></div><div><h2>7292</h2></div> 
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-row">
+                <div class="logo-container caption">
+                    <img src="{{serverHost}}/docs/img?id=logo-cnsrv-light.png"/>
+                </div>
+                <div class="title-black val">
+                    <h3>{{payCashInfo.tipo_evento}}</h3>
+                    <p>EL EJECUTIVO NO RECIBE EFECTIVO</p>
+                </div>
+            </div>
+
+            <div class="card-banks text-center">
+                <h2>BANCOS AFILIADOS A CONSERVA</h2>
+
+                <div class="tabla2">
+                    <div> <p class="fw-bold">Intermediario</p> </div>
+                    <div> <p class="fw-bold">Cuenta</p></div>
+                    <div> <p class="fw-bold">Referencia</p></div>
+                </div>
+                <div class="tabla2">
+                    <div> <img src="{{serverHost}}/docs/img?id=bbienestar-logo.png" /> </div> <div> <p>{{bbienestarInfo.no_cuenta}}</p></div><div> <p>{{bbienestarInfo.referencia}}</p></div>
+                    <div> <img src="{{serverHost}}/docs/img?id=banorte-logo.jpg" /> </div> <div> <p>{{banorteInfo.no_cuenta}}</p></div><div> <p>{{banorteInfo.referencia}}</p></div>
+                    <div> <img src="{{serverHost}}/docs/img?id=bbva-logo.jpg" /> </div> <div> <p>{{bbvaInfo.no_cuenta}}</p></div><div> <p>{{bbvaInfo.referencia}}</p></div>
+                    <div> <img src="{{serverHost}}/docs/img?id=fbienestar-logo.jpg" /> </div> <div> <p>{{fbienestarInfo.no_cuenta}}</p></div><div> <p>{{fbienestarInfo.referencia}}</p></div>
+                    <div> <img src="{{serverHost}}/docs/img?id=banbajio-logo.png" /> </div> <div> <p>{{bbajioInfo.no_cuenta}}</p></div><div> <p>{{bbajioInfo.referencia}}</p></div>
+                </div>
+            </div>
+            <div class="card-reference">
+                <svg id="barcode2"></svg>
+                <h3>{{paynetInfo.referencia}}</h3>
+                <div class="card-row">
+                    <div class="caption"> <img src="{{serverHost}}/docs/img?id=paynet-logo.jpg"/></div>
+                     <p>Escribir la referencia en caso de fallo del codigo</p>
+                </div>
+                <p>Puede realizar su deposito de <span><strong>{{payCashInfo.tipo_evento}}</strong></span> en los siguientes establecimientos:</p>
+                <div class="card-row">
+                    <div class="pd-nm"><img src="{{serverHost}}/docs/img?id=farmahorro-logo.jpeg"/></div>
+                    <div class="pd-nm"><img src="{{serverHost}}/docs/img?id=farmguadalajara-logo.jpeg"/></div>
+                    <div class="pd-nm"><img src="{{serverHost}}/docs/img?id=waldos-logo.jpeg"/></div>
+                </div>
+                <p>El presente Tarjetón es de carácter informativo, no es transferible y está designado para el depósito de <strong>{{payCashInfo.tipo_evento}}</strong> con referencias propias, únicamente para el cliente: <strong>{{payCashInfo.nombre_cliente}}</strong> </p>
+                <p class="fw-bold">DUDAS Y ACLARACIONES 800 290 9000</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-row text-center pd-nm">
+                <div class="logo-container caption">
+                    <img src="{{serverHost}}/docs/img?id=logo-cnsrv-light.png"/>
+                </div>
+                <div>
+                    <h3>TARJETÓN DE PAGO EN CAJA</h3>
+                    <p class="fs-sm">CONSULTORES DE SERVICIOS VARIOS S.A. DE C.V. SOFOM ENR</p>
+                    <p>EL EJECUTIVO NO RECIBE EFECTIVO</p>
+                    <h4>{{payCashInfo.tipo_evento}}</h4>
+                </div>
+            </div>
+            <div>
+                <div class="card-row"><p class="caption">ID de Cliente:</p> <p class="val">{{clientId}}</p></div>
+                <div class="card-row"><p class="caption">Nombre Cliente:</p> <p class="val">{{payCashInfo.nombre_cliente}}</p></div>
+                <div class="card-row"><p class="caption">Tipo Deposito:</p> <p class="val">{{payCashInfo.tipo_evento}}</p></div>
+                <div class="card-row"><p class="caption">Intermediario:</p> <p class="val">Referencia</p></div>
+            </div>
+            <div class="card-reference">
+                <svg id="barcode3"></svg>
+                <h3>{{conservaInfo.referencia}}</h3>
+                <p>Escribir la referencia en caso de fallo del codigo.</p>
+                <p>Puede realizar su depósito de <strong>{{payCashInfo.tipo_evento}}</strong> en nuestras sucursales</p>
+            </div>
+                <p class="text-center">El presente Tarjetón es de carácter informativo, no es transferible y está designado para el depósito de <strong>{{payCashInfo.tipo_evento}}</strong> con referencias propias, únicamente para el cliente: <strong>{{payCashInfo.nombre_cliente}}</strong></p>
+                <p class="text-center fw-bold">DUDAS Y ACLARACIONES 800 290 9000</p>
+        </div>
+    </div>
+
+    <script>
+        JsBarcode("#barcode", {{payCashInfo.referencia}},{ fontSize: 8 ,displayValue: false });
+        JsBarcode("#barcode2", {{paynetInfo.referencia}},{ fontSize: 8 ,displayValue: false });
+        JsBarcode("#barcode3", {{conservaInfo.referencia}},{ fontSize: 8 ,displayValue: false });
+    </script>
+</body>
+</html>
