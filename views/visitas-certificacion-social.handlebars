@@ -70,7 +70,7 @@
 <body>
     <header class="header">
         <div class="logo-container">
-            <img src={{logoImageFilePath}} >
+            <img src='{{serverHost}}/docs/img?id=logo-cnsrv-light.png' >
         </div>
         <div>
             <h3>CONSULTORES DE SERVICIOS VARIOS SA de CV SOFOM ENR</h3>
@@ -91,7 +91,7 @@
             </div>
             <div class="img-collage">
                 {{#each this.visits_pics}} 
-                    <img src='data:image/jpeg;base64,{{base64str}}'>
+                    <img src='{{serverHost}}/docs/img?id={{_id}}'>
                 {{/each}}
             </div>
         </div>

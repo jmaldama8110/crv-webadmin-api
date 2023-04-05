@@ -11,7 +11,7 @@ const Client = require('../model/client');
 const multer  = require('multer')
 const upload = multer();
 
-const serverHost = `${process.env.BASE_PROTOCOL}://${process.env.BASE_HOST}:${process.env.PORT}`;
+const serverHost = `${process.env.WEB_SERVER_HOST}`;
 
 router.get('/docs/html/visitas-certificacion-social', async(req, res) =>{
 
@@ -43,13 +43,10 @@ router.get('/docs/html/visitas-certificacion-social', async(req, res) =>{
       }
     }).filter( (w) => w.visitQuiz == 'Si' ) // visitQuiz TRUE only
     
-    const logoBase64 = fs.readFileSync('./public/logo-cnsrv-light.png', { encoding: 'base64'}); 
     const hbs = new ExpressHandlebars({ extname:".handlebars" });
-
     const data = await hbs.render('views/visitas-certificacion-social.handlebars', {
-        logoImageFilePath: `data:image/jpeg;base64,${logoBase64}`,
+        serverHost,
         queryData,
-
      });
       res.send(data);
 
@@ -232,12 +229,14 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
 
 
   } catch (e) {
-    res.status(400).send(e.message);
+    console.log(e);
+    res.status(400).send(e);
   }
 });
 
 
 /*** ***TARJETON DE REFERENCIAS ******/
+
 router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
 
   try{
@@ -331,7 +330,8 @@ router.post('/photos/upload', authorize, upload.array('photos', 24), async funct
     res.status(400).send({ error: e.message, note:'try upload less than 24 photo files'});
   }
   
-})
+});
+
 router.get('/docs/img', async (req, res) =>{
   /// server images based on the _id
     const id = req.query.id;
