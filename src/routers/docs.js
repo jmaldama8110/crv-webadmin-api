@@ -300,6 +300,18 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
 
 })
 
+router.get('/docs/pdf/test', authorize, async(req,res) =>{
+  try{
+
+    const htmlData = await hbs.render('views/test.handlebars');
+
+     const fileUrl = await renderPDf(htmlData);
+     res.send( {...fileUrl});
+  }
+  catch(error){
+    res.status(400).send(error.message);
+  }
+})
 async function renderPDf( htmlData ) {
 
   const serverEnv = process.env.SERVER_ENV || 'development'
