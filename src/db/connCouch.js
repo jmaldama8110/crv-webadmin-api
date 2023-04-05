@@ -9,7 +9,7 @@ nano.db.list().then(dbs => {
     .catch((err) => console.log(err.message))
   }
   
-  console.log('CouchDB connected correctly...!', dbRequired);
+  console.log('Apache couchdb connected correctly...!', dbRequired);
 }).catch(e => console.log(e))
 
 
