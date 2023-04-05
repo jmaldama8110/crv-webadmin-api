@@ -224,8 +224,30 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
       }),
 
     });
-
-    res.send( await renderPDf (htmlData) )
+    const serverEnv = process.env.SERVER_ENV || 'development'
+    const browser = (serverEnv === 'development') ? await puppeteer.launch() : 
+                                                  await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox']});
+    
+    const page = await browser.newPage();
+    await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
+   
+    //To reflect CSS used for screens instead of print
+    await page.emulateMediaType('print');
+    const fileNamePathPdf = `./public/pdfs/accstatement_${Date.now().toString()}.pdf`
+    
+    const pdf = await page.pdf({
+      path: fileNamePathPdf,
+      margin: { top: '20px', right: '30px', bottom: '20px', left: '30px' },
+      printBackground: true,
+      format: 'Letter',
+    });
+    
+    // Close the browser instance
+    await browser.close();
+    // fs.unlinkSync(fileNamePathPdf);
+    // res.send(pdf.toString('base64'));
+    res.send( { downloadPath: fileNamePathPdf.replace('./public/','') } )
+    // res.send( await renderPDf (htmlData) )
 
 
   } catch (e) {
