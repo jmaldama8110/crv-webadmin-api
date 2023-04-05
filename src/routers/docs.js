@@ -296,7 +296,7 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
                                                    await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox']});
      
      const page = await browser.newPage();
-     await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
+     await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"], timeout: 0 });
     
      //To reflect CSS used for screens instead of print
      await page.emulateMediaType('print');
