@@ -323,7 +323,9 @@ router.get('/docs/pdf/test', authorize, async(req,res) =>{
   try{
 
     const hbs = new ExpressHandlebars({ extname:".handlebars" });
-    const htmlData = await hbs.render('views/test.handlebars');
+    const htmlData = await hbs.render('views/test.handlebars',{
+      serverHost
+    });
     const serverEnv = process.env.SERVER_ENV || 'development'
 
     const browser = (serverEnv === 'development') ? await puppeteer.launch() : 
