@@ -303,10 +303,30 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
 router.get('/docs/pdf/test', authorize, async(req,res) =>{
   try{
 
+    const hbs = new ExpressHandlebars({ extname:".handlebars" });
     const htmlData = await hbs.render('views/test.handlebars');
+    const serverEnv = process.env.SERVER_ENV || 'development'
 
-     const fileUrl = await renderPDf(htmlData);
-     res.send( {...fileUrl});
+    const browser = (serverEnv === 'development') ? await puppeteer.launch() : 
+                                                  await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox']});
+    
+    const page = await browser.newPage();
+    await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
+   
+    //To reflect CSS used for screens instead of print
+    await page.emulateMediaType('print');
+    const fileNamePathPdf = `./public/pdfs/accstatement_${Date.now().toString()}.pdf`
+    
+    const pdf = await page.pdf({
+      path: fileNamePathPdf,
+      margin: { top: '20px', right: '30px', bottom: '20px', left: '30px' },
+      printBackground: true,
+      format: 'Letter',
+    });
+    // Close the browser instance
+    await browser.close();
+     
+     res.send( { downloadPath: fileNamePathPdf.replace('./public/','') });
   }
   catch(error){
     res.status(400).send(error.message);
