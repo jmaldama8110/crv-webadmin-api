@@ -9,7 +9,6 @@ const Employee = require('../model/employee');
 const Signup = require("../model/signup");
 const moment = require("moment");
 const multer = require("multer"); // parar cargar imagenes
-const sharp = require("sharp");
 const axios = require("axios");
 
 const connCouch = require("./../db/connCouch");
@@ -650,74 +649,6 @@ const upload = multer({
     // cb( undefined, true )
     // cb( undefined, false )
   },
-});
-
-// POST actualizar imagen avater del usuario autenticado
-router.post("/users/me/avatar", auth, upload.single("avatar"), async (req, res) => {
-  //sharp convierte imagenes grandes en formatos comunes compatibles con la web
-  if (req.file != undefined) {
-    const buffer = await sharp(req.file.buffer)
-      .resize({ width: 250, height: 250 })
-      .png()
-      .toBuffer();
-
-    req.user.selfi = buffer;
-
-    // console.log(req.user)
-
-    return await req.user.save()
-      .then(() => {
-        res.status(200).send(req.user);
-        // res.status(200).send('Image successfully uploaded');
-      })
-      .catch(() => {
-        res.status(400).send('Could not update');
-      })
-  }
-
-  res.status(400).send('Empty avatar');
-
-  // res.send();
-},
-  (error, req, res, next) => {
-    // handle error while loading upload
-    res.status(400).send({ error: error.message });
-  }
-);
-
-// DELETE elminar el avatar del usuario autenticado
-router.delete("/users/me/avatar", auth, async (req, res) => {
-  // console.log('eliminar el avatar de', req.user)
-  req.user.selfi = undefined;
-  await req.user.save()
-    .then(() => {
-      res.status(200).send('Avatar removed successfully');
-    })
-    .catch(() => {
-      res.status(400).send('Could not delete');
-    })
-
-  // res.send();
-});
-
-// GET obtener el avatar de cualquier usuario (sin estar logeado)
-router.get("/users/:id/avatar", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-
-    if (!user) {
-      throw new Error('User does not exist');
-    }
-
-    if (!user.selfi) {
-      throw new Error('No avatar has been uploaded for this user');
-    }
-
-    res.set("Content-Type", "image/png"); // respues en modo imagen desde el server
-    res.send(user.selfi); // send -> campo buffer
-  } catch (error) {
-    res.status(404).send(error + '');
-  }
 });
 
 const removeAccents = (str) => {
