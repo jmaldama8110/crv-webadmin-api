@@ -412,12 +412,12 @@ router.get('/docs/img', async (req, res) =>{
     const id = req.query.id;
   
     try{
-      if( !id ) throw new Error('No img id supplied..')
+      if( !id ) throw new Error('No img id supplied..');
       const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
       const data = await db.get(id);
       const img = Buffer.from(data.base64str,'base64');
       res.writeHead(200,{
-        'Content-Type': 'image/jpg',
+        'Content-Type': 'image/png',
         'Content-Length': img.length
       });
       res.end(img);
