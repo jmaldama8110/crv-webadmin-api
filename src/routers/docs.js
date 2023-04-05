@@ -224,30 +224,9 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
       }),
 
     });
-    const serverEnv = process.env.SERVER_ENV || 'development'
-    const browser = (serverEnv === 'development') ? await puppeteer.launch() : 
-                                                  await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox']});
-    
-    const page = await browser.newPage();
-    await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
-   
-    //To reflect CSS used for screens instead of print
-    await page.emulateMediaType('print');
-    const fileNamePathPdf = `./public/pdfs/accstatement_${Date.now().toString()}.pdf`
-    
-    const pdf = await page.pdf({
-      path: fileNamePathPdf,
-      margin: { top: '20px', right: '30px', bottom: '20px', left: '30px' },
-      printBackground: true,
-      format: 'Letter',
-    });
-    
-    // Close the browser instance
-    await browser.close();
-    // fs.unlinkSync(fileNamePathPdf);
-    // res.send(pdf.toString('base64'));
-    res.send( { downloadPath: fileNamePathPdf.replace('./public/','') } )
-    // res.send( await renderPDf (htmlData) )
+
+    const result = await renderPDf(htmlData);
+    res.send({...result } );
 
 
   } catch (e) {
@@ -326,28 +305,9 @@ router.get('/docs/pdf/test', authorize, async(req,res) =>{
     const htmlData = await hbs.render('views/test.handlebars',{
       serverHost
     });
-    const serverEnv = process.env.SERVER_ENV || 'development'
 
-    const browser = (serverEnv === 'development') ? await puppeteer.launch() : 
-                                                  await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox']});
-    
-    const page = await browser.newPage();
-    await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
-   
-    //To reflect CSS used for screens instead of print
-    await page.emulateMediaType('print');
-    const fileNamePathPdf = `./public/pdfs/accstatement_${Date.now().toString()}.pdf`
-    
-    const pdf = await page.pdf({
-      path: fileNamePathPdf,
-      margin: { top: '20px', right: '30px', bottom: '20px', left: '30px' },
-      printBackground: true,
-      format: 'Letter',
-    });
-    // Close the browser instance
-    await browser.close();
-     
-     res.send( { downloadPath: fileNamePathPdf.replace('./public/','') });
+    const result = await renderPDf(htmlData);
+     res.send( {...result});
   }
   catch(error){
     res.status(400).send(error.message);
@@ -394,6 +354,7 @@ router.post('/photos/upload', authorize, upload.array('photos', 24), async funct
         _id: req.files[i].originalname,
         base64str,
         title: req.files[i].originalname,
+        mimetype: req.files[i].mimetype
       }
       newListDocs.push(item);
     }
@@ -414,10 +375,10 @@ router.get('/docs/img', async (req, res) =>{
     try{
       if( !id ) throw new Error('No img id supplied..');
       const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
-      const data = await db.get(id);
-      const img = Buffer.from(data.base64str,'base64');
+      const imageData = await db.get(id);
+      const img = Buffer.from(imageData.base64str,'base64');
       res.writeHead(200,{
-        'Content-Type': 'image/png',
+        'Content-Type': imageData.mimetype,
         'Content-Length': img.length
       });
       res.end(img);
