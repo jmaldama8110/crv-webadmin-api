@@ -71,6 +71,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
     
     const hbs = new ExpressHandlebars({ extname:".handlebars"});
     
+    
     const htmlData = await hbs.render('views/account-statement.handlebars', 
     { 
       chartCapitalPagado:   summary.capital_pagado,
@@ -78,6 +79,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
       chartInteresPagado: summary.interes_pagado,
       chartInteresPendiente: summary.interes_vencido,
       serverHost,
+      imgLogoConserva: loadBase64ImgFromDB('logo-cnsrv-light.png'),
       condusefTexto: {
           nombreSucursal: summary.nombre_oficina,
           direccionSucursal: summary.direccion_oficina,
@@ -298,21 +300,7 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
 
 })
 
-router.get('/docs/pdf/test', authorize, async(req,res) =>{
-  try{
 
-    const hbs = new ExpressHandlebars({ extname:".handlebars" });
-    const htmlData = await hbs.render('views/test.handlebars',{
-      serverHost
-    });
-
-    const result = await renderPDf(htmlData);
-     res.send( {...result});
-  }
-  catch(error){
-    res.status(400).send(error.message);
-  }
-})
 async function renderPDf( htmlData ) {
 
   const serverEnv = process.env.SERVER_ENV || 'development'
@@ -387,8 +375,12 @@ router.get('/docs/img', async (req, res) =>{
       console.log(e)
       res.status(400).send(e.message);
     }
-  
-  })
-  
+})
+
+async function loadBase64ImgFromDB (id) {
+  const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
+  const imageData = await db.get(id);
+  return Buffer.from(imageData.base64str,'base64');
+}  
 
 module.exports = router;
