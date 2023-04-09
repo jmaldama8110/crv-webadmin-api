@@ -71,7 +71,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
     
     const hbs = new ExpressHandlebars({ extname:".handlebars"});
     
-    
+    const imgLogoConserva = await loadBase64ImgFromDB('logo-cnsrv-light.png');
     const htmlData = await hbs.render('views/account-statement.handlebars', 
     { 
       chartCapitalPagado:   summary.capital_pagado,
@@ -79,7 +79,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
       chartInteresPagado: summary.interes_pagado,
       chartInteresPendiente: summary.interes_vencido,
       serverHost,
-      imgLogoConserva: loadBase64ImgFromDB('logo-cnsrv-light.png'),
+      imgLogoConserva,
       condusefTexto: {
           nombreSucursal: summary.nombre_oficina,
           direccionSucursal: summary.direccion_oficina,
@@ -380,7 +380,7 @@ router.get('/docs/img', async (req, res) =>{
 async function loadBase64ImgFromDB (id) {
   const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
   const imageData = await db.get(id);
-  return Buffer.from(imageData.base64str,'base64');
+  return imageData.base64str;
 }  
 
 module.exports = router;
