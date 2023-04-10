@@ -48,7 +48,7 @@ router.get('/docs/html/visitas-certificacion-social', async(req, res) =>{
         serverHost,
         queryData,
      });
-      res.send(data);
+    res.send(data);
 
   }
   catch(error){
@@ -241,7 +241,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
 
 /*** ***TARJETON DE REFERENCIAS ******/
 
-router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
+router.get('/docs/html/tarjeton-digital', async(req, res) =>{
 
   try{
 
@@ -256,13 +256,8 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
     const fbienestarInfo = sqlRes.find( x => x.id_intermerdiario == 6 );
     const bbajioInfo = sqlRes.find( x => x.id_intermerdiario == 7 );
     const paynetInfo = sqlRes.find( x => x.id_intermerdiario == 8 );
-    let payCashInfo = sqlRes.find( x => x.id_intermerdiario == 9 );
+    const payCashInfo = sqlRes.find( x => x.id_intermerdiario == 9 );
     const conservaInfo = sqlRes.find( x => x.id_intermerdiario == 11 );
-  
-    if( payCashInfo.no_cuenta === '0' ){
-      payCashInfo.referencia = '999999999999999999999'    
-    }
-    
 
     const imgs = await loadBase64ImgArrayFromDB( [
       'banbajio-logo.png',
@@ -328,8 +323,7 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
         conservaInfo
      });
 
-    const result = await renderPDf(htmlData); 
-    res.send({...result } );
+     res.send(htmlData);
  
 
   }
@@ -338,6 +332,100 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
   }
 
 })
+
+
+
+router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
+
+  try{
+
+    const { typeReference, contractId, clientId} = req.query;
+    const id = typeReference === '2' ? clientId : contractId;
+    const sqlRes = await Client.createReference(typeReference, id);
+
+    const hbs = new ExpressHandlebars({ extname:".handlebars" });
+    const bbienestarInfo = sqlRes.find( x => x.id_intermerdiario == 1 );
+    const banorteInfo = sqlRes.find( x => x.id_intermerdiario == 2 );
+    const bbvaInfo = sqlRes.find( x => x.id_intermerdiario == 4 );
+    const fbienestarInfo = sqlRes.find( x => x.id_intermerdiario == 6 );
+    const bbajioInfo = sqlRes.find( x => x.id_intermerdiario == 7 );
+    const paynetInfo = sqlRes.find( x => x.id_intermerdiario == 8 );
+    const payCashInfo = sqlRes.find( x => x.id_intermerdiario == 9 );
+    const conservaInfo = sqlRes.find( x => x.id_intermerdiario == 11 );
+
+    const imgs = await loadBase64ImgArrayFromDB( [
+      'banbajio-logo.png',
+      'banorte-logo.jpg',
+      'bbienestar-logo.png',
+      'bbva-logo.jpg',
+      'bodega-logo.png',
+      'circlek-logo.png',
+      'cityclub-logo.png',
+      'extra-logo.png',
+      'farmahorro-logo.jpeg',
+      'farmguadalajara-logo.jpeg',
+      'fbienestar-logo.jpg',
+      'logo-cnsrv-light.png',
+      'merza-logo.png',
+      'paycash-logo.png',
+      'paynet-logo.jpg',
+      'sams-logo.png',
+      'santander-logo.png',
+      'seven-logo.png',
+      'soriana-logo.png',
+      'superama-logo.png',
+      'waldos-logo.jpeg',
+      'walmart-logo.png',
+      'yza-logo.png'
+    ]);
+    const banbajioLogo = imgs[0];
+    const banorteLogo = imgs [1];
+    const bbienestarLogo = imgs[2];
+    const bbvaLogo = imgs[3];
+    const bodegaLogo = imgs[4];
+    const circlekLogo = imgs[5];
+    const cityclubLogo = imgs[6];
+    const extraLogo = imgs[7]
+    const farmahorroLogo = imgs[8]
+    const farmguadalajaraLogo = imgs[9]
+    const fbienestarLogo = imgs[10]
+    const cnsrvlightLogo = imgs[11];
+    const merzaLogo = imgs[12];
+    const paycashLogo = imgs[13];
+    const paynetLogo = imgs[14];
+    const samsLogo = imgs[15];
+    const santanderLogo = imgs[16];
+    const sevenLogo = imgs[17];
+    const sorianaLogo = imgs[18];
+    const superamaLogo = imgs[19]
+    const waldosLogo = imgs[20]
+    const walmartLogo = imgs[21];
+    const yzaLogo = imgs[22];
+  
+    const htmlData = await hbs.render('views/tarjeton-digital.handlebars', {
+        banbajioLogo,banorteLogo, bbienestarLogo,bbvaLogo,bodegaLogo,circlekLogo,cityclubLogo,extraLogo,farmahorroLogo,waldosLogo,walmartLogo,yzaLogo,
+        farmguadalajaraLogo,fbienestarLogo,cnsrvlightLogo,merzaLogo,paycashLogo,paynetLogo,samsLogo,santanderLogo,sevenLogo,sorianaLogo,superamaLogo,
+        clientId,
+        serverHost,
+        payCashInfo,
+        paynetInfo,
+        bbienestarInfo,
+        fbienestarInfo,
+        bbajioInfo,
+        banorteInfo,
+        bbvaInfo,
+        conservaInfo
+     });
+    const result = await renderPDf(htmlData); 
+    res.send({...result } );
+  }
+  catch(error){
+    res.status(400).send(error.message);
+  }
+
+})
+
+
 
 
 async function renderPDf( htmlData ) {
