@@ -71,7 +71,8 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
     
     const hbs = new ExpressHandlebars({ extname:".handlebars"});
     
-    const imgLogoConserva = await loadBase64ImgFromDB('logo-cnsrv-light.png');
+    const imgs = await loadBase64ImgArrayFromDB(['logo-cnsrv-light.png']);
+    
     const htmlData = await hbs.render('views/account-statement.handlebars', 
     { 
       chartCapitalPagado:   summary.capital_pagado,
@@ -79,7 +80,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
       chartInteresPagado: summary.interes_pagado,
       chartInteresPendiente: summary.interes_vencido,
       serverHost,
-      imgLogoConserva,
+      imgLogoConserva: imgs[0],
       condusefTexto: {
           nombreSucursal: summary.nombre_oficina,
           direccionSucursal: summary.direccion_oficina,
@@ -249,17 +250,72 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
     const sqlRes = await Client.createReference(typeReference, id);
 
     const hbs = new ExpressHandlebars({ extname:".handlebars" });
-    const payCashInfo = sqlRes.find( x => x.id_intermerdiario == 9 );
     const bbienestarInfo = sqlRes.find( x => x.id_intermerdiario == 1 );
-    const fbienestarInfo = sqlRes.find( x => x.id_intermerdiario == 6 );
-    const bbvaInfo = sqlRes.find( x => x.id_intermerdiario == 4 );
     const banorteInfo = sqlRes.find( x => x.id_intermerdiario == 2 );
+    const bbvaInfo = sqlRes.find( x => x.id_intermerdiario == 4 );
+    const fbienestarInfo = sqlRes.find( x => x.id_intermerdiario == 6 );
     const bbajioInfo = sqlRes.find( x => x.id_intermerdiario == 7 );
-    const conservaInfo = sqlRes.find( x => x.id_intermerdiario == 11 );
     const paynetInfo = sqlRes.find( x => x.id_intermerdiario == 8 );
+    let payCashInfo = sqlRes.find( x => x.id_intermerdiario == 9 );
+    const conservaInfo = sqlRes.find( x => x.id_intermerdiario == 11 );
+  
+    if( payCashInfo.no_cuenta === '0' ){
+      payCashInfo.referencia = '999999999999999999999'    
+    }
     
-    
+
+    const imgs = await loadBase64ImgArrayFromDB( [
+      'banbajio-logo.png',
+      'banorte-logo.jpg',
+      'bbienestar-logo.png',
+      'bbva-logo.jpg',
+      'bodega-logo.png',
+      'circlek-logo.png',
+      'cityclub-logo.png',
+      'extra-logo.png',
+      'farmahorro-logo.jpeg',
+      'farmguadalajara-logo.jpeg',
+      'fbienestar-logo.jpg',
+      'logo-cnsrv-light.png',
+      'merza-logo.png',
+      'paycash-logo.png',
+      'paynet-logo.jpg',
+      'sams-logo.png',
+      'santander-logo.png',
+      'seven-logo.png',
+      'soriana-logo.png',
+      'superama-logo.png',
+      'waldos-logo.jpeg',
+      'walmart-logo.png',
+      'yza-logo.png'
+    ]);
+    const banbajioLogo = imgs[0];
+    const banorteLogo = imgs [1];
+    const bbienestarLogo = imgs[2];
+    const bbvaLogo = imgs[3];
+    const bodegaLogo = imgs[4];
+    const circlekLogo = imgs[5];
+    const cityclubLogo = imgs[6];
+    const extraLogo = imgs[7]
+    const farmahorroLogo = imgs[8]
+    const farmguadalajaraLogo = imgs[9]
+    const fbienestarLogo = imgs[10]
+    const cnsrvlightLogo = imgs[11];
+    const merzaLogo = imgs[12];
+    const paycashLogo = imgs[13];
+    const paynetLogo = imgs[14];
+    const samsLogo = imgs[15];
+    const santanderLogo = imgs[16];
+    const sevenLogo = imgs[17];
+    const sorianaLogo = imgs[18];
+    const superamaLogo = imgs[19]
+    const waldosLogo = imgs[20]
+    const walmartLogo = imgs[21];
+    const yzaLogo = imgs[22];
+  
     const htmlData = await hbs.render('views/tarjeton-digital.handlebars', {
+        banbajioLogo,banorteLogo, bbienestarLogo,bbvaLogo,bodegaLogo,circlekLogo,cityclubLogo,extraLogo,farmahorroLogo,waldosLogo,walmartLogo,yzaLogo,
+        farmguadalajaraLogo,fbienestarLogo,cnsrvlightLogo,merzaLogo,paycashLogo,paynetLogo,samsLogo,santanderLogo,sevenLogo,sorianaLogo,superamaLogo,
         clientId,
         serverHost,
         payCashInfo,
@@ -271,28 +327,11 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
         bbvaInfo,
         conservaInfo
      });
-     const serverEnv = process.env.SERVER_ENV || 'development'
 
-     const browser = (serverEnv === 'development') ? await puppeteer.launch() : 
-                                                   await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox']});
-     
-     const page = await browser.newPage();
-     await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"], timeout: 0 });
-    
-     //To reflect CSS used for screens instead of print
-     await page.emulateMediaType('print');
-     const fileNamePathPdf = `./public/pdfs/accstatement_${Date.now().toString()}.pdf`
-     
-     const pdf = await page.pdf({
-       path: fileNamePathPdf,
-       margin: { top: '20px', right: '30px', bottom: '20px', left: '30px' },
-       printBackground: true,
-       format: 'Letter',
-     });
-     // Close the browser instance
-     await browser.close();
-      
-      res.send( { downloadPath: fileNamePathPdf.replace('./public/','') });
+    const result = await renderPDf(htmlData); 
+    res.send({...result } );
+ 
+
   }
   catch(error){
     res.status(400).send(error.message);
@@ -356,6 +395,7 @@ router.post('/photos/upload', authorize, upload.array('photos', 24), async funct
   
 });
 
+
 router.get('/docs/img', async (req, res) =>{
   /// server images based on the _id
     const id = req.query.id;
@@ -377,10 +417,14 @@ router.get('/docs/img', async (req, res) =>{
     }
 })
 
-async function loadBase64ImgFromDB (id) {
+
+async function loadBase64ImgArrayFromDB (keys) {
   const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
-  const imageData = await db.get(id);
-  return imageData.base64str;
-}  
+  const data = await db.fetch({keys:keys });
+  const newData = data.rows.map( x=> ( { base64str: x.doc.base64str, mimetype: x.doc.mimetype, title: x.doc.title }))
+  return newData;
+  
+}
+
 
 module.exports = router;

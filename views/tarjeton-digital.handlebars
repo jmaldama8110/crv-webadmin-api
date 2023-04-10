@@ -111,12 +111,11 @@
 </head>
 <body>
 
-    <div class="content">
-
+    <div class="content">   
         <div class="card">
             <div class="card-row">
                 <div class="logo-container caption">
-                    <img src="{{serverHost}}/docs/img?id=paycash-logo.png"/>
+                    <img src="data:{{cnsrvlightLogo.mimetype}};base64,{{cnsrvlightLogo.base64str}}"/>
                 </div>
                 <div class="title-black val">
                     <p>TARJETÓN DE REFERENCIAS</p>
@@ -137,17 +136,17 @@
             </div>
 
             <div class="card-brandlogos">
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=sams-logo.png" /></div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=soriana-logo.png" /></div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=bodega-logo.png" /></div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=yza-logo.png" /></div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=extra-logo.png" /></div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=walmart-logo.png" /></div>                
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=seven-logo.png" /></div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=superama-logo.png" /></div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=merza-logo.png" /></div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=circlek-logo.png" /> </div>
-                <div class="logo-container"><img src="{{serverHost}}/docs/img?id=cityclub-logo.png" /></div>
+                <div class="logo-container"><img src="data:{{samsLogo.mimetype}};base64,{{samsLogo.base64str}}"/></div>
+                <div class="logo-container"><img src="data:{{sorianaLogo.mimetype}};base64,{{sorianaLogo.base64str}}"/></div>
+                <div class="logo-container"><img src="data:{{bodegaLogo.mimetype}};base64,{{bodegaLogo.base64str}}"/></div>
+                <div class="logo-container"><img src="data:{{yzaLogo.mimetype}};base64,{{yzaLogo.base64str}}"/></div>
+                <div class="logo-container"><img src="data:{{extraLogo.mimetype}};base64,{{extraLogo.base64str}}"/></div>
+                <div class="logo-container"><img src="data:{{walmartLogo.mimetype}};base64,{{walmartLogo.base64str}}"/></div>                
+                <div class="logo-container"><img src="data:{{sevenLogo.mimetype}};base64,{{sevenLogo.base64str}}"/></div>
+                <div class="logo-container"><img src="data:{{superamaLogo.mimetype}};base64,{{superamaLogo.base64str}}"/></div>
+                <div class="logo-container"><img src="data:{{merzaLogo.mimetype}};base64,{{merzaLogo.base64str}}"/></div>
+                <div class="logo-container"><img src="data:{{circlekLogo.mimetype}};base64,{{circlekLogo.base64str}}"/> </div>
+                <div class="logo-container"><img src="data:{{cityclubLogo.mimetype}};base64,{{cityclubLogo.base64str}}"/></div>
             </div>
            
             <div class="card-banks text-center">
@@ -158,18 +157,19 @@
                     <div> <p class="fw-bold">CONVENIO CIE</p></div>
                 </div>
                 <div class="tabla1">
-                    <div> <img src="{{serverHost}}/docs/img?id=banorte-logo.jpg" /></div><div><h2>3724</h2></div>   
-                    <div> <img src="{{serverHost}}/docs/img?id=bbva-logo.jpg" /></div><div><h2>1420712</h2></div>   
-                    <div> <img src="{{serverHost}}/docs/img?id=fbienestar-logo.jpg" /></div><div><h2>3724</h2></div>
-                    <div> <img src="{{serverHost}}/docs/img?id=santander-logo.png" /></div><div><h2>7292</h2></div> 
+                    <div> <img src="data:{{banorteLogo.mimetype}};base64,{{banorteLogo.base64str}}"/>  </div><div><h2>3724</h2></div>   
+                    <div> <img src="data:{{bbvaLogo.mimetype}};base64,{{bbvaLogo.base64str}}"/>  </div><div><h2>1420712</h2></div>   
+                    <div> <img src="data:{{fbienestarLogo.mimetype}};base64,{{fbienestarLogo.base64str}}"/>  </div><div><h2>3724</h2></div>
+                    <div> <img src="data:{{santanderLogo.mimetype}};base64,{{santanderLogo.base64str}}"/>  </div><div><h2>7292</h2></div> 
                 </div>
+
             </div>
         </div>
 
         <div class="card">
             <div class="card-row">
                 <div class="logo-container caption">
-                    <img src="{{serverHost}}/docs/img?id=logo-cnsrv-light.png"/>
+                    <img src="data:{{cnsrvlightLogo.mimetype}};base64,{{cnsrvlightLogo.base64str}}"/>
                 </div>
                 <div class="title-black val">
                     <h3>{{payCashInfo.tipo_evento}}</h3>
@@ -186,25 +186,26 @@
                     <div> <p class="fw-bold">Referencia</p></div>
                 </div>
                 <div class="tabla2">
-                    <div> <img src="{{serverHost}}/docs/img?id=bbienestar-logo.png" /> </div> <div> <p>{{bbienestarInfo.no_cuenta}}</p></div><div> <p>{{bbienestarInfo.referencia}}</p></div>
-                    <div> <img src="{{serverHost}}/docs/img?id=banorte-logo.jpg" /> </div> <div> <p>{{banorteInfo.no_cuenta}}</p></div><div> <p>{{banorteInfo.referencia}}</p></div>
-                    <div> <img src="{{serverHost}}/docs/img?id=bbva-logo.jpg" /> </div> <div> <p>{{bbvaInfo.no_cuenta}}</p></div><div> <p>{{bbvaInfo.referencia}}</p></div>
-                    <div> <img src="{{serverHost}}/docs/img?id=fbienestar-logo.jpg" /> </div> <div> <p>{{fbienestarInfo.no_cuenta}}</p></div><div> <p>{{fbienestarInfo.referencia}}</p></div>
-                    <div> <img src="{{serverHost}}/docs/img?id=banbajio-logo.png" /> </div> <div> <p>{{bbajioInfo.no_cuenta}}</p></div><div> <p>{{bbajioInfo.referencia}}</p></div>
+                    <div> <img src="data:{{bbienestarLogo.mimetype}};base64,{{bbienestarLogo.base64str}}"/></div> <div> <p>{{bbienestarInfo.no_cuenta}}</p></div><div> <p>{{bbienestarInfo.referencia}}</p></div>
+                    <div> <img src="data:{{banorteLogo.mimetype}};base64,{{banorteLogo.base64str}}"/></div> <div> <p>{{banorteInfo.no_cuenta}}</p></div><div> <p>{{banorteInfo.referencia}}</p></div>
+                    <div> <img src="data:{{bbvaLogo.mimetype}};base64,{{bbvaLogo.base64str}}"/></div> <div> <p>{{bbvaInfo.no_cuenta}}</p></div><div> <p>{{bbvaInfo.referencia}}</p></div>
+                    <div> <img src="data:{{fbienestarLogo.mimetype}};base64,{{fbienestarLogo.base64str}}"/></div> <div> <p>{{fbienestarInfo.no_cuenta}}</p></div><div> <p>{{fbienestarInfo.referencia}}</p></div>
+                    <div> <img src="data:{{banbajioLogo.mimetype}};base64,{{banbajioLogo.base64str}}"/></div> <div> <p>{{bbajioInfo.no_cuenta}}</p></div><div> <p>{{bbajioInfo.referencia}}</p></div>
                 </div>
+
             </div>
             <div class="card-reference">
                 <svg id="barcode2"></svg>
                 <h3>{{paynetInfo.referencia}}</h3>
                 <div class="card-row">
-                    <div class="caption"> <img src="{{serverHost}}/docs/img?id=paynet-logo.jpg"/></div>
+                    <div class="caption"> <img src="data:{{paynetLogo.mimetype}};base64,{{paynetLogo.base64str}}"/></div>
                      <p>Escribir la referencia en caso de fallo del codigo</p>
                 </div>
                 <p>Puede realizar su deposito de <span><strong>{{payCashInfo.tipo_evento}}</strong></span> en los siguientes establecimientos:</p>
                 <div class="card-row">
-                    <div class="pd-nm"><img src="{{serverHost}}/docs/img?id=farmahorro-logo.jpeg"/></div>
-                    <div class="pd-nm"><img src="{{serverHost}}/docs/img?id=farmguadalajara-logo.jpeg"/></div>
-                    <div class="pd-nm"><img src="{{serverHost}}/docs/img?id=waldos-logo.jpeg"/></div>
+                    <div class="pd-nm"><img src="data:{{farmahorroLogo.mimetype}};base64,{{farmahorroLogo.base64str}}"/></div>
+                    <div class="pd-nm"><img src="data:{{farmguadalajaraLogo.mimetype}};base64,{{farmguadalajaraLogo.base64str}}"/></div>
+                    <div class="pd-nm"><img src="data:{{waldosLogo.mimetype}};base64,{{waldosLogo.base64str}}"/></div>
                 </div>
                 <p>El presente Tarjetón es de carácter informativo, no es transferible y está designado para el depósito de <strong>{{payCashInfo.tipo_evento}}</strong> con referencias propias, únicamente para el cliente: <strong>{{payCashInfo.nombre_cliente}}</strong> </p>
                 <p class="fw-bold">DUDAS Y ACLARACIONES 800 290 9000</p>
@@ -214,7 +215,7 @@
         <div class="card">
             <div class="card-row text-center pd-nm">
                 <div class="logo-container caption">
-                    <img src="{{serverHost}}/docs/img?id=logo-cnsrv-light.png"/>
+                    <img src="data:{{cnsrvlightLogo.mimetype}};base64,{{cnsrvlightLogo.base64str}}"/>
                 </div>
                 <div>
                     <h3>TARJETÓN DE PAGO EN CAJA</h3>
