@@ -20,7 +20,7 @@ const Branch = new BranchCollection()
 async function createLoanFromHF(data) {
     try {
         console.log(data);
-        const { idUsuario, idOficina, num, typeClient } = data;
+        const { idUsuario, idOficina, num, typeClient, idLoan } = data;
         // typeClient 2-> individual
         // typeClient 1 -> grupo
         const pool = await sql.connect(sqlConfig);
@@ -31,6 +31,7 @@ async function createLoanFromHF(data) {
             .input('idTipoCliente', sql.Int, typeClient) //1 -> Grupo, 2 -> Individual
             .input('idServicioFinanciero', sql.Int, num) // Es el unico que existe
             .input('cantidad', sql.Int, 1) // Numero de solicitudes a hacer
+            .input('intIdLoan', sql.BigInt, idLoan) // id_loan Couch
             .execute('MOV_InsertarSolicitudServicioFinanciero');
 
         return result.recordset;
@@ -488,7 +489,7 @@ async function sortLoanHFtoCouch(loan) {
  * @param {Number} idOffice
  * @returns Array [{0,0,0,0}]
  */
-async function loanRenovation(idClient, idLoan, idOfficer, idOffice) {
+async function loanRenovation(idClient, idLoan, idOfficer, idOffice, idLoanCouch) {
     try {
         const pool = await sql.connect(sqlConfig);
         const result = await pool.request()
@@ -497,6 +498,7 @@ async function loanRenovation(idClient, idLoan, idOfficer, idOffice) {
             .input('idUsuario', sql.Int, 0)
             .input('idOficial', sql.Int, idOfficer)
             .input('idOficinaActual', sql.Int, idOffice)
+            .input('intIdLoan', sql.BigInt, idLoanCouch) // id_loan Couch
             .execute('MOV_InsertSolicitudGrupoSolidarioCredito');
 
         return result.recordset[0].id_solicitud;
@@ -533,7 +535,7 @@ async function createLoanHF(data) {
         // CREAR LA SOLICITUD, SI ES SOLICITUD NUEVA
         if (isNewLoan) {
             console.log('NUEVA SOLICITUD');
-            const dataCreate = { idUsuario: 0, idOficina: idBranch, num: 1, typeClient: typeClient }
+            const dataCreate = { idUsuario: 0, idOficina: idBranch, num: 1, typeClient: typeClient, idLoan: id_loan }
 
             const LoanHFCreated = await createLoanFromHF(dataCreate);
             if (!LoanHFCreated) return new Error('Failed to create loan in HF');
@@ -548,7 +550,7 @@ async function createLoanHF(data) {
             console.log('RENOVACIÓN');
 
             idOfficer = loan.loan_officer ? loan.loan_officer : 0;
-            const idLoanRenovation = await loanRenovation(loan.id_cliente, loan.id_solicitud, idOfficer, idBranch);
+            const idLoanRenovation = await loanRenovation(loan.id_cliente, loan.id_solicitud, idOfficer, idBranch, id_loan);
             if (!idLoanRenovation) return new Error('Renovation loan');
             console.log('idRenovation:', idLoanRenovation)
             loan.id_solicitud = idLoanRenovation;
@@ -691,7 +693,8 @@ async function createLoanHF(data) {
         return MountAssigned[0][0];
 
     } catch (error) {
-        return new Error(error.message);
+        console.log(error);
+        return new Error(error.stack);
     }
 }
 

@@ -605,7 +605,7 @@ async function createClientHF(data) {
         //#endregion
     } catch (error) {
         console.log(error);
-        return new Error(error.message);
+        return new Error(error.stack);
     }
 }
 

@@ -344,6 +344,15 @@ class ActionCollection extends DocumentCollection {
             return new Error(error.message)
         }
     }
+    pushError(errors,typeDataOK,typeDataCompare,valueOK,property)
+    {
+        errors.push({
+            property: property,
+            ExpectedDataType: typeDataOK,
+            givenDataType: typeDataCompare,
+            example: valueOK
+        });
+    }
     async validateModel(model,data)
     {
         //Valida la estructura del modelo vs el que viene en la data
@@ -363,48 +372,55 @@ class ActionCollection extends DocumentCollection {
                     const typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
                     const typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare;
 
-                    if (typeDataOK != typeDataCompare) errors.push({
-                        property: `${item}.${key}`,
-                        ExpectedDataType: typeDataOK,
-                        givenDataType: typeDataCompare,
-                        example: valueOK
-                    })
+                    if (typeDataOK != typeDataCompare){
+                        this.pushError(errors,typeDataOK,typeDataCompare,valueOK,`${item}.${key}`);
+                    }
                 })
             }
 
-            if (typeDataOKEx == "array" && typeDataCoEx == "array" && typeof valueOKExample[1] == 'object') {
-                valueOKExample.forEach((obj, idx) => {
-                    const keyItemArray = Object.keys(obj);
+            if (typeDataOKEx == "array" && typeDataCoEx == "array" && typeof valueOKExample[0] == 'object') {
+
+                    const keyItemArray = Object.keys(valueOKExample[0]);
                     keyItemArray.forEach((key) => {
-                        if (valueCompareExample.lenght < idx) {
-                            const valueOK = obj[key] || '';
-                            const valueCompare = valueCompareExample[idx][key] ? valueCompareExample[idx][key] : undefined;
+                        const valueOK = valueOKExample[0][key];
+                        let typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
+                        let valueCompare = undefined;
+                        let typeDataCompare = undefined;
+                        valueCompareExample.forEach((obj, idx) => {
+                            // Si es un objeto
+                            if(typeof valueOK == "object"){
+                                const keyItemArrayObj = Object.keys(valueOK);
+                                keyItemArrayObj.forEach((keyObj) => {
+                                    const valueOKObj = valueOK[keyObj];
+                                    const valueCompareObj = valueCompareExample[idx][key][keyObj];
+                                    const typeDataOKObj = typeof valueOKObj == "object" && Array.isArray(valueOKObj) ? "array" : typeof valueOKObj;
+                                    const typeDataCompareObj = typeof valueCompareObj == "object" && Array.isArray(valueCompareObj) ? "array" : typeof valueCompareObj;
 
-                            // console.log(typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare)
-                            let typeDataOK = typeof valueOK == "object" && Array.isArray(valueOK) ? "array" : typeof valueOK;
-                            let typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare || null;
-                            if (!typeDataCompare) console.log('pasa')
-                            // if (!typeDataCompare)
+                                    if (typeDataOKObj != typeDataCompareObj){
+                                        this.pushError(errors,typeDataOKObj,typeDataCompareObj,valueOKObj,`${item}[${idx}].${key}.${keyObj}`);
+                                    }
+                                })
 
-                            if (typeDataOK != typeDataCompare || !typeDataCompare) erros.push({
-                                property: `address[${idx}].${key}`,
-                                ExpectedDataType: typeDataOK,
-                                givenDataType: typeDataCompare,
-                                example: valueOK
-                            })
-                        }
+                            }
+                            // Si es un valor o array
+                            else{
+                                valueCompare = valueCompareExample[idx][key];
+                                typeDataCompare = typeof valueCompare == "object" && Array.isArray(valueCompare) ? "array" : typeof valueCompare;
+                                if (typeDataOK != typeDataCompare || !typeDataCompare){
+                                    this.pushError(errors,typeDataOK,typeDataCompare,valueOK,`${item}[${idx}].${key}`);
+                                }
+                            }
 
+
+                        })
+                        if(valueCompareExample.length == 0 && (typeDataOK != typeDataCompare || !typeDataCompare))
+                            this.pushError(errors,typeDataOK,typeDataCompare,valueOK,`${item}[0].${key}`);
                     })
-                })
-            }
 
-            if (typeDataOKEx != typeDataCoEx || !typeDataCoEx)
-                errors.push({
-                    property: item,
-                    ExpectedDataType: typeDataOKEx,
-                    givenDataType: typeDataCoEx,
-                    example: valueOKExample
-                });
+            }
+            if (typeDataOKEx != typeDataCoEx || !typeDataCoEx){
+                this.pushError(errors,typeDataOKEx,typeDataCoEx,valueOKExample,item);
+            }
         });
         return errors;
     }
@@ -536,6 +552,63 @@ class ActionCollection extends DocumentCollection {
         return {info, errors};
     }
 
+    async validateDataDropMemberLoan(data)
+    {
+        ///// VALIDAR QUE LOS DATOS PARA ELIMINAR PERSONAS DE LA SOLICITUD SEA VALIDA
+        const dataExample = {
+            dropout: [
+                {
+                    member_id: "3",
+                    id_cliente: 353266,
+                    fullname: "JENNIFER JATZIRI CASTRO MENDOZA",
+                    reasonType: "CANCELACION",
+                    dropoutReason: [
+                        2,
+                        "CONFLICTOS INTERNOS DEL GRUPO"
+                    ],
+                    updated_at: "2023-03-28T22:46:44.961Z"
+                }
+            ]
+        };
+        let errors = [];
+        errors = await this.validateModel(dataExample, data)
+        let action_type = 'DROPOUT MEMBER LOAN';
+        const info = {
+            client_id: data.id_cliente,
+            loan_id: data.id_solicitud,
+            action_type: action_type
+        }
+        return {info, errors};
+    }
+
+    async validateDataAddMemberLoan(data)
+    {
+        ///// VALIDAR QUE LOS DATOS PARA AGREGAR PERSONAS DE LA SOLICITUD SEA VALIDA
+        const dataExample = {
+            beadded: [
+                {
+                    member_id: "3",
+                    id_cliente: 353266,
+                    fullname: "JENNIFER JATZIRI CASTRO MENDOZA",
+                    reasonType: "CANCELACION",
+                    dropoutReason: [
+                        2,
+                        "CONFLICTOS INTERNOS DEL GRUPO"
+                    ],
+                    updated_at: "2023-03-28T22:46:44.961Z"
+                }
+            ]
+        };
+        let errors = [];
+        errors = await this.validateModel(dataExample, data)
+        let action_type = 'BEADDED MEMBER LOAN';
+        const info = {
+            client_id: data.id_cliente,
+            loan_id: data.id_solicitud,
+            action_type: action_type
+        }
+        return {info, errors};
+    }
     async validateDataClient(data) {
         ///// VALIDAR QUE LOS DATOS de CLIENTE
         const dataExample = {
@@ -543,7 +616,6 @@ class ActionCollection extends DocumentCollection {
             _rev: "1-2f83cbfb8a5e9950d00940d1cf8a55d7",
             address: [
                 {
-                    _id: "1679723842324",
                     type: "DOMICILIO",
                     address_line1: "CALLE 25",
                     country: [
@@ -710,7 +782,10 @@ class ActionCollection extends DocumentCollection {
         }
         return { info, errors };
     }
-
+    async generarErrorRSP(error,info){
+        let errors = [error];
+        return { info, errors };
+    }
     async validateAction(id_action,type = "VALIDATE") {
         let response =
             {
@@ -719,7 +794,6 @@ class ActionCollection extends DocumentCollection {
                 action: null
             };
         try {
-
             const Action = new ActionCollection();
             const action = await Action.findOne({ _id: id_action });
 
