@@ -552,11 +552,11 @@ class ActionCollection extends DocumentCollection {
         return {info, errors};
     }
 
-    async validateDataDropMemberLoan(data)
+    async validateDataDropMemberLoan(data,info)
     {
         ///// VALIDAR QUE LOS DATOS PARA ELIMINAR PERSONAS DE LA SOLICITUD SEA VALIDA
         const dataExample = {
-            dropout: [
+            dropouts: [
                 {
                     member_id: "3",
                     id_cliente: 353266,
@@ -572,20 +572,14 @@ class ActionCollection extends DocumentCollection {
         };
         let errors = [];
         errors = await this.validateModel(dataExample, data)
-        let action_type = 'DROPOUT MEMBER LOAN';
-        const info = {
-            client_id: data.id_cliente,
-            loan_id: data.id_solicitud,
-            action_type: action_type
-        }
         return {info, errors};
     }
 
-    async validateDataAddMemberLoan(data)
+    async validateDataAddMemberLoan(data, info)
     {
         ///// VALIDAR QUE LOS DATOS PARA AGREGAR PERSONAS DE LA SOLICITUD SEA VALIDA
         const dataExample = {
-            beadded: [
+            newmembers: [
                 {
                     member_id: "3",
                     id_cliente: 353266,
@@ -601,12 +595,6 @@ class ActionCollection extends DocumentCollection {
         };
         let errors = [];
         errors = await this.validateModel(dataExample, data)
-        let action_type = 'BEADDED MEMBER LOAN';
-        const info = {
-            client_id: data.id_cliente,
-            loan_id: data.id_solicitud,
-            action_type: action_type
-        }
         return {info, errors};
     }
     async validateDataClient(data) {

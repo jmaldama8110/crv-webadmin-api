@@ -2,6 +2,7 @@ const DocumentCollection = require('./documentCollection');
 const { sqlConfig } = require("../db/connSQL");
 const sql = require("mssql");
 const tbl = require('../utils/TablesSQL');
+const LoanAppCollection = require("./loanAppCollection");
 
 class LoanAppGroupCollection extends DocumentCollection {
     constructor(obj = {}) {
@@ -113,6 +114,15 @@ class LoanAppGroupCollection extends DocumentCollection {
         //     activo: true
         // }]
 
+    }
+    async getLoan(id_loan) {
+        let LoanAppGroup = new LoanAppGroupCollection();
+        let loan = await LoanAppGroup.findOne({ _id: id_loan });
+        if (loan === undefined){
+            let LoanApp = new LoanAppCollection();
+            loan = await LoanApp.findOne({ _id: id_loan });
+        }
+        return loan;
     }
 
 

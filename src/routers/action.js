@@ -38,16 +38,16 @@ router.get('/actions/validate', async (req, res) => {
         {
             let action = response.action;
             let info = { action_type: action.name }
+            let loan;
+            let id_loan
             switch (action.name)
             {
-                case 'CREATE_UPDATE_LOAN':
+                case 'MEMBER_DROPOUT':
                     // Get data
-                    let loan;
-                    let { id_loan, hasDropouts, hasBeaddeds } = action.data;
-                    if(hasDropouts === undefined) hasDropouts= 0;
-                    if(hasBeaddeds === undefined) hasBeaddeds= 0;
-                    loan = await LoanAppGroup.findOne({ _id: id_loan });
-                    if (loan === undefined) loan = await LoanApp.findOne({ _id: id_loan });
+                    id_loan = action.data.id_loan;
+                    let dropouts = action.data.dropouts;
+                    id_loan = action.data.id_loan;
+                    loan = await LoanAppGroup.getLoan(id_loan)
                     if (loan === undefined) {
                         info.loan_id = id_loan;
                         RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
@@ -55,39 +55,50 @@ router.get('/actions/validate', async (req, res) => {
                     }
                     info.client_id = loan.id_cliente;
                     info.loan_id = loan.id_solicitud;
-                    let members = {dropout: [], beadded: []};
-                    // To drop member
-                    if(hasDropouts>0){
-                        members.dropout =  loan.dropout;
-                        if(members.dropout instanceof Array && members.dropout.length >= 0)
-                            RSP_Result = await Action.validateDataDropMemberLoan({dropout: members.dropout});
-                        else{
-                            info.action_type = "DROPOUT MEMBER LOAN"
-                            RSP_Result = await Action.generarErrorRSP("Without rows to dropOut",info);
-                        }
+                    //Validate data
+                    if(dropouts instanceof Array && dropouts.length >= 0)
+                        RSP_Result = await Action.validateDataDropMemberLoan({dropouts: dropouts}, info);
+                    else
+                        RSP_Result = await Action.generarErrorRSP("Without rows to dropouts", info);
+                    break;
+                case 'MEMBER_NEW':
+                    // Get data
+                    id_loan = action.data.id_loan;
+                    let newmembers = action.data.newmembers;
+                    loan = await LoanAppGroup.getLoan(id_loan)
+                    if (loan === undefined) {
+                        info.loan_id = id_loan;
+                        RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
+                        break;
                     }
-                    // To add member
-                    else if(hasBeaddeds>0){
-                        members.beadded =  loan.beadded;
-                        if(members.beadded instanceof Array && members.beadded.length >= 0)
-                            RSP_Result = await Action.validateDataAddMemberLoan({beadded: members.beadded});
-                        else{
-                            info.action_type = "BEADDED MEMBER LOAN";
-                            RSP_Result = await Action.generarErrorRSP("Without rows to beAdded",info);
-                        }
+                    info.client_id = loan.id_cliente;
+                    info.loan_id = loan.id_solicitud;
+                    //Validate data
+                    if(newmembers instanceof Array && newmembers.length >= 0)
+                        RSP_Result = await Action.validateDataAddMemberLoan({newmembers: newmembers}, info);
+                    else
+                        RSP_Result = await Action.generarErrorRSP("Without rows to newmembers", info);
+                    break;
+                case 'CREATE_UPDATE_LOAN':
+                    // Get data
+                    id_loan = action.data.id_loan;
+                    loan = await LoanAppGroup.getLoan(id_loan)
+                    if (loan === undefined) {
+                        info.loan_id = id_loan;
+                        RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
+                        break;
                     }
-                    // To create or update loan
-                    else{
-                        RSP_Result = await Action.validateDataLoan(loan);
-                    }
+                    info.client_id = loan.id_cliente;
+                    info.loan_id = loan.id_solicitud;
+                    //Validate data
+                    RSP_Result = await Action.validateDataLoan(loan);
                     break;
                 case 'CREATE_UPDATE_CLIENT':
                     // Get data
                     let client;
                     const { _id } = action.data;
                     client = await Client.findOne({ _id });
-                    if (client === undefined) throw new Error('Client not found');
-
+                    if (client === undefined) throw new Error('Client is not found');
                     //Validate data
                     RSP_Result = await Action.validateDataClient(client);
                     break;
