@@ -15,7 +15,7 @@ const LoanAppGroup = new LoanAppGroupCollection();
 const Token = new TokenCollection();
 const { sortDataPerson, createPersonHF } = require('./../actions/createPerson');
 const { sortDataClient, createClientHF } = require('./../actions/createdClient');
-const { createLoanHF, sortLoanHFtoCouch } = require('./../actions/createLoan');
+const { createLoanHF, sortLoanHFtoCouch, assignClientLoanFromHF } = require('./../actions/createLoan');
 
 router.post('/action', async (req, res) => {
     try {
@@ -31,9 +31,13 @@ router.post('/action', async (req, res) => {
 router.get('/actions/validate', async (req, res) => {
     try {
         // Validate action
-        let RSP_Result;
+
+        let RSP_Result = { status: 'ERROR' };
         const { id } = req.query;
         const response = await Action.validateAction(id,"VALIDATE");
+        let info = { _id: id }
+        let action = response.action;
+        RSP_Result.action = action;
         if(response.status === "OK")
         {
             let action = response.action;
@@ -53,11 +57,13 @@ router.get('/actions/validate', async (req, res) => {
                         RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
                         break;
                     }
-                    info.client_id = loan.id_cliente;
-                    info.loan_id = loan.id_solicitud;
+                    info.id_cliente = loan.id_cliente;
+                    info.id_solicitud = loan.id_solicitud;
+                    info.id_loan = id_loan;
                     //Validate data
-                    if(dropouts instanceof Array && dropouts.length >= 0)
+                    if(dropouts instanceof Array && dropouts.length >= 0) {
                         RSP_Result = await Action.validateDataDropMemberLoan({dropouts: dropouts}, info);
+                    }
                     else
                         RSP_Result = await Action.generarErrorRSP("Without rows to dropouts", info);
                     break;
@@ -71,8 +77,9 @@ router.get('/actions/validate', async (req, res) => {
                         RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
                         break;
                     }
-                    info.client_id = loan.id_cliente;
-                    info.loan_id = loan.id_solicitud;
+                    info.id_cliente = loan.id_cliente;
+                    info.id_solicitud = loan.id_solicitud;
+                    info.id_loan = id_loan;
                     //Validate data
                     if(newmembers instanceof Array && newmembers.length >= 0)
                         RSP_Result = await Action.validateDataAddMemberLoan({newmembers: newmembers}, info);
@@ -88,88 +95,186 @@ router.get('/actions/validate', async (req, res) => {
                         RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
                         break;
                     }
-                    info.client_id = loan.id_cliente;
-                    info.loan_id = loan.id_solicitud;
+                    info.id_cliente = loan.id_cliente;
+                    info.id_solicitud = loan.id_solicitud;
+                    info.id_loan = id_loan;
                     //Validate data
-                    RSP_Result = await Action.validateDataLoan(loan);
+                    RSP_Result = await Action.validateDataLoan(loan, info);
                     break;
                 case 'CREATE_UPDATE_CLIENT':
                     // Get data
                     let client;
                     const { _id } = action.data;
                     client = await Client.findOne({ _id });
-                    if (client === undefined) throw new Error('Client is not found');
+                    if (client === undefined) {
+                        RSP_Result = await Action.generarErrorRSP('Client is not found',info);
+                        break;
+                    }
                     //Validate data
                     RSP_Result = await Action.validateDataClient(client);
                     break;
                 default:
-                    throw new Error('Action "'+action.name+'" is not supported')
+                    RSP_Result = await Action.generarErrorRSP('Action "'+action.name+'" is not supported',info);
+                    break;
             }
             //Save validation
             RSP_Result = await Action.saveValidation(RSP_Result,action);
             RSP_Result.action = action;
         }
         else
-            RSP_Result = await Action.generarErrorRSP(response.message, id);
+            RSP_Result = await Action.generarErrorRSP(response.message, info);
         res.status(201).send(RSP_Result);
     } catch (err) {
-        res.status(400).send(err.message)
+        let RSP_Result = await Action.generarErrorRSP(err.message, req.query);
+        res.status(400).send(RSP_Result)
     }
 });
 
 router.get('/actions/exec', async (req, res) => {
     try {
         // Validate action
+        let RSP_Result = { status: 'ERROR' };
         const { id } = req.query;
         const response = await Action.validateAction(id,"EXEC");
-
-        if(response.status !== "OK")
-            throw new Error(response.message);
-
-        const action = response.action;
-
-        switch (action.name){
-            case 'CREATE_UPDATE_LOAN':
-                if (!action.isOk) throw new Error('Invalid data loan');
-                // Create loan
-                const loan = await createLoanHF(action.data);
-                // Validate creation of loan
-                if (loan instanceof Error || !loan) {
-                    action.status = 'Error';
-                    action.errors = [loan.message];
-                    // sendReportActionError(task);
-                    console.log(loan)
-                } else {
-                    action.errors = [];
-                    action.status = 'Done';
-                };
-                break;
-            case 'CREATE_UPDATE_CLIENT':
-                if (!action.isOk) throw new Error('Invalid data client');
-                // Create person and client
-                const personCreatedHF = await createPersonHF(action.data);
-                const clientSaved = await createClientHF(action.data);
-                // Validate creation person and
-                if (!personCreatedHF || !clientSaved || personCreatedHF instanceof Error || clientSaved instanceof Error) {
-                    action.status = 'Error'
-                    action.errors = [personCreatedHF.message, clientSaved.message];
-                    //Action.repostActionError(action.data);
-                    console.log('Error :', { personCreatedHF, clientSaved })
-                } else {
-                    action.status = 'Done';
-                    action.errors = [];
-                };
-                break;
-            default:
-                throw new Error('Action "'+action.name+'" is not supported')
+        let info = { _id: id }
+        let action = response.action;
+        RSP_Result.action = action;
+        if(response.status === "OK") {
+            info.action_type = action.name;
+            RSP_Result.info = info
+            if (!action.isOk)
+                RSP_Result = await Action.generarErrorRSP("The action "+ action.name+ " with id "+ id+" has not been validated. You must to run option '/actions/validate'",info);
+            else
+            {
+                let loan;
+                switch (action.name) {
+                    case 'MEMBER_DROPOUT':
+                        id_loan = action.data.id_loan;
+                        info.loan_id = id_loan;
+                        let dropouts = action.data.dropouts;
+                        id_loan = action.data.id_loan;
+                        loan = await LoanAppGroup.getLoan(id_loan)
+                        if (loan === undefined) {
+                            RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
+                            break;
+                        }
+                        if(loan.id_solicitud == 0){
+                            RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} has not been created at HF`,info);
+                            break;
+                        }
+                        for(let drop of dropouts)
+                        {
+                            let member = undefined;
+                            drop.status = 'Not found'
+                            member = loan.members.find(row => row.id_cliente == drop.id_cliente);
+                            if(member !== undefined)
+                            {
+                                drop.status = 'Found'
+                                const dataDrop = {
+                                    id_solicitud_prestamo: loan.id_solicitud,
+                                    id_cliente: drop.id_cliente,
+                                    etiqueta_opcion: "BAJA",
+                                    tipo_baja: drop.reasonType.trim(),
+                                    id_motivo: drop.dropoutReason[0],
+                                    uid: 0
+                                }
+                                let result = await assignClientLoanFromHF(dataDrop);
+                                drop.result =  result;
+                            }
+                        }
+                        RSP_Result.status = 'OK';
+                        action.errors = [];
+                        action.status = 'Done';
+                        action.data.dropouts = dropouts;
+                        break;
+                    case 'MEMBER_NEW': id_loan = action.data.id_loan;
+                        info.loan_id = id_loan;
+                        let newmembers = action.data.newmembers;
+                        id_loan = action.data.id_loan;
+                        loan = await LoanAppGroup.getLoan(id_loan)
+                        if (loan === undefined) {
+                            RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
+                            break;
+                        }
+                        if(loan.id_solicitud == 0){
+                            RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} has not been created at HF`,info);
+                            break;
+                        }
+                        for(let news of newmembers)
+                        {
+                            let member = undefined;
+                            news.status = 'Duplicated'
+                            //member = loan.members.find(row => row.id_cliente == news.id_cliente);
+                            if(member === undefined)
+                            {
+                                news.status = 'Found'
+                                const dataNew = {
+                                    id_solicitud_prestamo: loan.id_solicitud,
+                                    id_cliente: news.id_cliente,
+                                    etiqueta_opcion: "ALTA",
+                                    tipo_baja: '',
+                                    id_motivo: 0,
+                                    uid: 0
+                                }
+                                let result = await assignClientLoanFromHF(dataNew);
+                                news.result =  result;
+                            }
+                        }
+                        RSP_Result.status = 'OK';
+                        action.errors = [];
+                        action.status = 'Done';
+                        action.data.newmembers = newmembers;
+                        break;
+                    case 'CREATE_UPDATE_LOAN':
+                        // Create loan
+                        loan = await createLoanHF(action.data);
+                        // Validate creation of loan
+                        if (loan instanceof Error || !loan) {
+                            action.status = 'Error';
+                            action.errors = [loan.message];
+                            RSP_Result.status = 'ERROR';
+                            console.log(loan)
+                        }
+                        else {
+                            RSP_Result.status = 'OK';
+                            action.errors = [];
+                            action.status = 'Done';
+                        }
+                        break;
+                    case 'CREATE_UPDATE_CLIENT':
+                        // Create person and client
+                        const personCreatedHF = await createPersonHF(action.data);
+                        const clientSaved = await createClientHF(action.data);
+                        // Validate creation person and
+                        if (!personCreatedHF || !clientSaved || personCreatedHF instanceof Error || clientSaved instanceof Error) {
+                            action.status = 'Error'
+                            action.errors = [personCreatedHF.message, clientSaved.message];
+                            RSP_Result.status = 'ERROR';
+                            console.log('Error :', {personCreatedHF, clientSaved})
+                        }
+                        else {
+                            RSP_Result.status = 'OK';
+                            action.status = 'Done';
+                            action.errors = [];
+                        }
+                        break;
+                    default:
+                        RSP_Result = await Action.generarErrorRSP('Action "' + action.name + '" is not supported', info);
+                        break;
+                }
+            }
+            RSP_Result.action =  action
+            //Save execution
+            if(RSP_Result.status == "OK")
+                await new ActionCollection(action).save();
         }
-        //Save execution
-        await new ActionCollection(action).save();
-        let RSP_Action = { name: action.name, status : action.status, action:action  }
-        res.status(201).send(RSP_Action);
+        else
+            RSP_Result = await Action.generarErrorRSP(response.message, info);
+        res.status(201).send(RSP_Result);
 
     } catch (err) {
-        res.status(400).send(err.message)
+        let RSP_Result = await Action.generarErrorRSP(err.message, req.query);
+        res.status(400).send(RSP_Result)
     }
 });
 

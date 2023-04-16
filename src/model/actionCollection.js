@@ -425,7 +425,7 @@ class ActionCollection extends DocumentCollection {
         return errors;
     }
 
-    async validateDataLoan(data) {
+    async validateDataLoan(data, info) {
         ///// VALIDAR QUE LOS DATOS PARA LA SOLICITUD QUE SE GENERARA EN EL HF ES CORRECTA
 
         const dataExample = {
@@ -543,13 +543,7 @@ class ActionCollection extends DocumentCollection {
         } else {
             action_type = 'UPDATE LOAN';
         }
-
-        const info = {
-            client_id: data.id_cliente,
-            loan_id: data.id_solicitud,
-            action_type: action_type
-        }
-        return {info, errors};
+        return {status: errors.length == 0 ? 'OK': 'ERROR', info, errors};
     }
 
     async validateDataDropMemberLoan(data,info)
@@ -572,7 +566,7 @@ class ActionCollection extends DocumentCollection {
         };
         let errors = [];
         errors = await this.validateModel(dataExample, data)
-        return {info, errors};
+        return {status: errors.length == 0 ? 'OK': 'ERROR', info, errors};
     }
 
     async validateDataAddMemberLoan(data, info)
@@ -595,7 +589,7 @@ class ActionCollection extends DocumentCollection {
         };
         let errors = [];
         errors = await this.validateModel(dataExample, data)
-        return {info, errors};
+        return {status: errors.length == 0 ? 'OK': 'ERROR', info, errors};
     }
     async validateDataClient(data) {
         ///// VALIDAR QUE LOS DATOS de CLIENTE
@@ -768,11 +762,11 @@ class ActionCollection extends DocumentCollection {
             loan_id: data.id_solicitud,
             action_type: action_type
         }
-        return { info, errors };
+        return { status: errors.length == 0 ? 'OK': 'ERROR', info, errors };
     }
     async generarErrorRSP(error,info){
         let errors = [error];
-        return { info, errors };
+        return { status:'ERROR',info, errors };
     }
     async validateAction(id_action,type = "VALIDATE") {
         let response =
