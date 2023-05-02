@@ -678,7 +678,7 @@ async function createLoanHF(data) {
             loan.id_producto = detailLoan[0][0].id_producto;
             if (isNewLoan) {
                 client.id_cliente = detailLoan[1][0].id;
-                client.address.id = detailLoan[2][0].id_direccion;
+                client.address.id = detailLoan[2].length > 0 ? detailLoan[2][0].id_direccion : 0 ;
                 await new GroupCollection(client).save();
             }
         }
