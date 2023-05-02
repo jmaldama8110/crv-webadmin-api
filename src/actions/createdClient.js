@@ -419,7 +419,7 @@ async function createClientHF(data) {
         tbl.UDT_CONT_Persona.rows.add(dataSort["PERSONA"][0].id, null, null,
             null, null, null, null, null, null,
             null, null, null, null, null, null,
-            null, null, null);
+            null, null, null, null);
 
         tbl.UDT_CONT_Identificaciones.rows.add( // NO SE USA
             dataSort['IDENTIFICACIONES'][0].id,//id prospera

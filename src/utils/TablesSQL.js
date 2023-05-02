@@ -58,6 +58,7 @@ UDT_CONT_Persona.columns.add('id_nacionalidad', SQL.Int, { nullable: true });
 UDT_CONT_Persona.columns.add('id_pais_nacimiento', SQL.Int, { nullable: true });
 UDT_CONT_Persona.columns.add('es_pep', SQL.Int, { nullable: true });
 UDT_CONT_Persona.columns.add('es_persona_prohibida', SQL.Int, { nullable: true });
+UDT_CONT_Persona.columns.add('fechaN', SQL.VarChar(100), { nullable: true });
 //#endregion
 
 //#region UDT_CONT_Identificaciones

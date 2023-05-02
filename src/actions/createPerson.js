@@ -241,7 +241,8 @@ async function createPersonHF(data) {
             dataSort['DATOS_PERSONALES'][0].id_nacionalidad,
             dataSort['DATOS_PERSONALES'][0].id_pais_nacimiento,
             dataSort['DATOS_PERSONALES'][0].es_pep,
-            dataSort['DATOS_PERSONALES'][0].es_persona_prohibida
+            dataSort['DATOS_PERSONALES'][0].es_persona_prohibida,
+            dataSort['DATOS_PERSONALES'][0].fecha_nacimiento
         );
 
         for (const idx in dataSort['IDENTIFICACIONES']) {

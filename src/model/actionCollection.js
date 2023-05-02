@@ -151,7 +151,7 @@ class ActionCollection extends DocumentCollection {
             tbl.UDT_CONT_Persona.rows.add(data["PERSONA"][0].id, null, null,
                 null, null, null, null, null, null,
                 null, null, null, null, null, null,
-                null, null, null);
+                null, null, null,null);
 
             tbl.UDT_CONT_Identificaciones.rows.add( // NO SE USA
                 data['IDENTIFICACIONES'][0].id,//id prospera

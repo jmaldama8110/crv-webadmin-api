@@ -302,7 +302,8 @@ clientSchema.statics.createPersonHF = async(data, action) => {
         data['DATOS_PERSONALES'][0].id_nacionalidad,
         data['DATOS_PERSONALES'][0].id_pais_nacimiento,
         data['DATOS_PERSONALES'][0].es_pep,
-        data['DATOS_PERSONALES'][0].es_persona_prohibida
+        data['DATOS_PERSONALES'][0].es_persona_prohibida,
+        data['DATOS_PERSONALES'][0].fecha_nacimiento
     );
 
     for (const idx in data['IDENTIFICACIONES']) {
@@ -483,7 +484,7 @@ clientSchema.statics.createClientHF = async(data, value) => {
         tbl.UDT_CONT_Persona.rows.add(data["PERSONA"][0].id, null, null,
             null, null, null, null, null, null,
             null, null, null, null, null, null,
-            null, null, null);
+            null, null, null,null);
 
         tbl.UDT_CONT_Identificaciones.rows.add( // NO SE USA
             data['IDENTIFICACIONES'][0].id,//id prospera
