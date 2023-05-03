@@ -295,7 +295,7 @@ userSchema.statics.findUserByCredentialsHF = async function (user, password) {
   
   const userReponse = {
     login: userCredentials.login.trim(),
-    email: `${userCredentials.correo}@grupoconserva.mx`,
+    email: `${userCredentials.correo}`,
     loan_officer: userCredentials.id_persona,
     name: loanOfficerData.name,
     lastname: loanOfficerData.lastname,
