@@ -353,6 +353,7 @@ class ActionCollection extends DocumentCollection {
             example: valueOK
         });
     }
+
     async validateModel(model,data)
     {
         //Valida la estructura del modelo vs el que viene en la data
@@ -745,10 +746,7 @@ class ActionCollection extends DocumentCollection {
                 1,
                 "Pendiente"
             ],
-            tributary_regime: [
-                "1",
-                "Persona Fisica AE"
-            ],
+
             comment: "",
             identity_pics: [],
             comprobante_domicilio_pics: []
