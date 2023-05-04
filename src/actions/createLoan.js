@@ -640,7 +640,7 @@ async function createLoanHF(data) {
                     id_seguro: seguro[0].id_seguro || 0,
                     nombre_beneficiario: member.insurance.beneficiary,
                     parentesco: member.insurance.relationship,
-                    porcentaje: member.percentage || 100,
+                    porcentaje: member.insurance.percentage || 100,
                     costo_seguro: 0, // TODO FALTA CALCULAR
                     incluye_saldo_deudor: seguro[0].incluye_saldo_deudor
                 }

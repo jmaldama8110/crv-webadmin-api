@@ -118,8 +118,8 @@ async function sortDataPerson(client, action) {
                 id_localidad: dirIfe.length >= 1 && dirIfe[0].city[0] ? getId(dirIfe[0].city[0]) : (person.DIRECCIONES)[0].id_localidad,
                 id_asentamiento: dirIfe.length >= 1 && dirIfe[0].colony[0] ? getId(dirIfe[0].colony[0]) : (person.DIRECCIONES)[0].id_asentamiento,
                 direccion: dirIfe.length >= 1 ? dirIfe[0].address_line1 ? dirIfe[0].address_line1 : (person.DIRECCIONES)[0].direccion : (person.DIRECCIONES)[0].direccion,
-                numero_exterior: "SN",
-                numero_interior: "SN",
+                numero_exterior: dirIfe[0].ext_number ? dirIfe[0].ext_number.toString() : "SN",
+                numero_interior: dirIfe[0].int_number ? dirIfe[0].int_number.toString() : "SN",
                 referencia: dirIfe.length >= 1 && dirIfe[0].street_reference ? dirIfe[0].street_reference : (person.DIRECCIONES)[0].direccion,
                 casa_situacion: dirIfe.length >= 1 ? dirIfe[0].ownership ? dirIfe[0].ownership === true ? 1 : 0 : 0 : (person.DIRECCIONES)[0].casa_situacion,
                 tiempo_habitado_inicio: dirIfe.length >= 1 && dirIfe[0].start_date ? getDates(dirIfe[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
@@ -127,7 +127,7 @@ async function sortDataPerson(client, action) {
                 correo_electronico: client.email ? client.email : '',
                 num_interior: 0,
                 num_exterior: 0,
-                id_vialidad: 5,//vialidad
+                id_vialidad: dirIfe[0].road ? dirIfe[0].road[0] : 5,//vialidad
                 domicilio_actual: 1
             }
         )
@@ -143,8 +143,8 @@ async function sortDataPerson(client, action) {
                 id_localidad: dirRfc.length >= 1 && dirRfc[0].city[0] ? getId(dirRfc[0].city[0]) : (person.DIRECCIONES)[0].id_localidad,
                 id_asentamiento: dirRfc.length >= 1 && dirRfc[0].colony[0] ? getId(dirRfc[0].colony[0]) : (person.DIRECCIONES)[0].id_asentamiento,
                 direccion: dirRfc.length >= 1 && dirRfc[0].address_line1 ? dirRfc[0].address_line1 : (person.DIRECCIONES)[0].direccion,
-                numero_exterior: "SN",
-                numero_interior: "SN",
+                numero_exterior: dirRfc[0].ext_number ? dirRfc[0].ext_number.toString() : "SN",
+                numero_interior: dirRfc[0].int_number ? dirRfc[0].int_number.toString() : "SN",
                 referencia: dirRfc.length >= 1 && dirRfc[0].street_reference ? dirRfc[0].street_reference : (person.DIRECCIONES)[0].direccion,
                 casa_situacion: dirRfc.length >= 1 ? dirRfc[0].ownership ? dirRfc[0].ownership === true ? 1 : 0 : 0 : (person.DIRECCIONES)[0].casa_situacion,
                 tiempo_habitado_inicio: dirRfc.length >= 1 && dirRfc[0].start_date ? getDates(dirRfc[0].start_date) : (person.DIRECCIONES)[0].tiempo_habitado_inicio,
@@ -152,7 +152,7 @@ async function sortDataPerson(client, action) {
                 correo_electronico: client.email ? client.email : '',
                 num_interior: 0,
                 num_exterior: 0,
-                id_vialidad: 5,
+                id_vialidad: dirRfc[0].road ? dirRfc[0].road[0] : 5,//vialidad
                 domicilio_actual: 1
             }
         )
