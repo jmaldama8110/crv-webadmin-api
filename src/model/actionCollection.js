@@ -623,7 +623,10 @@ class ActionCollection extends DocumentCollection {
                     ext_number: "ext",
                     int_number: "int",
                     street_reference: "reference",
-                    road: 5,
+                    road:[
+                        5,
+                        "Calle"
+                    ]
                 },
                 {
                     _id: "1679723842324",
@@ -653,7 +656,10 @@ class ActionCollection extends DocumentCollection {
                     ext_number: "ext",
                     int_number: "int",
                     street_reference: "reference",
-                    road: 5,
+                    road:[
+                        5,
+                        "Calle"
+                    ]
                 }
             ],
             branch: [
