@@ -620,7 +620,10 @@ class ActionCollection extends DocumentCollection {
                         "NEIGHBORHOOD|113",
                         "carlos salinas de gortari"
                     ],
-                    post_code: "29500"
+                    ext_number: "ext",
+                    int_number: "int",
+                    street_reference: "reference",
+                    road: "road",
                 },
                 {
                     _id: "1679723842324",
@@ -646,7 +649,11 @@ class ActionCollection extends DocumentCollection {
                         "NEIGHBORHOOD|113",
                         "carlos salinas de gortari"
                     ],
-                    post_code: "29500"
+                    post_code: "29500",
+                    ext_number: "ext",
+                    int_number: "int",
+                    street_reference: "reference",
+                    road: "road",
                 }
             ],
             branch: [
