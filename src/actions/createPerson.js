@@ -195,7 +195,6 @@ async function createPersonHF(data) {
         const dataSort = await sortDataPerson(clientCouch);
         if (!dataSort) return new Error('data sort Error');
 
-        console.log(dataSort);
         const pool = await sql.connect(sqlConfig);
 
         const action2 = dataSort['DATOS_PERSONALES'][0].id > 0 ? 'ACTUALIZAR_PERSONA' : 'INSERTAR_PERSONA'
