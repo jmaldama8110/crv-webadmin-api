@@ -84,11 +84,11 @@ router.get("/clients/hf", authorize, async(req, res) => {
                     ext_number: add.numero_exterior,
                     int_number: add.numero_interior,
                     street_reference: add.referencia,
-                    ownership: add.casa_situacion === 'RENTADO' ? true : false,
+                    ownership: add.casa_situacion === 'PROPIO' ? true : false,
                     post_code: add.codigo_postal,
                     residence_since: add.tiempo_habitado_inicio,
                     residence_to: add.tiempo_habitado_final,
-                    road: [add.vialidad,add.etiqueta_vialidad]
+                    road: [add.vialidad, add.etiqueta_vialidad]
                 })
             }
             const phones = [];
@@ -1339,10 +1339,11 @@ const addAddress = (body) => {
             ext_number: add.numero_exterior.trim(),
             int_number: add.numero_interior.trim(),
             street_reference: add.referencia,
-            ownership: add.casa_situacion === 'RENTADO' ? true : false,
+            ownership: add.casa_situacion === 'PROPIO' ? true : false,
             post_code: add.codigo_postal,
             residence_since: add.tiempo_habitado_inicio,
-            residence_to: add.tiempo_habitado_final
+            residence_to: add.tiempo_habitado_final,
+            road: [add.vialidad, add.etiqueta_vialidad]
         })
     }
 
@@ -1390,10 +1391,11 @@ const addAddressClientHF = (addressMongo, addressHF) => {
             ext_number: add.numero_exterior.trim(),
             int_number: add.numero_interior.trim(),
             street_reference: add.referencia,
-            ownership: add.casa_situacion === 'RENTADO' ? false : true,
+            ownership: add.casa_situacion === 'PROPIO' ? true : false,
             post_code: add.codigo_postal,
             residence_since: add.tiempo_habitado_inicio,
-            residence_to: add.tiempo_habitado_final
+            residence_to: add.tiempo_habitado_final,
+            road: [add.vialidad, add.etiqueta_vialidad]
         })
     }
 

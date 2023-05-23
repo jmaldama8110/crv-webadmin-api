@@ -390,17 +390,21 @@ class ActionCollection extends DocumentCollection {
                             // Si es un objeto
                             if(typeof valueOK == "object"){
                                 const keyItemArrayObj = Object.keys(valueOK);
-                                keyItemArrayObj.forEach((keyObj) => {
-                                    const valueOKObj = valueOK[keyObj];
-                                    const valueCompareObj = valueCompareExample[idx][key][keyObj];
-                                    const typeDataOKObj = typeof valueOKObj == "object" && Array.isArray(valueOKObj) ? "array" : typeof valueOKObj;
-                                    const typeDataCompareObj = typeof valueCompareObj == "object" && Array.isArray(valueCompareObj) ? "array" : typeof valueCompareObj;
+                                if(valueCompareExample[idx][key] === undefined )
+                                    this.pushError(errors,typeDataOK,typeDataCompare,valueOK,`${item}[${idx}].${key}`);
+                                else
+                                {
+                                    keyItemArrayObj.forEach((keyObj) => {
+                                        const valueOKObj = valueOK[keyObj];
+                                        const valueCompareObj = valueCompareExample[idx][key] === undefined ? undefined : valueCompareExample[idx][key][keyObj] ;
+                                        const typeDataOKObj = typeof valueOKObj == "object" && Array.isArray(valueOKObj) ? "array" : typeof valueOKObj;
+                                        const typeDataCompareObj = typeof valueCompareObj == "object" && Array.isArray(valueCompareObj) ? "array" : typeof valueCompareObj;
 
-                                    if (typeDataOKObj != typeDataCompareObj){
-                                        this.pushError(errors,typeDataOKObj,typeDataCompareObj,valueOKObj,`${item}[${idx}].${key}.${keyObj}`);
-                                    }
-                                })
-
+                                        if (typeDataOKObj != typeDataCompareObj){
+                                            this.pushError(errors,typeDataOKObj,typeDataCompareObj,valueOKObj,`${item}[${idx}].${key}.${keyObj}`);
+                                        }
+                                    })
+                                }
                             }
                             // Si es un valor o array
                             else{
