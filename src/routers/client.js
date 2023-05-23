@@ -87,7 +87,8 @@ router.get("/clients/hf", authorize, async(req, res) => {
                     ownership: add.casa_situacion === 'RENTADO' ? true : false,
                     post_code: add.codigo_postal,
                     residence_since: add.tiempo_habitado_inicio,
-                    residence_to: add.tiempo_habitado_final
+                    residence_to: add.tiempo_habitado_final,
+                    road: [add.vialidad,add.etiqueta_vialidad]
                 })
             }
             const phones = [];
