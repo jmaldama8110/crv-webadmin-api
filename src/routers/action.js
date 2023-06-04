@@ -43,7 +43,8 @@ router.get('/actions/validate', async (req, res) => {
             let action = response.action;
             let info = { action_type: action.name }
             let loan;
-            let id_loan
+            let id_loan;
+            let RSP_ResultNewMembers = [];
             switch (action.name)
             {
                 case 'MEMBER_DROPOUT':
@@ -93,6 +94,43 @@ router.get('/actions/validate', async (req, res) => {
                     if (loan === undefined) {
                         info.loan_id = id_loan;
                         RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
+                        break;
+                    }
+                    // Validate members
+                    if(!Array.isArray(loan.members)){
+                        RSP_Result = await Action.generarErrorRSP('Members were not found: ',info);
+                        break;
+                    }
+                    let memberstransact = loan.members.filter( row => row.estatus.trim().toUpperCase() === "TRAMITE" && row.sub_estatus.trim().toUpperCase() === "NUEVO TRAMITE" );
+                    let memberscancelled = loan.members.filter( row => row.estatus.trim().toUpperCase() === "CANCELADO" && row.sub_estatus.trim().toUpperCase() === "CANCELACION/ABANDONO" );
+                    let membersnew = loan.members.filter( row => row.estatus.trim().toUpperCase() === "INGRESO" && row.sub_estatus.trim().toUpperCase() === "NUEVO");
+                    if(membersnew.length === 0 && memberscancelled.length === 0 && memberstransact.length === 0){
+                        RSP_Result = await Action.generarErrorRSP('There are not members with status in TRAMITE, CANCELADO or INGRESO',info);
+                        break;
+                    }
+                    for (let row of membersnew) {
+                        // Get data
+                        let client;
+                        const  _id  = row.client_id;
+                        client = await Client.findOne({ _id });
+                        if (client === undefined) {
+                            info.client_id = _id;
+                            RSP_Result = await Action.generarErrorRSP('Client new is not found: '+row.client_id,info);
+                            RSP_ResultNewMembers.push(RSP_Result)
+                        }
+                        else {
+                            //Validate data
+                            if(client.id_cliente == 0 || client.id_persona == 0) {
+                                RSP_Result = await Action.validateDataClient(client);
+                                if (RSP_Result.status !== "OK") {
+                                    RSP_Result.info.client_id = _id;
+                                    RSP_ResultNewMembers.push(RSP_Result)
+                                }
+                            }
+                        }
+                    }
+                    if(RSP_ResultNewMembers.length > 0) {
+                        RSP_Result = await Action.generarErrorRSP("The new members have a trouble with any validation.",RSP_ResultNewMembers);
                         break;
                     }
                     info.id_cliente = loan.id_cliente;
@@ -226,6 +264,47 @@ router.get('/actions/exec', async (req, res) => {
                         action.data.newmembers = newmembers;
                         break;
                     case 'CREATE_UPDATE_LOAN':
+                        // Get Loan
+                        let RSP_ResultNewMembers = []
+                        const { id_loan } = action.data;
+                        loan = await LoanAppGroup.getLoan(id_loan);
+                        //Crear miembros nuevos
+                        let membersnew = loan.members.filter( row => row.estatus.trim().toUpperCase() === "INGRESO" && row.sub_estatus.trim().toUpperCase() === "NUEVO");
+                        for (let row of membersnew) {
+                            let _id = row.client_id
+                            client = await Client.findOne({ _id });
+                            if(client.id_cliente == 0 || client.id_persona == 0) {
+                                // Create person and client
+                                const personCreatedHF = await createPersonHF({"_id": row.client_id});
+                                const clientSaved = await createClientHF({"_id": row.client_id});
+                                // Validate creation person and
+                                if (!personCreatedHF || !clientSaved || personCreatedHF instanceof Error || clientSaved instanceof Error) {
+                                    action.status = 'Error'
+                                    action.errors = [personCreatedHF.message, clientSaved.message];
+                                    RSP_Result.status = 'ERROR';
+                                    RSP_ResultNewMembers.push(RSP_Result);
+                                }
+                            }
+                           else
+                                RSP_Result.status = "OK";
+                           if(RSP_Result.status === "OK")
+                           {
+                               _id = row.client_id
+                               client = await Client.findOne({ _id });
+                               row.id_member =  client.id_persona;
+                               row.id_cliente =  client.id_cliente;
+                               row.estatus =  "TRAMITE";
+                               row.sub_estatus =  "NUEVO TRAMITE";;
+                           }
+                        }
+                        if(RSP_ResultNewMembers.length > 0) {
+                            RSP_Result = await Action.generarErrorRSP("The new members have a trouble with any validation.",RSP_ResultNewMembers);
+                            break;
+                        }
+                        if(loan.couchdb_type === "LOANAPP_GROUP")
+                            await new LoanAppGroupCollection(loan).save();
+                        else
+                            await new LoanAppCollection(loan).save()
                         // Create loan
                         loan = await createLoanHF(action.data);
                         // Validate creation of loan

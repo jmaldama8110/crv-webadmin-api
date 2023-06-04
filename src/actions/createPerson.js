@@ -62,19 +62,19 @@ async function sortDataPerson(client, action) {
         person.IDENTIFICACIONES = [];
         person.IDENTIFICACIONES.push(
             {
-                id: IS_CREATE ? 0 : client.identities[2]._id,
+                id: IS_CREATE ? 0 : (client.identities.length < 3 ? 0 : client.identities[2]._id),
                 id_entidad: IS_CREATE ? 0 : client.id_persona,
                 tipo_identificacion: "CURP",
                 id_numero: client.curp
             },
             {
-                id: IS_CREATE ? 0 : client.identities[0]._id,
+                id: IS_CREATE ? 0 : (client.identities.length < 1 ? 0 : client.identities[0]._id),
                 id_entidad: IS_CREATE ? 0 : client.id_persona,
                 tipo_identificacion: "IFE",
                 id_numero: client.clave_ine.slice(0, 18) // ine_clave
             },
             {
-                id: IS_CREATE ? 0 : client.identities[1]._id,
+                id: IS_CREATE ? 0 : (client.identities.length < 2 ? 0 : client.identities[1]._id),
                 id_entidad: IS_CREATE ? 0 : client.id_persona,
                 tipo_identificacion: "RFC",
                 id_numero: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0, 13)
@@ -85,7 +85,7 @@ async function sortDataPerson(client, action) {
 
         person.DIRECCIONES.push(
             {
-                id: IS_CREATE ? 0 : dirDomi[0]._id,
+                id: IS_CREATE ? 0 : (dirDomi[0]._id > 2147483647 ? 0 : dirDomi[0]._id) [0],
                 tipo: 'DOMICILIO',
                 id_pais: dirDomi[0].country[0] ? getId(dirDomi[0].country[0]) : 1,
                 id_estado: dirDomi[0].province[0] ? getId(dirDomi[0].province[0]) : 5,
@@ -110,7 +110,7 @@ async function sortDataPerson(client, action) {
         //Si no se encuentra una dirección del IFE, se le asignará el mismo del domicilio
         person.DIRECCIONES.push(
             {
-                id: IS_CREATE ? 0 : dirIfe.length >= 1 ? dirIfe[0]._id : 0,
+                id: IS_CREATE ? 0 : dirIfe.length >= 1 ? (dirIfe[0]._id > 2147483647 ? 0 : dirIfe[0]._id) : 0,
                 tipo: 'IFE',
                 id_pais: dirIfe.length >= 1 && dirIfe[0].country[0] ? getId(dirIfe[0].country[0]) : (person.DIRECCIONES)[0].id_pais,
                 id_estado: dirIfe.length >= 1 && dirIfe[0].province[0] ? getId(dirIfe[0].province[0]) : (person.DIRECCIONES)[0].id_estado,
@@ -135,7 +135,7 @@ async function sortDataPerson(client, action) {
         //Agregamos la dirección del RFC
         person.DIRECCIONES.push(
             {
-                id: IS_CREATE ? 0 : dirRfc[0]._id,
+                id: IS_CREATE ? 0 : dirRfc.length >= 1 ? (dirRfc[0]._id > 2147483647 ? 0 : dirRfc[0]._id) : 0,
                 tipo: 'RFC',
                 id_pais: dirRfc.length >= 1 && dirRfc[0].country[0] ? getId(dirRfc[0].country[0]) : (person.DIRECCIONES)[0].id_pais,
                 id_estado: dirRfc.length >= 1 && dirRfc[0].province[0] ? getId(dirRfc[0].province[0]) : (person.DIRECCIONES)[0].id_estado,

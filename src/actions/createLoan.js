@@ -143,7 +143,7 @@ async function assignMontoloanHF(data) {
         for (let idx = 0; idx < data['INTEGRANTES'].length; idx++) {
             tbl.UDT_SolicitudDetalle.rows.add(
                 data['INTEGRANTES'][idx].id_individual,
-                data['SOLICITUD'][0].id,
+                0,//data['SOLICITUD'][0].id,
                 data['INTEGRANTES'][idx].id_persona,
                 '', // Nombre
                 '', // Apellido paterno
@@ -506,7 +506,20 @@ async function loanRenovation(idClient, idLoan, idOfficer, idOffice, idLoanCouch
         console.log(error.message);
     }
 }
+async function getLoan(data)
+{
+    const { id_loan } = data;
 
+    let typeClient;
+    let loan;
+    loan = await LoanAppGroup.findOne({ _id: id_loan });
+    typeClient = 1;
+    if (loan == undefined) {
+        loan = await LoanApp.findOne({ _id: id_loan });
+        typeClient = 2;
+    }
+    return loan;
+}
 async function createLoanHF(data) {
     try {
         const { id_loan } = data;
