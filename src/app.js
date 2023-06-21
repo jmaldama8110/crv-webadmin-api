@@ -33,8 +33,8 @@ const loanDestRouter = require('./routers/loanDest');
 const actionRouter = require('./routers/action');
 const groupsRouter = require('./routers/group');
 const intermediaryRouter = require('./routers/intermediary');
-
 const docsRouter = require('./routers/docs');
+const verifyIdentityRouter = require('./routers/verifyIdentity');
 
 /** Handlebars initialization */
 const { create } = require('express-handlebars');
@@ -86,5 +86,6 @@ app.use(actionRouter);
 app.use(groupsRouter);
 app.use(docsRouter);
 app.use(intermediaryRouter);
+app.use(verifyIdentityRouter);
 
 module.exports = app

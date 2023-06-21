@@ -81,6 +81,7 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
                     loan_cycle: i.ciclo,
                     disbursment_mean: i.id_cata_medio_desembolso,
                     insurance: {
+                        id: nCounter,
                         beneficiary: (insuranceMemberInfo ? insuranceMemberInfo.nombre_beneficiario : ''),
                         relationship: (insuranceMemberInfo ? insuranceMemberInfo.parentesco : ''),
                         percentage: (insuranceMemberInfo ? insuranceMemberInfo.porcentaje : 0 )

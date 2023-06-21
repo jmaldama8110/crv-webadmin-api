@@ -6,6 +6,8 @@ const notificationPush = require('../model/notificationPush');
 const Province = require('../model/province');
 const nano = require('../db/connCouch');
 const authorize = require("../middleware/authorize");
+const axios = require("axios");
+const url = require("url");
 
 const moment = require("moment");
 const formato = 'YYYY-MM-DD';
@@ -209,6 +211,7 @@ router.get('/clients/hf/getBalance', authorize, async(req, res) => {
         res.status(401).send(error.message)
     }
 });
+
 
 router.get('/clients/hf/loanapps', authorize, async(req, res) => {
     try{
@@ -1100,21 +1103,6 @@ router.post('/createClientHF/:id', authorize, async (req, res) => {
     }
 })
 
-router.post('/sendsms', authorize, async (req, res) => {
-    try {
-
-        const data = req.body;
-        const cantidad = formatLocalCurrency(30000)
-        // console.log(typeof data.message)
-        const body = `La cantidad solicitada es de  ${cantidad} pesos`
-
-        sendSms('+529191207777', body);
-        res.send('ok');
-
-    } catch (e) {
-        res.status(404).send(e.message);
-    }
-})
 
 router.get('/client/hf', authorize, async (req, res) => {
     try {
@@ -1128,172 +1116,6 @@ router.get('/client/hf', authorize, async (req, res) => {
     }
 
 });
-
-// router.get('/person/hf', authorize, async (req, res) => {
-
-//     try {
-
-//         if (!req.query.curp) {
-//             throw new Error('Some query parameters area mising...')
-//         }
-
-//         const personHF = await Client.findPersonByCurp(req.query.curp);
-
-//         res.status(200).send(personHF);
-
-//     } catch (e) {
-//         res.status(400).send(e.message);
-//     }
-
-// });
-
-// router.delete("/clients/:id", authorize, async (req, res) => {
-
-//     try {
-//         const _id = req.params.id;
-
-//         const client = await Client.findOne({ _id });
-//         if (!client) {
-//             throw new Error("Not able to find the client");
-//         }
-
-//         const user = await User.findOne({ client_id: client._id });
-//         if (user != null) {
-//             const userDeleted = await user.delete();
-//             if (!userDeleted) {
-//                 throw new Error("Error deleting user");
-//             }
-//         }
-
-//         const clientDeleted = await client.delete();
-//         if (!clientDeleted) {
-//             throw new Error("Error deleting client");
-//         }
-
-//         res.status(200).send({
-//             client,
-//             message: 'Client successfully disabled'
-//         });
-
-//     } catch (e) {
-//         res.status(400).send(e + '');
-//     }
-
-// });
-
-// router.delete("/clientsBD", authorize, async (req, res) => {
-
-//     try {
-
-//         const match = {};
-
-//         if (req.query.id) {
-//             match._id = req.query.id;
-//         }
-
-//         const client = await Client.find(match);
-//         if (!client || client.length === 0) {
-//             throw new Error("Not found any record");
-//         }
-
-//         for (let i = 0; i < client.length; i++) {
-//             const dataClient = client[i];
-//             // console.log(dataClient._id)
-//             const user = await User.findOne({ client_id: dataClient._id });
-//             if (user != null) {
-//                 const userDeleted = await user.remove();
-//                 if (!userDeleted) {
-//                     throw new Error("Error deleting user");
-//                 }
-//             }
-
-//             const clientDeleted = await dataClient.remove();
-//             if (!clientDeleted) {
-//                 throw new Error("Error deleting client");
-//             }
-//         }
-
-//         res.status(200).send('Done!')
-
-//     } catch (e) {
-//         console.log(e)
-//         res.status(400).send(e + '');
-//     }
-
-// });
-
-// router.get("/clientsDeleted", async (req, res) => {
-//     try {
-
-//         const client = await Client.findDeleted()
-//         if (!client || client.length === 0) {
-//             throw new Error("Not able to find the client");
-//         }
-
-//         res.status(200).send(client)
-
-//     } catch (e) {
-//         res.status(400).send(e + '')
-//     }
-// })
-
-// router.post("/clients/restore/:id", auth, async (req, res) => {
-
-//     try {
-//         const _id = req.params.id;
-
-//         const client = await Client.findOneDeleted({ _id });
-//         if (!client) {
-//             throw new Error("Not able to find the client");
-//         }
-
-//         const user = await User.findOneDeleted({ client_id: client._id });
-//         if (user != null) {
-//             const userRestore = await user.restore()
-//             if (!userRestore) {
-//                 throw new Error("Error restoring user");
-//             }
-//         }
-
-//         const clientRestore = await client.restore()
-//         if (!clientRestore) {
-//             throw new Error("Error restore client");
-//         }
-
-//         res.status(200).send({
-//             client,
-//             message: 'Client successfully enabled'
-//         });
-
-//     } catch (e) {
-//         res.status(400).send(e + '');
-//     }
-
-// });
-
-
-//------------Crear persona en HF
-// router.post('/createPersonHF', auth, async (req, res) => {
-//     try {
-//         const result = await Client.createPersonHF(req.body, 'INSERTAR_PERSONA')
-
-//         res.status(201).send(result);
-//     } catch (error) {
-//         res.status(401).send(error.message)
-//     }
-// });
-
-// // ------------------- Crear  cliente idividual en HF
-// router.post('/clients/hf/create', auth, async (req, res) => { // FUNCIONA
-//     try {
-//         const result = await Client.createClientHF(req.body);
-
-//         res.status(201).send(result, 1);
-
-//     } catch (error) {
-//         res.status(401).send(error.message)
-//     }
-// });
 
 
 const getDates = (fecha) => {
@@ -1327,14 +1149,11 @@ const addAddress = (body) => {
         address.push({
             _id: add.id,
             type: add.tipo.trim(),
-
             country: [add.id_pais, add.nombre_pais],
-
             province: [add.id_estado, add.nombre_estado],
             municipality: [add.id_municipio, add.nombre_municipio],
             city: [add.id_ciudad_localidad, add.nombre_ciudad_localidad],
             colony: [add.id_asentamiento, add.nombre_asentamiento],
-
             address_line1: add.direccion,
             ext_number: add.numero_exterior.trim(),
             int_number: add.numero_interior.trim(),
@@ -1418,42 +1237,6 @@ const addPhones = (body) => {
     return phones;
 }
 
-const orderGuarantees = (guarantees) => {
-
-    const guarantee = JSON.parse(JSON.stringify(guarantees));
-
-    const equipment = [];
-    const vehicle = [];
-    const property = [];
-    const result = {};
-
-
-    for (let i = 0; i < guarantee.length; i++) {
-        const data = guarantee[i];
-        if (data.guarantee_type === 'equipment') {
-            delete data.property;
-            delete data.vehicle;
-            equipment.push(data);
-        }
-        if (data.guarantee_type === 'vehicle') {
-            delete data.equipment;
-            delete data.property;
-            vehicle.push(data)
-        }
-        if (data.guarantee_type === 'property') {
-            delete data.equipment;
-            delete data.vehicle;
-            property.push(data)
-        }
-    }
-
-    result.equipment = equipment;
-    result.vehicle = vehicle;
-    result.property = property;
-
-    // console.log(result);
-
-    return result;
-}
-
+  
+  
 module.exports = router;
