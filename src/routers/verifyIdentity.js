@@ -4,7 +4,6 @@ const nano = require('../db/connCouch');
 const authorize = require("../middleware/authorize");
 const axios = require("axios");
 const url = require("url");
-const { v4: uuidv4 } = require('uuid');
 
 router.post("/verify", authorize, async (req, res) => {
 
@@ -15,39 +14,39 @@ router.post("/verify", authorize, async (req, res) => {
     const db = nano.use(process.env.COUCHDB_NAME);
     const client = await db.get(req.query.clientId);
 
-    const frontImage = '';
-    const backImage = '';
-    const faceImage = '';
+    if( !client.identity_pics || client.identity_pics.length != 3 ){
+      
+      throw new Error('Client.identity_pics is missing or numbers of taken images is not 3')
+    }
+    
+    const dbX = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
+    const keys = client.identity_pics.map( i => ( i._id ));    
+    const imageDocs = await dbX.fetch( { keys } )
+
     const id = client._id;
 
-    // const veridocToken = await getVeridocToken();
-    // const api = axios.create({
-    //   method: "post",
-    //   url: "/id/v2/verify",
-    //   baseURL: process.env.VERIDOC_URL,
-    //   headers: {
-    //     "content-type": "application/json",
-    //     Authorization: `Bearer ${veridocToken}`,
-    //   },
-    // });
+    const veridocToken = await getVeridocToken();
+    const api = axios.create({
+      method: "post",
+      url: "/id/v2/verify",
+      baseURL: process.env.VERIDOC_URL,
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${veridocToken}`,
+      },
+    });
 
-    //   const veridocRes = await api.post("/id/v2/verify", {
-    //     id,
-    //     frontImage: req.user.veridoc.frontImage,
-    //     backImage: req.user.veridoc.backImage,
-    //     faceImage: req.user.veridoc.faceImage,
-    //   });
+      const veridocRes = await api.post("/id/v2/verify", {
+        id,
+        frontImage: imageDocs.rows[0].doc.base64str,
+        backImage: imageDocs.rows[1].doc.base64str,
+        faceImage: imageDocs.rows[2].doc.base64str,
+      });
 
     //// guarda el UUID devuelto por veridoc
     // const verificationId = veridocRes.data;
-      
-    setTimeout( ()=>{
-      res.send(
-        // uuid: uuidv4()
-         '3b7940b1-426a-4b07-8eaa-352595b5b522'
-      );
-    },2400)
-    
+      res.send(veridocRes.data);
+
   } catch (error) {
     res.status(404).send('No coincidences found with supplied Id');
   }
