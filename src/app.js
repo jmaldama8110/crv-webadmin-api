@@ -27,7 +27,7 @@ const rccFycoRouter =  require('./routers/rccfyco');
 const guaranteeRouter = require('./routers/guarantee');
 const identityRouter = require('./routers/identityimg');
 const socioeconomicRouter = require('./routers/socioeconomic');
-const emailsWebSiteRouter = require('./routers/emailsWebSite');
+const emailRouter = require('./routers/email');
 const coundbRouter = require('./routers/couchdb');
 const loanDestRouter = require('./routers/loanDest');
 const actionRouter = require('./routers/action');
@@ -76,7 +76,7 @@ app.use(rccFycoRouter)
 app.use(guaranteeRouter)
 app.use(identityRouter)
 app.use(socioeconomicRouter)
-app.use(emailsWebSiteRouter)
+app.use(emailRouter);
 
 app.use(coundbRouter);
 
