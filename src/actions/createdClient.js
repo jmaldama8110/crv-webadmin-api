@@ -1,5 +1,6 @@
 const DocumentCollection = require('./../model/documentCollection');
 const ClientCollection = require('./../model/clientCollection');
+const Functions = require('./../helpers/functions');
 const { sqlConfig } = require("../db/connSQL");
 const tbl = require('../utils/TablesSQL');
 const moment = require("moment");
@@ -9,6 +10,7 @@ const { getDates, getId } = require('./createPerson');
 
 const Document = new DocumentCollection();
 const Client = new ClientCollection();
+const Funct = new Functions();
 
 async function getClientHFById(externalId) {
     try {
@@ -162,7 +164,7 @@ function sortDataClient(client) {
 
     (clientHF.TELEFONO).push(
         {
-            id: IS_CREATE ? 0 : phoneBusiness._id,
+            id: IS_CREATE ? 0 : Funct.validateInt(phoneBusiness._id),
             idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
             extension: "",
             tipo_telefono: phoneBusiness ? phoneBusiness.type ? phoneBusiness.type : " " : " ",
@@ -176,7 +178,7 @@ function sortDataClient(client) {
         if (campo.type === 'NEGOCIO') {
             clientHF.NEGOCIO = [
                 {
-                    id: IS_CREATE ? 0 : client.data_company[0]["id_empresa"],
+                    id: IS_CREATE ? 0 : Funct.validateInt(client.data_company[0]["id_empresa"]),
                     id_dir: IS_CREATE ? 0 : campo._id, //id de la dirección del negocio
                     nombre: business_data.business_name ? business_data.business_name.trim() : "NEGOCIO",
                     calle: campo.address_line1 ? campo.address_line1 : "Calle ...",
@@ -207,8 +209,8 @@ function sortDataClient(client) {
                     id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 716,
                     tiempo_actividad_incio: business_data.business_start_date ? getDates(business_data.business_start_date) : "1970-01-01",
                     tiempo_actividad_final: business_data.business_end_date ? getDates(business_data.business_end_date) : "1970-01-01",
-                    id_empresa: IS_CREATE ? 0 : client.data_company[0].id_empresa,
-                    id_oficina_empresa: IS_CREATE ? 0 : client.data_company[0].id_oficina_empresa
+                    id_empresa: IS_CREATE ? 0 : Funct.validateInt(client.data_company[0].id_empresa),
+                    id_oficina_empresa: IS_CREATE ? 0 : Funct.validateInt(client.data_company[0].id_oficina_empresa)
                 }
             ]
         }
@@ -224,7 +226,7 @@ function sortDataClient(client) {
 
     clientHF.IDENTIFICACIONES = [
         {
-            id: IS_CREATE ? 0 : client.identities[3]._id,
+            id: IS_CREATE ? 0 : Funct.validateInt(client.identities[3]._id),
             id_entidad: IS_CREATE ? 0 : client.id_persona,
             tipo_identificacion: "PROSPERA",
             id_numero: ""
@@ -286,7 +288,7 @@ function sortDataClient(client) {
 
     clientHF.EFIRMA = [
         {
-            id_firma_electronica: IS_CREATE ? 0 : client.data_efirma[0].id,
+            id_firma_electronica: IS_CREATE ? 0 : Funct.validateInt(client.data_efirma[0].id),
             fiel: ""
         }
     ]
