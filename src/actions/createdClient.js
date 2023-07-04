@@ -179,7 +179,7 @@ function sortDataClient(client) {
             clientHF.NEGOCIO = [
                 {
                     id: IS_CREATE ? 0 : Funct.validateInt(client.data_company[0]["id_empresa"]),
-                    id_dir: IS_CREATE ? 0 : campo._id, //id de la dirección del negocio
+                    id_dir: IS_CREATE ? 0 : Funct.validateInt(campo._id), //id de la dirección del negocio
                     nombre: business_data.business_name ? business_data.business_name.trim() : "NEGOCIO",
                     calle: campo.address_line1 ? campo.address_line1 : "Calle ...",
                     referencia: campo.address_line1 ? campo.address_line1 : "Calle ...",
