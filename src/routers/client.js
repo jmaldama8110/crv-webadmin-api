@@ -121,16 +121,21 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 business_phone: ""
             }
 
-            let econActId = 0, econActCap = ''
-            if( data.recordsets[7][0].id_actividad_economica ){
-                econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
-                econActCap =  data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString(): '';
-            }
+            let econActId = 0, econActCap = '',
+            profId = 0, profCap = '',
+            occupId = 0, occupCap = ''
 
-            const   profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
-                    profCap = data.recordsets[7][0].nombre_profesion? data.recordsets[7][0].nombre_profesion.toString() : '';
-            const   occupId = perSet.id_occupation ? perSet.id_occupation : 0,
-                    occupCap = perSet.occupation? perSet.occupation.toString() : '';
+            if( data.recordsets[7].length > 0 ){
+                if( data.recordsets[7][0].id_actividad_economica  ){
+                    econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
+                    econActCap =  data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString(): '';
+                }
+                profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
+                profCap = data.recordsets[7][0].nombre_profesion? data.recordsets[7][0].nombre_profesion.toString() : '';
+                
+                occupId = perSet.id_occupation ? perSet.id_occupation : 0,
+                occupCap = perSet.occupation? perSet.occupation.toString() : '';            
+            }
 
             if( data.recordsets[7].length ) {
                 business_data = {
