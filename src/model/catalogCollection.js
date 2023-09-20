@@ -211,8 +211,7 @@ class CatalogCollection extends DocumentCollection {
                     data: {
                         to: [
                             "jmgomez@grupoconserva.mx",
-                            "aamorales@grupoconserva.mx",
-                            "omarmelendez638@gmail.com"
+                            "aamorales@grupoconserva.mx"
                         ],
                         from: "aamorales@grupoconserva.mx"
                     }
