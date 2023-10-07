@@ -15,8 +15,9 @@ const LoanApp = new LoanAppCollection();
 const LoanAppGroup = new LoanAppGroupCollection();
 const User = new UserCollection();
 const Product = new ProductCollection();
-const Branch = new BranchCollection()
-
+const Branch = new BranchCollection();
+const Functions = require('./../helpers/functions');
+const Funct = new Functions();
 async function createLoanFromHF(data) {
     try {
         console.log(data);
@@ -156,7 +157,7 @@ async function assignMontoloanHF(data) {
                 data['INTEGRANTES'][idx].monto_autorizado,
                 data['INTEGRANTES'][idx].econ_id_actividad_economica, // econ_id_actividad_economica // TODO: ver si lo ocupa el procedimiento
                 0, // CURP Fisica
-                0, // motivo
+                data['INTEGRANTES'][idx].motivo, // motivo
                 data['INTEGRANTES'][idx].id_cata_medio_desembolso, //1->CHEQUE, 2->ORDEN DE PAGO, 3->TARJETA DE PAGO
                 0.00 // monto_garantia_financiable
             );
@@ -640,7 +641,7 @@ async function createLoanHF(data) {
                     monto_autorizado: member.approved_amount || 0,
                     econ_id_actividad_economica: 0, // TODO Se toma de los datos del cliente
                     curp_fisica: 0,
-                    motivo: '',
+                    motivo: Funct.validateInt(Array.isArray(member.dropout_reason) ? member.dropout_reason[0] : 0),
                     id_cata_medio_desembolso: member.disbursment_mean ? member.disbursment_mean : 2, // 1-> Cheque, 2->Orden de pago
                     monto_garantia_financiable: member.monto_garantia_financiable ? member.monto_garantia_financiable : 0,
                 }
