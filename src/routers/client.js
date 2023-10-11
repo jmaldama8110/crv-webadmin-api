@@ -268,6 +268,7 @@ router.get('/clients/hf/loanapps', authorize, async(req, res) => {
                 loan_cycle: i.ciclo,
                 disbursment_mean: i.id_cata_medio_desembolso,
                 insurance: {
+                    id: nCounter,
                     beneficiary: (insuranceMemberInfo ? insuranceMemberInfo.nombre_beneficiario : ''),
                     relationship: (insuranceMemberInfo ? insuranceMemberInfo.parentesco : ''),
                     percentage: (insuranceMemberInfo ? insuranceMemberInfo.porcentaje : 0 )
@@ -291,8 +292,8 @@ router.get('/clients/hf/loanapps', authorize, async(req, res) => {
             disbursment_mean: loan_application.medio_desembolso.trim(),
             liquid_guarantee: loan_application.garantia_liquida,
             loan_cycle: loan_cycle.ciclo,
-            estatus: "TRAMITE", // para renovacion
-            sub_estatus: "NUEVO TRAMITE", /// 
+            estatus: loan_application.estatus.trim(), // para renovacion
+            sub_estatus: loan_application.sub_estatus.trim(), /// 
             renovation: true,
             members,
             product: {
