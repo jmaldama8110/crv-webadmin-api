@@ -683,7 +683,8 @@ async function createLoanHF(data) {
 
         const MountAssigned = await assignMontoloanHF(dataMount);
         if (!MountAssigned) return new Error('Failed to assign mount');
-
+        console.log("MEMBER");
+        console.log(loan.members);
         const detailLoan = await LoanApp.getDetailLoan(loan.id_solicitud, idBranch);
         if (!detailLoan) return new Error('Failed to in Loan');
 
@@ -696,10 +697,12 @@ async function createLoanHF(data) {
                 await new GroupCollection(client).save();
             }
         }
-
-        for (let idx = 0; idx < detailLoan[4].length; idx++) {
-            loan.members[idx].insurance.id = detailLoan[5][idx].id
+        try{
+            for (let idx = 0; idx < detailLoan[4].length; idx++) {
+                loan.members[idx].insurance.id = detailLoan[5][idx].id
+            }
         }
+        catch(error){}
 
         typeClient === 1 ? await new LoanAppGroupCollection(loan).save() : await new LoanAppCollection(loan).save();
 
