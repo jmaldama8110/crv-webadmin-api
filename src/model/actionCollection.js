@@ -746,7 +746,7 @@ class ActionCollection extends DocumentCollection {
                     company: "Desconocida",
                     validated: false
                 }
-            ],
+            ],  
             identities: [],
             province_of_birth: [
                 "PROVINCE|15",
