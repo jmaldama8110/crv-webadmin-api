@@ -681,6 +681,7 @@ async function createLoanHF(data) {
             }
         };
 
+        return new Error(loan.members);
         const MountAssigned = await assignMontoloanHF(dataMount);
         if (!MountAssigned) return new Error('Failed to assign mount');
         console.log("MEMBER");
