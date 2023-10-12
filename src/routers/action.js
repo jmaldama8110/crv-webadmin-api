@@ -326,9 +326,8 @@ router.get('/actions/exec', async (req, res) => {
                         // Validate creation of loan
                         if (loan instanceof Error || !loan) {
                             action.status = 'Error';
-                            action.errors = loan.message
+                            action.errors = [loan.message];
                             RSP_Result.status = 'ERROR';
-                            await new ActionCollection(action).save();
                             console.log(loan)
                         }
                         else {
