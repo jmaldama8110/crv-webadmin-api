@@ -17,6 +17,7 @@ const User = new UserCollection();
 const Product = new ProductCollection();
 const Branch = new BranchCollection();
 const Functions = require('./../helpers/functions');
+const {json} = require("express");
 const Funct = new Functions();
 async function createLoanFromHF(data) {
     try {
@@ -681,7 +682,7 @@ async function createLoanHF(data) {
             }
         };
 
-        return new Error(loan.members);
+        return new Error(JSON.stringify(loan.members));
         const MountAssigned = await assignMontoloanHF(dataMount);
         if (!MountAssigned) return new Error('Failed to assign mount');
         console.log("MEMBER");
