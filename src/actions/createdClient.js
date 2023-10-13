@@ -322,7 +322,10 @@ async function createClientHF(data) {
             tbl.cleanTable(tbl.UDT_SPLD_DatosCliente);
             tbl.cleanTable(tbl.UDT_CONT_FirmaElectronica);
         }
-
+        tbl.UDT_CONT_Empresa.rows.clear();
+        tbl.UDT_CONT_Direcciones.rows.clear();
+        tbl.UDT_CONT_Oficinas.rows.clear();
+        tbl.UDT_CONT_Telefonos.rows.clear();
         tbl.UDT_CONT_Empresa.rows.add(
             dataSort["NEGOCIO"][0].id,
             dataSort["NEGOCIO"][0].nombre,
@@ -395,6 +398,17 @@ async function createClientHF(data) {
             .input('id_sesion', sql.Int, 0)
             .execute('MOV_AdministrarEmpresa')//Sirve para crear el negocio
         cleanAllTables();
+        tbl.UDT_CONT_Persona.rows.clear();
+        tbl.UDT_CONT_Identificaciones.rows.clear();
+        tbl.UDT_CONT_Telefonos.rows.clear();
+        tbl.UDT_CONT_Negocios.rows.clear();
+        tbl.UTD_CLIE_Clientes.rows.clear();
+        tbl.UDT_CLIE_Individual.rows.clear();
+        tbl.UDT_CLIE_Solicitud.rows.clear();
+        tbl.UDT_CLIE_DatoBancario.rows.clear();
+        tbl.UDT_SPLD_DatosCliente.rows.clear();
+        tbl.UDT_CONT_FirmaElectronica.rows.clear();
+
         let id_empresa = 0;
         let id_direccion = 0;//direccion de empresa/Negocio
         let id_oficina = 0;

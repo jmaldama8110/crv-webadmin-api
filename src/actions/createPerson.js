@@ -198,7 +198,12 @@ async function createPersonHF(data) {
         if (!dataSort) return new Error('data sort Error');
 
         const pool = await sql.connect(sqlConfig);
-
+        tbl.UDT_CONT_DireccionContacto.rows.clear();
+        tbl.UDT_CONT_Persona.rows.clear();
+        tbl.UDT_CONT_Identificaciones.rows.clear();
+        tbl.UDT_CONT_CURP.rows.clear();
+        tbl.UDT_CONT_IFE.rows.clear();
+        tbl.UDT_CONT_Telefonos.rows.clear();
         const action2 = dataSort['DATOS_PERSONALES'][0].id > 0 ? 'ACTUALIZAR_PERSONA' : 'INSERTAR_PERSONA'
         // TODO ENVIAR LOS id´s CUANDO SE TENGA QUE ACTUALIZAR DE LO CONTRARIO ENVIAR 0
         console.log(action2)

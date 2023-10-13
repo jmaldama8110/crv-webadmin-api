@@ -259,7 +259,12 @@ clientSchema.statics.createPersonHF = async(data, action) => {
     const pool = await sql.connect(sqlConfig);
 
     // TODO: ENVIAR LOS id´s CUANDO SE TENGA QUE ACTUALIZAR DE LO CONTRARIO ENVIAR 0
-
+    tbl.UDT_CONT_DireccionContacto.rows.clear();
+    tbl.UDT_CONT_Persona.rows.clear();
+    tbl.UDT_CONT_Identificaciones.rows.clear();
+    tbl.UDT_CONT_CURP.rows.clear();
+    tbl.UDT_CONT_IFE.rows.clear();
+    tbl.UDT_CONT_Telefonos.rows.clear();
     for (const idx in data['DIRECCIONES']) {
         tbl.UDT_CONT_DireccionContacto.rows.add(
             data['DIRECCIONES'][idx].id,
@@ -383,6 +388,10 @@ clientSchema.statics.createClientHF = async(data, value) => {
             tbl.cleanTable(tbl.UDT_SPLD_DatosCliente);
             tbl.cleanTable(tbl.UDT_CONT_FirmaElectronica);
         }
+        tbl.UDT_CONT_Empresa.rows.clear();
+        tbl.UDT_CONT_Direcciones.rows.clear();
+        tbl.UDT_CONT_Oficinas.rows.clear();
+        tbl.UDT_CONT_Telefonos.rows.clear();
 
         tbl.UDT_CONT_Empresa.rows.add(
             data["NEGOCIO"][0].id,
@@ -478,7 +487,16 @@ clientSchema.statics.createClientHF = async(data, value) => {
         //     id_oficina,
         //     id_telefono
         // };
-
+        tbl.UDT_CONT_Persona.rows.clear();
+        tbl.UDT_CONT_Identificaciones.rows.clear();
+        tbl.UDT_CONT_Telefonos.rows.clear();
+        tbl.UDT_CONT_Negocios.rows.clear();
+        tbl.UTD_CLIE_Clientes.rows.clear();
+        tbl.UDT_CLIE_Individual.rows.clear();
+        tbl.UDT_CLIE_Solicitud.rows.clear();
+        tbl.UDT_CLIE_DatoBancario.rows.clear();
+        tbl.UDT_SPLD_DatosCliente.rows.clear();
+        tbl.UDT_CONT_FirmaElectronica.rows.clear();
 
         //#region CREATE CLIENT
         tbl.UDT_CONT_Persona.rows.add(data["PERSONA"][0].id, null, null,

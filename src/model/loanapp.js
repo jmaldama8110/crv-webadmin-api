@@ -178,7 +178,16 @@ loanappSchema.statics.assignClientLoanFromHF = async(data) => {
 loanappSchema.statics.assignMontoloanHF = async(data) => {
     try {
         const pool = await sql.connect(sqlConfig);
-
+        tbl.UDT_Solicitud.rows.clear();
+        tbl.Cliente.rows.clear();
+        tbl.GrupoSolidario.rows.clear();
+        tbl.Direccion.rows.clear();
+        tbl.UDT_SolicitudDetalle.rows.clear();
+        tbl.UDT_CLIE_DetalleSeguro.rows.clear();
+        tbl.UDT_CLIE_ReferenciasPersonales.rows.clear();
+        tbl.UDT_OTOR_GarantiaPrendaria.rows.clear();
+        tbl.UDT_OTOR_TuHogarConConserva.rows.clear();
+        tbl.UDT_CLIE_TuHogarConConservaCoacreditado.rows.clear();
         tbl.UDT_Solicitud.rows.add(
             data['SOLICITUD'][0].id,
             data['CLIENTE'][0].id,
@@ -319,7 +328,16 @@ loanappSchema.statics.assignMontoloanHF = async(data) => {
 loanappSchema.statics.updateLoanDataHF = async(body, seguro, status) => { //Metodo para actualizar datos del loan en el HF (principalmente los estatus)
     try {
         const pool = await sql.connect(sqlConfig);
-
+        tbl.UDT_Solicitud.rows.clear();
+        tbl.Cliente.rows.clear();
+        tbl.GrupoSolidario.rows.clear();
+        tbl.Direccion.rows.clear();
+        tbl.UDT_SolicitudDetalle.rows.clear();
+        tbl.UDT_CLIE_DetalleSeguro.rows.clear();
+        tbl.UDT_CLIE_ReferenciasPersonales.rows.clear();
+        tbl.UDT_OTOR_GarantiaPrendaria.rows.clear();
+        tbl.UDT_OTOR_TuHogarConConserva.rows.clear();
+        tbl.UDT_CLIE_TuHogarConConservaCoacreditado.rows.clear();
         let id_producto = body[0][0].id_producto;
         let statusHF = 'ACEPTADO';
         let subestatusHF = 'AUTORIZADO';
