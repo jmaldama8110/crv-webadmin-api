@@ -428,7 +428,7 @@ router.get('/docs/pdf/tarjeton-digital',authorize, async(req, res) =>{
 
 })
 
-router.get('/docs/pdf/test', async(req, res) =>{
+router.get('/docs/pdf/mujeres-de-palabra',authorize, async(req, res) =>{
 
   try{
 
@@ -451,9 +451,8 @@ router.get('/docs/pdf/test', async(req, res) =>{
     const clientsQuery = await db.fetch({keys: keys})
     
     const loginUser = {
-      fullName: req.user ?`${req.user.name} ${req.lastname} ${req.second_lastname}` : '__________________________________________________________________'
+      fullName: req.user ?`${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : '__________________________________________________________________'
     }
-
 
     const clientsData = clientsQuery.rows.map( (x) => {
 
