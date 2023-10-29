@@ -17,7 +17,6 @@ const User = new UserCollection();
 const Product = new ProductCollection();
 const Branch = new BranchCollection();
 const Functions = require('./../helpers/functions');
-const {json} = require("express");
 const Funct = new Functions();
 async function createLoanFromHF(data) {
     try {
@@ -79,7 +78,16 @@ async function assignClientLoanFromHF(data) {
 async function assignMontoloanHF(data) {
     try {
         const pool = await sql.connect(sqlConfig);
-
+        tbl.UDT_Solicitud.rows.clear();
+        tbl.Cliente.rows.clear();
+        tbl.GrupoSolidario.rows.clear();
+        tbl.Direccion.rows.clear();
+        tbl.UDT_SolicitudDetalle.rows.clear();
+        tbl.UDT_CLIE_DetalleSeguro.rows.clear();
+        tbl.UDT_CLIE_ReferenciasPersonales.rows.clear();
+        tbl.UDT_OTOR_GarantiaPrendaria.rows.clear();
+        tbl.UDT_OTOR_TuHogarConConserva.rows.clear();
+        tbl.UDT_CLIE_TuHogarConConservaCoacreditado.rows.clear();
         tbl.UDT_Solicitud.rows.add(
             data['SOLICITUD'][0].id,
             data['SOLICITUD'][0].id_cliente,
@@ -682,11 +690,9 @@ async function createLoanHF(data) {
             }
         };
 
-        return new Error(JSON.stringify(loan.members));
         const MountAssigned = await assignMontoloanHF(dataMount);
         if (!MountAssigned) return new Error('Failed to assign mount');
-        console.log("MEMBER");
-        console.log(loan.members);
+
         const detailLoan = await LoanApp.getDetailLoan(loan.id_solicitud, idBranch);
         if (!detailLoan) return new Error('Failed to in Loan');
 
@@ -699,6 +705,7 @@ async function createLoanHF(data) {
                 await new GroupCollection(client).save();
             }
         }
+
         try{
             for (let idx = 0; idx < detailLoan[4].length; idx++) {
                 loan.members[idx].insurance.id = detailLoan[5][idx].id

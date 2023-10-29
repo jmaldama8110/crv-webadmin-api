@@ -197,7 +197,16 @@ class LoanAppCollection extends DocumentCollection {
     static async assignMontoloanHF(data) {
         try {
             const pool = await sql.connect(sqlConfig);
-
+            tbl.UDT_Solicitud.rows.clear();
+            tbl.Cliente.rows.clear();
+            tbl.GrupoSolidario.rows.clear();
+            tbl.Direccion.rows.clear();
+            tbl.UDT_SolicitudDetalle.rows.clear();
+            tbl.UDT_CLIE_DetalleSeguro.rows.clear();
+            tbl.UDT_CLIE_ReferenciasPersonales.rows.clear();
+            tbl.UDT_OTOR_GarantiaPrendaria.rows.clear();
+            tbl.UDT_OTOR_TuHogarConConserva.rows.clear();
+            tbl.UDT_CLIE_TuHogarConConservaCoacreditado.rows.clear();
             tbl.UDT_Solicitud.rows.add(
                 data['SOLICITUD'][0].id,
                 data['CLIENTE'][0].id,
