@@ -772,7 +772,7 @@ async function renderPDf( htmlData ) {
   await browser.close();
   // fs.unlinkSync(fileNamePathPdf);
   // res.send(pdf.toString('base64'));
-  return { downloadPath: serverHost+'/' +fileNamePathPdf.replace('./public/','') }
+  return { downloadPath: fileNamePathPdf.replace('./public/','') }
 }
 
 router.post('/photos/upload', authorize, upload.array('photos', 24), async function (req, res, next) {
