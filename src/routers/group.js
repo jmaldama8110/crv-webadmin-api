@@ -96,7 +96,9 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
         await db.createIndex({ index:{  fields:["couchdb_type"] }});
         const productList = await db.find( { selector: { couchdb_type: "PRODUCT" }});
         const productMaster = productList.docs.find( (prod)=> prod.external_id == loan_application.id_producto_maestro  )
-        
+        if( !productMaster) {
+            throw new Error('Se producto maestro no se encontro para id_producto_maestro: '+ loan_application.id_producto_maestro );
+        }
         const identifierFreq = loan_application.periodicidad.slice(0,1);
         const frequency = productMaster.allowed_term_type.find( (i) => i.identifier === identifierFreq)
         /// Uses the same loan application info, except some field, ei: id_solicitud,
