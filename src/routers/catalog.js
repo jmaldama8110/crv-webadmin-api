@@ -1,13 +1,7 @@
 const express = require('express');
 const router = new express.Router();
-const Catalog = require('../model/catalog')
-const Neighborhood = require('../model/neighborhood');
-const City = require('../model/city');
-const Municipality = require('../model/municipality');
-const Province = require('../model/province');
-const Country = require('../model/country');
-const Branch = require('../model/branch');
 
+const authorize = require("../middleware/authorize");
 
 const CatalogCollection = require('../model/catalogCollection');
 

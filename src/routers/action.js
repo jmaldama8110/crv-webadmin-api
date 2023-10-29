@@ -12,12 +12,13 @@ const Group = new GroupCollection();
 const Action = new ActionCollection();
 const LoanApp = new LoanAppCollection();
 const LoanAppGroup = new LoanAppGroupCollection();
+const authorize = require("../middleware/authorize");
 const Token = new TokenCollection();
 const { sortDataPerson, createPersonHF } = require('./../actions/createPerson');
 const { sortDataClient, createClientHF } = require('./../actions/createdClient');
-const { createLoanHF, sortLoanHFtoCouch, assignClientLoanFromHF } = require('./../actions/createLoan');
 
-router.post('/action', async (req, res) => {
+const { createLoanHF, sortLoanHFtoCouch, assignClientLoanFromHF } = require('./../actions/createLoan');
+router.post('/action', authorize,async (req, res) => {
     try {
         const newAction = new ActionCollection({ ...req.body });
         newAction.save();
@@ -28,7 +29,7 @@ router.post('/action', async (req, res) => {
     }
 });
 
-router.get('/actions/validate', async (req, res) => {
+router.get('/actions/validate', authorize,async (req, res) => {
     try {
         // Validate action
 
@@ -169,7 +170,7 @@ router.get('/actions/validate', async (req, res) => {
 });
 
 
-router.get('/actions/exec', async (req, res) => {
+router.get('/actions/exec',authorize, async (req, res) => {
     try {
         // Validate action
         let RSP_Result = { status: 'ERROR' };
