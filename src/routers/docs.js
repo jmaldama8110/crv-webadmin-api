@@ -435,6 +435,7 @@ router.get('/docs/pdf/mujeres-de-palabra',authorize, async(req, res) =>{
     if( !req.query.loanId ){
       throw new Error('parameter loanId is missing in URL');
     }
+    
     const db = nano.use(process.env.COUCHDB_NAME);
     await db.createIndex({ index: { fields: ["couchdb_type"]}});
     const query = await db.find( { selector: { couchdb_type: "LOANAPP_GROUP" }, limit: 50000});
@@ -480,20 +481,20 @@ router.get('/docs/pdf/mujeres-de-palabra',authorize, async(req, res) =>{
   
         }
         const incomeInfo = {
-          sales: formatLocalCurrency(parseInt(x.doc.business_data.income_sales_total)),
-          family: formatLocalCurrency(parseInt(x.doc.business_data.income_partner)),
-          job: formatLocalCurrency(parseInt(x.doc.business_data.income_job)),
-          abroad: formatLocalCurrency(parseInt(x.doc.business_data.income_remittances)),
-          other: formatLocalCurrency(parseInt(x.doc.business_data.income_other)),
-          total: formatLocalCurrency(parseInt(x.doc.business_data.income_total)),
+          sales: x.doc.business_data.income_sales_total,
+          family: x.doc.business_data.income_partner,
+          job: x.doc.business_data.income_job,
+          abroad: x.doc.business_data.income_remittances,
+          other: x.doc.business_data.income_other,
+          total: x.doc.business_data.income_total,
         }
         const expensesInfo = {
-          family: formatLocalCurrency(parseInt(x.doc.business_data.expense_family)),
-          rent: formatLocalCurrency(parseInt(x.doc.business_data.expense_rent)),
-          bis: formatLocalCurrency(parseInt(x.doc.business_data.expense_business)),
-          payables: formatLocalCurrency(parseInt(x.doc.business_data.expense_debt)),
-          debt: formatLocalCurrency(parseInt(x.doc.business_data.expense_credit_cards)),
-          total: formatLocalCurrency(parseInt(x.doc.business_data.expense_total)),
+          family: x.doc.business_data.expense_family,
+          rent: x.doc.business_data.expense_rent,
+          bis: x.doc.business_data.expense_business,
+          payables: x.doc.business_data.expense_debt,
+          debt: x.doc.business_data.expense_credit_cards,
+          total: x.doc.business_data.expense_total,
         }
         const bisQualitySalesMonthly = {
           monthSaleJan: x.doc.business_data.bis_quality_sales_monthly.month_sale_jan,

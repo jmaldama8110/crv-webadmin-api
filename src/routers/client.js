@@ -15,18 +15,30 @@ const sendSms = require("../sms/sendsms");
 const formatLocalCurrency = require('../utils/numberFormatter');
 
 
+function mapSocialMedia (id) {
+    switch(id){
+        case 2: 
+            return 'WHATSAPP';
+        case 3:
+            return 'FACEBOOK';
+        case 4: 
+            return 'INSTAGRAM';
+        default: 
+            return '';
+    }
+}
 router.get("/clients/hf", authorize, async(req, res) => {
 
     //  get the Client Data with identityNumber and externalId
     /* 
-      recordsets[0][0]  -> Datos personsales
-      recordsets[1] Dataset -> Identificaciones
-      recordsets[2] Dataset -> Datos del IFE / INE
-      recordsets[3] Direcciones -> Direcciones  
-      recordsets[4] Telefonos
-      recordsets[5] Aval
-      recordsets[6] Ciclo
-      recordsets[7] Datos economicos
+      data.recordsets[0][0]  -> Datos personsales
+      data.recordsets[0][1] Dataset -> Identificaciones
+      data.recordsets[0][2] Dataset -> Datos del IFE / INE
+      data.recordsets[0][3] Direcciones -> Direcciones  
+      data.recordsets[0][4] Telefonos
+      data.recordsets[0][5] Aval
+      data.recordsets[0][6] Ciclo
+      data.recordsets[0][7] Datos economicos
       */
     try {
         
@@ -36,6 +48,7 @@ router.get("/clients/hf", authorize, async(req, res) => {
         } else {
             throw new Error('Some query parameters area mising...')
         }
+        console.log(data.recordsets[7][0]);
         
         if (data.recordset.length == 1) {
 
@@ -68,10 +81,13 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 })
             }
 
-            const address = []
+            const address = [];
+            let email = ''
             for (let i = 0; i < data.recordsets[3].length; i++) {
-                const add = data.recordsets[3][i]
-
+                const add = data.recordsets[3][i]                
+                if( add.correo_electronico ){
+                    email = add.correo_electronico;
+                }
                 address.push({
                     _id: add.id,
                     type: add.tipo.trim(),
@@ -90,7 +106,8 @@ router.get("/clients/hf", authorize, async(req, res) => {
                     post_code: add.codigo_postal,
                     residence_since: add.tiempo_habitado_inicio,
                     residence_to: add.tiempo_habitado_final,
-                    road: [add.vialidad, add.etiqueta_vialidad]
+                    road: [add.vialidad, add.etiqueta_vialidad],
+                    email
                 })
             }
             const phones = [];
@@ -112,13 +129,45 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 ...data.recordsets[0][0],
             };
             
+            let household_data = {
+                household_floor: false,
+                household_roof: false,
+                household_toilet: false,
+                household_latrine: false,
+                household_brick: false,
+                economic_dependants: "",
+                internet_access: false,
+                prefered_social: "",
+                user_social: "",
+            }
             let business_data = { 
                 economic_activity:[], 
                 profession:[],
                 business_name: '',
                 business_start_date:'',
                 business_owned: false,
-                business_phone: ""
+                business_phone: "",
+                number_employees: "",
+                loan_destination: [
+                  0,
+                  ""
+                ],
+                income_sales_total: "",
+                income_partner: "",
+                income_job: "",
+                income_remittances: "",
+                income_other: "",
+                income_total: "",
+                expense_family: "",
+                expense_rent: "",
+                expense_business: "",
+                expense_debt: "",
+                expense_credit_cards: "",
+                expense_total: "",
+                keeps_accounting_records: false,
+                has_previous_experience: false,
+                previous_loan_experience: "",
+                bis_season_type: "",
             }
 
             let econActId = 0, econActCap = '',
@@ -126,10 +175,12 @@ router.get("/clients/hf", authorize, async(req, res) => {
             occupId = 0, occupCap = ''
 
             if( data.recordsets[7].length > 0 ){
+
                 if( data.recordsets[7][0].id_actividad_economica  ){
                     econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
                     econActCap =  data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString(): '';
                 }
+
                 profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
                 profCap = data.recordsets[7][0].nombre_profesion? data.recordsets[7][0].nombre_profesion.toString() : '';
                 
@@ -138,14 +189,30 @@ router.get("/clients/hf", authorize, async(req, res) => {
             }
 
             if( data.recordsets[7].length ) {
-                business_data = {
-                    economic_activity: [ econActId,econActCap],
-                    profession: [profId, profCap],
-                    business_name: data.recordsets[7][0].nombre_negocio,
-                    business_start_date: data.recordsets[7][0].econ_fecha_inicio_act_productiva,
-                    business_owned: false,
-                    business_phone: ""    
-                }
+
+                business_data.economic_activity = [ econActId,econActCap],
+                business_data.profession = [profId, profCap],
+                business_data.business_name = data.recordsets[7][0].nombre_negocio,
+                business_data.business_start_date = data.recordsets[7][0].econ_fecha_inicio_act_productiva,
+                business_data.business_owned = false,
+                business_data.business_phone = "",
+                
+                business_data.number_employees = "";
+                business_data.loan_destination = [data.recordsets[7][0].econ_id_destino_credito,''];
+                business_data.income_sales_total = data.recordsets[7][0].econ_cantidad_mensual;
+                business_data.income_partner = data.recordsets[7][0].econ_sueldo_conyugue;
+                
+
+                household_data.economic_dependants = data.recordsets[7][0].econ_dependientes_economicos.toString();
+                household_data.household_brick = !!data.recordsets[7][0].vivienda_block;
+                household_data.household_floor = !!data.recordsets[7][0].vivienda_piso;
+                household_data.household_latrine = !!data.recordsets[7][0].vivienda_letrina;
+                household_data.household_roof = !!data.recordsets[7][0].vivienda_techo_losa;
+                household_data.household_toilet =  !!data.recordsets[7][0].vivienda_bano;
+                household_data.internet_access = !!data.recordsets[7][0].utiliza_internet;
+                household_data.prefered_social = mapSocialMedia( data.recordsets[7][0].id_tipo_red_social );
+                household_data.user_social = data.recordsets[7][0].usuario_red_social
+
             }
 
             const cicloData = data.recordsets[6]
@@ -157,7 +224,7 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 name: perSet.name,
                 lastname: perSet.lastname,
                 second_lastname: perSet.second_lastname,
-                email: `${perSet.second_lastname}_${perSet.lastname}_${perSet.name}_${perSet.gender}@conserva.org.mx`,
+                email,
                 curp: curp ? curp.id_numero : "",
                 clave_ine: ife ? ife.id_numero : "",
                 numero_emisiones: ine_detalle ? ine_detalle.numero_emision: '',
@@ -188,12 +255,15 @@ router.get("/clients/hf", authorize, async(req, res) => {
                 identification_type: [], // INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
                 guarantor: [],
                 business_data,
+                ...household_data,                
                 beneficiaries: [],
                 personal_references: [],
                 guarantee: [],
                 ife_details: ineDetail,
                 data_company: [data.recordsets[8][0]],
                 data_efirma: [data.recordsets[9][0]],
+
+                
                 
             };
             res.send(result);
@@ -206,6 +276,8 @@ router.get("/clients/hf", authorize, async(req, res) => {
         res.status(404).send('Client data not found');
     }
 });
+
+
 
 router.get('/clients/hf/getBalance', authorize, async(req, res) => {
     
