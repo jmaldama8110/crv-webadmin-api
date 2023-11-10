@@ -33,7 +33,6 @@ class ClientCollection extends DocumentCollection {
             this._loan_cycle = obj.loan_cycle,
             this._marital_status = obj.marital_status|| [],
             this._nationality = obj.nationality || [],
-            this._not_bis = obj.not_bis || false,
             this._ocupation = obj.ocupation || [],
             this._phones = obj.phones || [{}],
             this._identities = obj.identities || [],

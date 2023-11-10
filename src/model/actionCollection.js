@@ -756,7 +756,6 @@ class ActionCollection extends DocumentCollection {
                 0,
                 ""
             ],
-            not_bis: false,
             ocupation: [
                 28,
                 "PROMOTORA DE VENTAS (VENTAS POR CATALOGO)"
