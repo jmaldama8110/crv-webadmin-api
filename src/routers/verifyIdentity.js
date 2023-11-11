@@ -1,6 +1,5 @@
 const express = require("express");
 const router = new express.Router();
-const nano = require('../db/connCouch');
 const authorize = require("../middleware/authorize");
 const axios = require("axios");
 const url = require("url");
@@ -11,20 +10,16 @@ router.post("/verify", authorize, async (req, res) => {
 
     if( !req.query.clientId) throw new Error('Missing param clientId');
 
-    const db = nano.use(process.env.COUCHDB_NAME);
-    const client = await db.get(req.query.clientId);
-
-    if( !client.identity_pics || client.identity_pics.length != 3 ){
-      
-      throw new Error('Client.identity_pics is missing or numbers of taken images is not 3')
+    if( !req.body.frontImage ){
+      throw new Error('frontImage base64 property is missing at the request body')
     }
-    
-    const dbX = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
-    const keys = client.identity_pics.map( i => ( i._id ));    
-    const imageDocs = await dbX.fetch( { keys } )
-
-    const id = client._id;
-
+    if( !req.body.backImage ){
+      throw new Error('backImage base64 property is missing at the request body')
+    }
+    if( !req.body.faceImage) {
+      throw new Error('faceImage Image base64 property is missing at the request body')
+    }
+   
     const veridocToken = await getVeridocToken();
     const api = axios.create({
       method: "post",
@@ -37,14 +32,12 @@ router.post("/verify", authorize, async (req, res) => {
     });
 
       const veridocRes = await api.post("/id/v2/verify", {
-        id,
-        frontImage: imageDocs.rows[0].doc.base64str,
-        backImage: imageDocs.rows[1].doc.base64str,
-        faceImage: imageDocs.rows[2].doc.base64str,
+        id: req.query.clientId,
+        frontImage: req.body.frontImage,
+        backImage: req.body.backImage,
+        faceImage: req.body.faceImage,
       });
 
-    //// guarda el UUID devuelto por veridoc
-    // const verificationId = veridocRes.data;
       res.send(veridocRes.data);
 
   } catch (error) {
