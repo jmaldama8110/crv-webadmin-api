@@ -3,156 +3,141 @@ const router = new express.Router();
 const Product = require("../model/product")
 const auth = require("../middleware/auth");
 const authorize = require("../middleware/authorize");
+const nano = require('../db/connCouch');
 
-const ProductCollection = require("../model/productCollection");
-
-
-router.post("/couch/products", async(req,res) => {
-    try{
-        //Creamos un nuevo producto
-        const newProduct = req.body;
-        const registro = Object.keys(newProduct);
-        
-        if (!isComparaArreglos(registro)) throw new Error('Body includes invalid properties...');
-
-        const product = new ProductCollection(newProduct);
-
-        await product.save();
-
-        res.status(201).send(product);
-
-    } catch(e){
-        res.status(400).send(e.message);
+function mapIdentifierForFrequency (frequencyType) {
+    switch( frequencyType){
+        case 'Semanal':
+            return 'Sl';
+        case 'Catorcenal':
+            return 'Cl';
+        case 'Quincenal': 
+            return 'Ql';
+        case 'Mensual':
+            return 'Ml'
+        default:
+            return undefined;
     }
-});
-router.post("/products", auth, async(req,res) => {
-    //Creamos un nuevo producto
-    try{
-        const newProduct = req.body;
-        const registro = Object.keys(newProduct);
-        
-        if (!isComparaArreglos(registro)) {
-            return res.status(400).send({ error: "Body includes invalid properties..." });
-        }
-        // console.log(req.files);
-
-        const product = new Product(newProduct);
-
-        // if(req.files != undefined){
-        //     console.log('Trae archivos')
-        //     if(req.files.logo != undefined){
-        //         console.log('trae logo');
-        //         const logo = req.files.logo;
-        //         const bufferlogo = await convertToBuffer(logo[0]);
-        //         product.logo = bufferlogo;
-        //     }
-        //     if(req.files.avatar != undefined){
-        //         console.log('trae avatar');
-        //         const avatar = req.files.avatar;
-        //         const bufferavatar = await convertToBuffer(avatar[0]);
-        //         product.avatar = bufferavatar;
-        //     }
-        // }
-
-        // console.log(newProduct)
-
-        await product.save();
-
-        res.status(201).send(product);
-
-    } catch(e){
-        console.log(e)
-        res.status(400).send(e + '')
+}
+function mapIdentifierForTerm (frequencyType) {
+    switch( frequencyType){
+        case 'Semanal':
+            return 'S';
+        case 'Catorcenal':
+            return 'C';
+        case 'Quincenal': 
+            return 'Q';
+        case 'Mensual':
+            return 'M'
+        default:
+            return undefined;
     }
-});
-
-router.get('/couchdb/products', authorize, async(req, res) => {    
-    try {
-        const match = {};
-
-        if(req.query.id) match._id = req.query.id;
-        const productCollection = new ProductCollection();
-        const product = await productCollection.find(match);
-
-        if (!product || product.length === 0) throw new Error("Not able to find the product(s)");
-        //TODO QUITAR EL ID Y DATOS PRIVADOS DE LA RESPUESTA(getDataPublic())
-        res.status(200).send(product);
-
-    } catch (e) {
-        console.log(e)
-        res.status(400).send(e.message);
+}
+function mapValueForTerm (frequencyType) {
+    switch( frequencyType){
+        case 'Semanal':
+            return 'Semana(s)';
+        case 'Catorcenal':
+            return 'Catorcena(s)';
+        case 'Quincenal': 
+            return 'Quicena(s)';
+        case 'Mensual':
+            return 'Mes(es)'
+        default:
+            return undefined;
     }
+}
+function mapYearPeriodForTerm (frequencyType) {
+    switch( frequencyType){
+        case 'Semanal':
+            return '52';
+        case 'Catorcenal':
+            return '26';
+        case 'Quincenal': 
+            return '24';
+        case 'Mensual':
+            return '12'
+        default:
+            return undefined;
+    }
+}
 
-});
 
-// router.get('/products', auth, async(req, res) => {
-
-//     const match = {};
-
-//     try {
-
-//         if(req.query.id){
-//             match._id = req.query.id
-//         }
-
-//         const product = await Product.find(match);
-//         if (!product || product.length === 0) {
-//             throw new Error("Not able to find the product(s)");
-//         }
-        
-//         res.status(200).send(product);
-
-//     } catch (e) {
-//         res.status(400).send(e + '');
-//     }
-
-// });
-
-//TODO NO SE OCUPA
-router.get('/productsWebSite', async(req, res) => {
-
-    const match = {};
+router.get('/products/sync', authorize, async(req, res) => {
 
     try {
+        const db = nano.use(process.env.COUCHDB_NAME);
         const product = await Product.getProductsWeb();
         if (!product || product.length === 0) {
             throw new Error("Not able to find the product(s)");
         }
+        const productsDestroy = await db.find({ selector: { couchdb_type: { "$eq": 'PRODUCT' } }, limit: 100000 });
+
+        const docsEliminate = productsDestroy.docs.map(doc => ({ _deleted: true, _id: doc._id, _rev: doc._rev }))
+        await db.bulk({ docs: docsEliminate })
 
         const rowData = [];
+        const creationDatetime = Date.now().toString();
 
-        product.forEach((item) => {
-            const periodicidades = item.periodicidades.split(",");
-            // console.log(periodicidades);
+        product.forEach((data) => {
 
+            /// el dato de SQL viene en una lista separada por comas. Una vez split, hay que limpiar la cadena devuelta
+            const freqTypes = data.periodicidades.split(",").map( x => x.trim() );
+                      
             rowData.push(
                 {
-                    external_id: item.id,
+                    default_frecuency: [
+                        mapIdentifierForFrequency(freqTypes[0]),
+                        freqTypes[0]
+                    ],
+                    deleted: false,
                     default_mobile_product: false,
-                    enabled: item.estatus === "Activo" ? true : false,
-                    product_type: item.tipo_credito,
-                    product_name: item.nombre,
-                    min_amount: item.valor_minimo,
-                    max_amount: item.valor_maximo,
-                    default_amount: item.valor_minimo,
-                    allowed_term_type: periodicidades,
-                    min_term: item.periodo_min,
-                    max_term: item.periodo_max,
-                    default_term: item.periodo_min,
-                    min_rate: item.tasa_anual_min,
-                    max_rate: item.tasa_anual_max,
-                    rate: item.tasa_anual_min,
-                    requires_insurance: item.requiere_seguro,
-                    liquid_guarantee: item.garantia_liquida,
-                    GL_financeable: item.garantia_liquida_financiable,
-                    tax: item.impuesto,
-                    years_type: item.tipo_ano
+                    enabled: true,
+                    product_type: "1",
+                    product_name: data.nombre,
+                    external_id: data.id,
+                    min_amount: data.valor_minimo.toString(),
+                    max_amount: data.valor_maximo.toString(),
+                    default_amount: data.valor_minimo.toString(),
+                    step_amount: "1000",
+                    min_term: data.periodo_min,
+                    max_term: data.periodo_max,
+                    default_term: data.periodo_min,
+                    min_rate: data.tasa_anual_min.toString(),
+                    max_rate: data.tasa_anual_max.toString(),
+                    rate: data.tasa_anual_min.toString(),
+                    tax: data.impuesto.toString(),
+                    years_type: data.tipo_ano,
+                    allowed_term_type:
+                    freqTypes.map(
+                        ( w,increment )=> ({
+                                    _id: increment,
+                                    identifier: mapIdentifierForTerm(w),
+                                    value: mapValueForTerm(w),
+                                    year_periods: mapYearPeriodForTerm(w)
+                               
+                    }))
+                    ,
+                    allowed_frequency: 
+                    freqTypes.map(
+                        ( w,increment )=> ({
+                                _id: increment,
+                                identifier: mapIdentifierForFrequency(w),
+                                value: w
+                    })),
+                    liquid_guarantee: data.garantia_liquida.toString(),
+                    GL_financeable: data.garantia_liquida_financiable,
+                    requires_insurance: data.requiere_seguro,
+                    logo: '',
+                    avatar: '',
+                    createdAt: creationDatetime,
+                    updatedAt: creationDatetime,
+                    couchdb_type: 'PRODUCT'
                 }
             )
         });
-
-        res.status(200).send(rowData);
-        // res.status(200).send(product);
+        await db.bulk({ docs: rowData });
+        res.send(rowData);
 
     } catch (e) {
         res.status(400).send(e + '');
@@ -160,114 +145,8 @@ router.get('/productsWebSite', async(req, res) => {
 
 });
 
-router.get('/couch/products/hf', async(req, res) => {
-    try{
-        const products = await ProductCollection.getAllProducts();
-        const result = (products.recordsets[0]).filter(configuracion => configuracion.configuracion === "MONTOS_OTORGADOS");
 
-        const rowData = [];
 
-        result.forEach((item) => {
-            const periodicidades = item.periodicidades.split(",");
-            rowData.push(
-                {
-                    external_id: item.id,
-                    default_mobile_product: false,
-                    enabled: item.estatus === "Activo" ? true : false,
-                    product_type: item.tipo_credito,
-                    product_name: item.nombre,
-                    min_amount: item.valor_minimo,
-                    max_amount: item.valor_maximo,
-                    default_amount: item.valor_minimo,
-                    allowed_term_type: periodicidades,
-                    min_term: item.periodo_min,
-                    max_term: item.periodo_max,
-                    default_term: item.periodo_min,
-                    min_rate: item.tasa_anual_min,
-                    max_rate: item.tasa_anual_max,
-                    rate: item.tasa_anual_min,
-                    requires_insurance: item.requiere_seguro,
-                    liquid_guarantee: item.garantia_liquida,
-                    GL_financeable: item.garantia_liquida_financiable,
-                    tax: item.impuesto,
-                    years_type: item.tipo_ano
-                }
-            )
-        });
-
-        res.status(200).send(rowData);
-
-    } catch (e){
-        console.log(e)
-        res.status(400).send(e.message);
-    }
-
-});
-router.get('/products/hf', auth, async(req, res) => {
-
-    try{
-
-        const products = await Product.getAllProducts();
-        // console.log(products.recordsets[0]);
-        
-        // const result = products.recordsets[0];
-        const result = (products.recordsets[0]).filter(configuracion => configuracion.configuracion === "MONTOS_OTORGADOS");
-        // console.log(result);
-
-        const rowData = [];
-
-        result.forEach((item) => {
-            const periodicidades = item.periodicidades.split(",");
-            // console.log(periodicidades);
-
-            rowData.push(
-                {
-                    external_id: item.id,
-                    default_mobile_product: false,
-                    enabled: item.estatus === "Activo" ? true : false,
-                    product_type: item.tipo_credito,
-                    product_name: item.nombre,
-                    min_amount: item.valor_minimo,
-                    max_amount: item.valor_maximo,
-                    default_amount: item.valor_minimo,
-                    allowed_term_type: periodicidades,
-                    min_term: item.periodo_min,
-                    max_term: item.periodo_max,
-                    default_term: item.periodo_min,
-                    min_rate: item.tasa_anual_min,
-                    max_rate: item.tasa_anual_max,
-                    rate: item.tasa_anual_min,
-                    requires_insurance: item.requiere_seguro,
-                    liquid_guarantee: item.garantia_liquida,
-                    GL_financeable: item.garantia_liquida_financiable,
-                    tax: item.impuesto,
-                    years_type: item.tipo_ano
-                }
-            )
-        });
-
-        // console.log(result);
-        res.status(200).send(rowData);
-
-    } catch (e){
-        console.log(e)
-        res.status(400).send(e + '');
-    }
-
-});
-
-router.get('/couch/productByBranch/:id', async(req, res) => {
-    try{
-        const id = req.params.id;
-        const result = await ProductCollection.getProductsByBranchId(id);
-
-        res.status(200).send(result.recordset);
-
-    } catch(e){
-        console.log(e);
-        res.status(400).send(e + '');
-    }
-});
 router.get('/productByBranch/:id', auth, async(req, res) => {
     try{
 
@@ -282,140 +161,5 @@ router.get('/productByBranch/:id', auth, async(req, res) => {
         res.status(400).send(e + '');
     }
 });
-
-//TODO FALTA
-router.patch('/couch/products/:id', async(req, res) => {
-    try {
-        const data = req.body;
-        const _id = req.params.id;
-        const actualizaciones = Object.keys(data);
-        
-        if (!isComparaArreglos(actualizaciones)) throw new Error('Body includes invalid properties...');
-        const productCollection = new ProductCollection();
-        const product = await productCollection.findOne( {_id} );
-
-        if (!product) throw new Error("Not able to find the product");
-        //TODO DUDA
-        if(data.default_mobile_product != undefined && data.default_mobile_product === true){
-            const default_mobile = await Product.findOne({"default_mobile_product": true})
-            if(default_mobile != null){
-                if(default_mobile._id != _id){//id diferentes cambiar a falso el que estaba por defecto
-                    await Product.updateOne({_id: default_mobile._id},{"default_mobile_product": false})
-                }
-            }
-        }
-        actualizaciones.forEach((valor) => (product[valor] = data[valor]));
-        const productUpdate = new ProductCollection(product)
-        productUpdate.save();
-
-        // await product.save();
-
-        res.status(200).send(product);
-    } catch (e) {
-        res.status(400).send(e.message);
-    }
-
-});
-router.patch('/products/:id', auth, async(req, res) => {
-
-    try {
-        const data = req.body;
-        // console.log(data);
-        // return res.send(data);
-        const _id = req.params.id;
-        const actualizaciones = Object.keys(data);
-        
-        if (!isComparaArreglos(actualizaciones)) {
-            return res.status(400).send({ error: "Body includes invalid properties..." });
-        }
-        
-        // if(req.files.logo != undefined){
-        //     const logo = req.files.logo;
-        //     const bufferlogo = await convertToBuffer(logo[0]);
-        //     data.logo = bufferlogo;
-        // }
-        // if(req.files.avatar != undefined){
-        //     const avatar = req.files.avatar;
-        //     const bufferavatar = await convertToBuffer(avatar[0]);
-        //     data.avatar = bufferavatar;
-        // }    
-
-        const product = await Product.findOne( {_id} );
-        if (!product) {
-            throw new Error("Not able to find the product");
-        }
-        if(data.default_mobile_product != undefined && data.default_mobile_product === true){
-            const default_mobile = await Product.findOne({"default_mobile_product": true})
-            if(default_mobile != null){
-                if(default_mobile._id != _id){//id diferentes cambiar a falso el que estaba por defecto
-                    await Product.updateOne({_id: default_mobile._id},{"default_mobile_product": false})
-                }
-            }
-        }
-        actualizaciones.forEach((valor) => (product[valor] = data[valor]));
-        // await Product.findByIdAndUpdate(_id,data)
-        await product.save();
-
-        res.status(200).send(product);
-    } catch (e) {
-        console.log('error' + e + '');
-        res.status(400).send(JSON.stringify(e + ''));
-    }
-
-});
-
-router.delete('/products/:id', auth, async(req, res) => {
-
-    try{
-        const _id = req.params.id;
-
-        const product = await Product.findOne({_id})
-
-        if(!product){
-            throw new Error("Not able to find the product");
-        }
-
-        await product.delete();
-        
-        res.status(200).send({
-            deleted: product.deleted,
-            message: `'${product.product_name}' product has been successfully enabled`
-        });
-
-    } catch(e){
-        res.status(400).send(e + '')
-    }
-});
-
-router.post('/products/restore/:id',auth,async(req, res) => {
-
-    const _id = req.params.id;
-
-    try{
-
-        const product = await Product.findOneDeleted({_id})
-        if(!product){
-            throw new Error("Not able to find the product");
-        }
-
-        product.restore();
-        
-        res.status(200).send({
-            deleted: product.deleted,
-            message: `'${product.product_name}' product has been successfully enabled`
-        });
-
-
-    } catch(e) {
-        res.status(400).send(e + '')
-    }
-
-});
-
-const isComparaArreglos = (actualizar) => {
-    const permitido = ["deleted","product_type","product_name","short_name","step_amount","min_amount","max_amount","default_amount","min_term","max_term","default_term","allowed_frequency", "default_frecuency","allowed_term_type","year_days","min_rate", "max_rate", "rate","logo","avatar","description","default_mobile_product", "enabled", "years_type", "requires_insurance", "liquid_guarantee", "GL_financeable", "tax", "external_id"];
-    const result = actualizar.every((campo) => permitido.includes(campo));
-    return result;
-};
 
 module.exports = router;

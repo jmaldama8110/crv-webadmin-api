@@ -64,17 +64,12 @@ class ProductCollection extends DocumentCollection {
     };
 
     static async getProductsWeb() {
-        try {
-            const pool = await sql.connect(sqlConfig);
-            let result = await pool
-                .request()
-                .execute('MOV_ProductsForWeb');
+        const pool = await sql.connect(sqlConfig);
+        let result = await pool
+            .request()
+            .execute('MOV_ProductsForWeb');
+        return result.recordset;
 
-            return result.recordset;
-
-        } catch (err) {
-            throw new Error(err);
-        }
     }
 
     static async getProductsByBranchId(id) {
