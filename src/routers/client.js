@@ -48,7 +48,6 @@ router.get("/clients/hf", authorize, async(req, res) => {
         } else {
             throw new Error('Some query parameters area mising...')
         }
-        console.log(data.recordsets[7][0]);
         
         if (data.recordset.length == 1) {
 
