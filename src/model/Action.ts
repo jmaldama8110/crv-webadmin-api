@@ -27,7 +27,7 @@ export default class Action extends DocumentCollection {
         this._isOk = obj.isOk || false;
     }
 
-    static async getClientHFById(externalId:number) {
+    async getClientHFById(externalId:number) {
         try {
             let pool = await sql.connect(sqlConfig);
             let result = await pool
@@ -40,7 +40,7 @@ export default class Action extends DocumentCollection {
             console.log(err)
         }
     }
-    static async createClientHF(data:any, value:any) {
+    async createClientHF(data:any, value:any) {
         try {
             const pool = await sql.connect(sqlConfig);
 
@@ -348,7 +348,7 @@ export default class Action extends DocumentCollection {
         }
     }
     
-    static async getActionHF() {
+    async getActionHF() {
         try {
             const pool = await sql.connect(sqlConfig);
             const result = await pool
@@ -361,7 +361,7 @@ export default class Action extends DocumentCollection {
             throw new Error(error.message)
         }
     }
-    static async updateActionHF(id_action: string, status: string) {
+    async updateActionHF(id_action: string, status: string) {
         try {
             const pool = await sql.connect(sqlConfig);
             const result = await pool
@@ -374,7 +374,7 @@ export default class Action extends DocumentCollection {
             return new Error(error.message)
         }
     }
-    static pushError(errors: any[],typeDataOK:any,typeDataCompare:any,valueOK:string,property:string)
+    pushError(errors: any[],typeDataOK:any,typeDataCompare:any,valueOK:string,property:string)
     {
         errors.push({
             property: property,
@@ -384,7 +384,7 @@ export default class Action extends DocumentCollection {
         });
     }
 
-    static async validateModel(model:any,data:any)
+    async validateModel(model:any,data:any)
     {
         //Valida la estructura del modelo vs el que viene en la data
         let errors: any[] = [];
@@ -460,7 +460,7 @@ export default class Action extends DocumentCollection {
         return errors;
     }
 
-    static async validateDataLoan(data:any, info:string) {
+    async validateDataLoan(data:any, info:string) {
         ///// VALIDAR QUE LOS DATOS PARA LA SOLICITUD QUE SE GENERARA EN EL HF ES CORRECTA
 
         const dataExample = {
@@ -580,7 +580,7 @@ export default class Action extends DocumentCollection {
         }
         return { status: errors.length == 0 ? 'OK': 'ERROR', info, errors };
     }
-    static async validateDataDropMemberLoan(data:any,info:string)
+    async validateDataDropMemberLoan(data:any,info:string)
     {
         ///// VALIDAR QUE LOS DATOS PARA ELIMINAR PERSONAS DE LA SOLICITUD SEA VALIDA
         const dataExample = {
@@ -603,7 +603,7 @@ export default class Action extends DocumentCollection {
         return {status: errors.length == 0 ? 'OK': 'ERROR', info, errors};
     }
 
-    static async validateDataAddMemberLoan(data:any, info:string)
+    async validateDataAddMemberLoan(data:any, info:string)
     {
         ///// VALIDAR QUE LOS DATOS PARA AGREGAR PERSONAS DE LA SOLICITUD SEA VALIDA
         const dataExample = {
@@ -625,7 +625,7 @@ export default class Action extends DocumentCollection {
         errors = await this.validateModel(dataExample, data)
         return {status: errors.length == 0 ? 'OK': 'ERROR', info, errors};
     }
-    static async validateDataClient(data:any) {
+    async validateDataClient(data:any) {
         ///// VALIDAR QUE LOS DATOS de CLIENTE
         const dataExample = {
             _id: "1679723948863",
@@ -807,11 +807,11 @@ export default class Action extends DocumentCollection {
         return { status: errors.length == 0 ? 'OK': 'ERROR', info, errors };
     }
 
-    static async generarErrorRSP(error:any,info:any){
+    async generarErrorRSP(error:any,info:any){
         let errors = [error];
         return { status:'ERROR',info, errors };
     }
-    static async validateAction(id_action:string,type = "VALIDATE") {
+    async validateAction(id_action:string,type = "VALIDATE") {
         let response =
             {
                 status:"FAIL",
@@ -827,7 +827,8 @@ export default class Action extends DocumentCollection {
                 return response;
             }
 
-            if (action._status !== 'Pending' && type == 'EXEC'){
+            if (action.status !== 'Pending' && type == 'EXEC'){
+                
                 response.message = 'Action is not pending, current status is "'+action.status+'"';
                 return response;
             }
@@ -841,7 +842,7 @@ export default class Action extends DocumentCollection {
         }
     }
     
-    static async saveValidation(result:any,action:any)
+    async saveValidation(result:any,action:any)
     {
         if (action.status === 'Pending')
         {

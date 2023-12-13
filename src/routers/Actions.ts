@@ -11,6 +11,8 @@ import { createLoanHF } from '../utils/createLoan';
 let loanAppGroup = new LoanAppGroup();
 let ClientDoc = new Client();
 
+let ActionDoc = new Action();
+
 const router = express.Router();
 
 router.get('/actions/validate', authorize, async (req, res) => {
@@ -20,7 +22,7 @@ router.get('/actions/validate', authorize, async (req, res) => {
         let RSP_Result:any = { status: 'ERROR' };
         const { id } = req.query;
         
-        const response = await Action.validateAction(id as string,"VALIDATE");
+        const response = await ActionDoc.validateAction(id as string,"VALIDATE");
         let info = { _id: id }
         let action = response.action;
         RSP_Result.action = action;
@@ -39,19 +41,19 @@ router.get('/actions/validate', authorize, async (req, res) => {
                     loan = await loanAppGroup.getLoan(id_loan)
                     if (loan === undefined) {
                         info.loan_id = id_loan;
-                        RSP_Result = await Action.generarErrorRSP(`Loan ${id_loan} is not found`,info);
+                        RSP_Result = await ActionDoc.generarErrorRSP(`Loan ${id_loan} is not found`,info);
                         break;
                     }
                     // Validate members
                     if(!Array.isArray(loan.members)){
-                        RSP_Result = await Action.generarErrorRSP('Members were not found: ',info);
+                        RSP_Result = await ActionDoc.generarErrorRSP('Members were not found: ',info);
                         break;
                     }
                     let memberstransact = loan.members.filter( (row:any) => row.estatus.trim().toUpperCase() === "TRAMITE" && row.sub_estatus.trim().toUpperCase() === "NUEVO TRAMITE" );
                     let memberscancelled = loan.members.filter( (row:any) => row.estatus.trim().toUpperCase() === "CANCELADO" && row.sub_estatus.trim().toUpperCase() === "CANCELACION/ABANDONO" );
                     let membersnew = loan.members.filter( (row:any) => row.estatus.trim().toUpperCase() === "INGRESO" && row.sub_estatus.trim().toUpperCase() === "NUEVO");
                     if(membersnew.length === 0 && memberscancelled.length === 0 && memberstransact.length === 0){
-                        RSP_Result = await Action.generarErrorRSP('There are not members with status in TRAMITE, CANCELADO or INGRESO',info);
+                        RSP_Result = await ActionDoc.generarErrorRSP('There are not members with status in TRAMITE, CANCELADO or INGRESO',info);
                         break;
                     }
                     for (let row of membersnew) {
@@ -61,13 +63,13 @@ router.get('/actions/validate', authorize, async (req, res) => {
                         client = await ClientDoc.findOne({ _id });
                         if (client === undefined) {
                             info.client_id = _id;
-                            RSP_Result = await Action.generarErrorRSP('Client new is not found: '+row.client_id,info);
+                            RSP_Result = await ActionDoc.generarErrorRSP('Client new is not found: '+row.client_id,info);
                             RSP_ResultNewMembers.push(RSP_Result)
                         }
                         else {
                             //Validate data
                             if(client.id_cliente == 0 || client.id_persona == 0) {
-                                RSP_Result = await Action.validateDataClient(client);
+                                RSP_Result = await ActionDoc.validateDataClient(client);
                                 if (RSP_Result.status !== "OK") {
                                     RSP_Result.info.client_id = _id;
                                     RSP_ResultNewMembers.push(RSP_Result)
@@ -76,14 +78,14 @@ router.get('/actions/validate', authorize, async (req, res) => {
                         }
                     }
                     if(RSP_ResultNewMembers.length > 0) {
-                        RSP_Result = await Action.generarErrorRSP("The new members have a trouble with any validation.",RSP_ResultNewMembers);
+                        RSP_Result = await ActionDoc.generarErrorRSP("The new members have a trouble with any validation.",RSP_ResultNewMembers);
                         break;
                     }
                     info.id_cliente = loan.id_cliente;
                     info.id_solicitud = loan.id_solicitud;
                     info.id_loan = id_loan;
                     //Validate data
-                    RSP_Result = await Action.validateDataLoan(loan, info);
+                    RSP_Result = await ActionDoc.validateDataLoan(loan, info);
                     break;
                 case 'CREATE_UPDATE_CLIENT':
                     // Get data
@@ -91,25 +93,25 @@ router.get('/actions/validate', authorize, async (req, res) => {
                     const { _id } = action.data;
                     client = await ClientDoc.findOne({ _id });
                     if (client === undefined) {
-                        RSP_Result = await Action.generarErrorRSP('Client is not found',info);
+                        RSP_Result = await ActionDoc.generarErrorRSP('Client is not found',info);
                         break;
                     }
                     //Validate data
-                    RSP_Result = await Action.validateDataClient(client);
+                    RSP_Result = await ActionDoc.validateDataClient(client);
                     break;
                 default:
-                    RSP_Result = await Action.generarErrorRSP('Action "'+action.name+'" is not supported',info);
+                    RSP_Result = await ActionDoc.generarErrorRSP('Action "'+action.name+'" is not supported',info);
                     break;
             }
             //Save validation
-            RSP_Result = await Action.saveValidation(RSP_Result,action);
+            RSP_Result = await ActionDoc.saveValidation(RSP_Result,action);
             RSP_Result.action = action;
         }
         else
-            RSP_Result = await Action.generarErrorRSP(response.message, info);
+            RSP_Result = await ActionDoc.generarErrorRSP(response.message, info);
         res.status(201).send(RSP_Result);
     } catch (err:any) {
-        let RSP_Result = await Action.generarErrorRSP(err.message, req.query);
+        let RSP_Result = await ActionDoc.generarErrorRSP(err.message, req.query);
         res.status(400).send(RSP_Result)
     }
 });
@@ -119,7 +121,7 @@ router.get('/actions/exec',authorize, async (req, res) => {
         // Validate action
         let RSP_Result:any = { status: 'ERROR' };
         const { id } = req.query;
-        const response = await Action.validateAction(id as string,"EXEC");
+        const response = await ActionDoc.validateAction(id as string,"EXEC");
         let info:any = { _id: id }
         let action:any = response.action;
         RSP_Result.action = action;
@@ -127,7 +129,7 @@ router.get('/actions/exec',authorize, async (req, res) => {
             info.action_type = action.name;
             RSP_Result.info = info
             if (!action.isOk)
-                RSP_Result = await Action.generarErrorRSP("The action "+ action.name+ " with id "+ id+" has not been validated. You must to run option '/actions/validate'",info);
+                RSP_Result = await ActionDoc.generarErrorRSP("The action "+ action.name+ " with id "+ id+" has not been validated. You must to run option '/actions/validate'",info);
             else
             {
                 let loan:any;
@@ -173,13 +175,13 @@ router.get('/actions/exec',authorize, async (req, res) => {
                                    row.sub_estatus =  "NUEVO TRAMITE";
                                }
                                else{
-                                   RSP_ResultClient = await Action.generarErrorRSP("The member with client_id "+row.client_id+" was not saved",RSP_ResultNewMembers);
+                                   RSP_ResultClient = await ActionDoc.generarErrorRSP("The member with client_id "+row.client_id+" was not saved",RSP_ResultNewMembers);
                                    RSP_ResultNewMembers.push(RSP_ResultClient);
                                }
                            }
                         }
                         if(RSP_ResultNewMembers.length > 0) {
-                            RSP_Result = await Action.generarErrorRSP("The new members have a trouble with any validation.",RSP_ResultNewMembers);
+                            RSP_Result = await ActionDoc.generarErrorRSP("The new members have a trouble with any validation.",RSP_ResultNewMembers);
                             break;
                         }
                         if(loan.couchdb_type === "LOANAPP_GROUP")
@@ -189,7 +191,7 @@ router.get('/actions/exec',authorize, async (req, res) => {
                         loan = await loanAppGroup.getLoan(id_loan);
                         membersnew = loan.members.filter( (row:any) => row.estatus.trim().toUpperCase() === "INGRESO" && row.sub_estatus.trim().toUpperCase() === "NUEVO");
                         if(membersnew.length > 0){
-                            RSP_Result = await Action.generarErrorRSP("The new members have not been saved correctly. Try again",RSP_ResultNewMembers);
+                            RSP_Result = await ActionDoc.generarErrorRSP("The new members have not been saved correctly. Try again",RSP_ResultNewMembers);
                             break;
                         }
                         // Create loan
@@ -225,7 +227,7 @@ router.get('/actions/exec',authorize, async (req, res) => {
                         }
                         break;
                     default:
-                        RSP_Result = await Action.generarErrorRSP('Action "' + action.name + '" is not supported', info);
+                        RSP_Result = await ActionDoc.generarErrorRSP('Action "' + action.name + '" is not supported', info);
                         break;
                 }
             }
@@ -235,11 +237,11 @@ router.get('/actions/exec',authorize, async (req, res) => {
                 await new Action(action).save();
         }
         else
-            RSP_Result = await Action.generarErrorRSP(response.message, info);
+            RSP_Result = await ActionDoc.generarErrorRSP(response.message, info);
         res.status(201).send(RSP_Result);
 
     } catch (err:any) {
-        let RSP_Result = await Action.generarErrorRSP(err.message, req.query);
+        let RSP_Result = await ActionDoc.generarErrorRSP(err.message, req.query);
         res.status(400).send(RSP_Result)
     }
 });
