@@ -1,6 +1,2 @@
-node_modules/
-src/playground/
-config/
-cert/
-temp/
-public/pdfs
+node_modules
+config
