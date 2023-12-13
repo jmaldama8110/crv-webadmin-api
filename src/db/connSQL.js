@@ -19,7 +19,7 @@ const sqlConfig = {
 
 async function connectionSQL() {
     try {
-        const pool = await SQL.connect(sqlConfig);
+        const pooxsxsl = await SQL.connect(sqlConfig);
         console.log('SQL Connected correctly!...')
         return pool;
     } catch (err) {

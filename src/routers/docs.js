@@ -11,7 +11,6 @@ const Client = require('../model/client');
 const multer  = require('multer');
 const { arrayFromStringSize } = require("../utils/arrayTransformations");
 const { calculateYearsMonthsFromDates } = require("../utils/diffDates");
-
 const upload = multer();
 
 const serverHost = `${process.env.WEB_SERVER_HOST}`;

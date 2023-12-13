@@ -20,6 +20,7 @@ const formatLocalDate2 = (data) =>{
     const yearN = newDate.getFullYear().toString();
     return `${dayWithCero}/${months[newDate.getMonth()]}/${yearN}`
 }
+
 const formatLocalDateShort = (data) =>{
     if( !data ) return '';
     const dateString = data.split('T')[0].split('-');
