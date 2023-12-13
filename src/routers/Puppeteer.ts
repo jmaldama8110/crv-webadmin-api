@@ -6,6 +6,8 @@ import { sqlConfig } from '../db/connSQL';
 import { authorize } from '../middleware/authorize';
 import { create } from 'express-handlebars';
 import { arrayFromStringSize, calculateYearsMonthsFromDates, formatLocalCurrency, formatLocalDate, formatLocalDate2, getRounded } from '../utils/misc';
+import * as Nano from 'nano';
+let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 
 const serverHost = `${process.env.WEB_SERVER_HOST}`;
 
@@ -14,9 +16,9 @@ const router = express.Router();
 router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
     try {
     
-      const db = nano.use(process.env.COUCHDB_NAME);
+      const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
       // Look up for the contract Id Information Generated ACCOUNT_STATEMENT
-      const accStt = await db.get(`CONTRACT|${req.query.contractId}`);
+      const accStt:any = await db.get(`CONTRACT|${req.query.contractId}`);
       const summary = accStt.rs[0][0];
       const mbrs = accStt.rs[1];
       const mbrsFr = accStt.rs[2];
@@ -294,11 +296,11 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
         throw new Error('parameter loanId is missing in URL');
       }
       
-      const db = nano.use(process.env.COUCHDB_NAME);
+      const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
       await db.createIndex({ index: { fields: ["couchdb_type"]}});
       const query = await db.find( { selector: { couchdb_type: "LOANAPP_GROUP" }, limit: 50000});
       
-      const loanApp = query.docs.find( (i:any) => i._id === req.query.loanId );
+      const loanApp:any = query.docs.find( (i:any) => i._id === req.query.loanId );
       if( !loanApp ){
         throw new Error('Loan App does not exist with the id:' + req.query.loanId);
       }
@@ -449,8 +451,11 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   async function renderPDf( htmlData:string ) {
 
     const serverEnv = process.env.SERVER_ENV || 'development'
-    const browser = (serverEnv === 'development') ? await puppeteer.launch() : 
-                                                  await puppeteer.launch({executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox']});
+  
+  
+
+    const browser = (serverEnv === 'development') ? await puppeteer.launch({headless: 'new'}) : 
+                                                  await puppeteer.launch({headless: 'new',executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox']});
     
     const page = await browser.newPage();
     await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
@@ -504,12 +509,12 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   
   router.get('/docs/img', async (req, res) =>{
     /// server images based on the _id
-      const id = req.query.id;
+      const id = req.query.id as string;
     
       try{
         if( !id ) throw new Error('No img id supplied..');
-        const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
-        const imageData = await db.get(id);
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const imageData:any = await db.get(id);
         const img = Buffer.from(imageData.base64str,'base64');
         res.writeHead(200,{
           'Content-Type': imageData.mimetype,
@@ -525,7 +530,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   
   
   async function loadBase64ImgArrayFromDB (keys: string[]) {
-    const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
+    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
     const data = await db.fetch({keys:keys });
     const newData = data.rows.map( (x:any)=> ( { base64str: x.doc.base64str, mimetype: x.doc.mimetype, title: x.doc.title }))
     return newData;

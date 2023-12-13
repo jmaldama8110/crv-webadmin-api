@@ -1,5 +1,6 @@
 import sql from 'mssql';
 import { sqlConfig } from '../db/connSQL';
+import { DocumentCollection } from './DocumentCollection';
 
 export class Group extends DocumentCollection {
 

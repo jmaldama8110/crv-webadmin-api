@@ -1,12 +1,10 @@
-
-
 import bodyParser from "body-parser";
 import cors from 'cors';
 import express from  'express';
-require('./db/connCouch');
 
 import { userRouter } from "./routers/User";
 import { hfRouter } from './routers/HfServer';
+import { ActionsRouter } from "./routers/Actions";
 import { verifyDocRouter } from './routers/VerifyDocument';
 import { puppeteerRouter } from "./routers/Puppeteer";
 import { sendEmailRouter } from "./routers/Email";
@@ -32,6 +30,7 @@ app.set('views', './views');
 
 app.use(userRouter);
 app.use(hfRouter);
+app.use(ActionsRouter)
 app.use(verifyDocRouter);
 app.use(puppeteerRouter);
 app.use(sendEmailRouter);

@@ -4,6 +4,7 @@ import { Client } from "../model/Client";
 import moment from 'moment';
 import { Functions } from './Functions';
 import { UDT_CONT_DireccionContacto, UDT_CONT_Persona, UDT_CONT_Identificaciones, UDT_CONT_CURP, UDT_CONT_IFE, UDT_CONT_Telefonos, cleanTable } from './TablesSql';
+import { DocumentCollection } from '../model/DocumentCollection';
 
 let ClientDoc = new Client();
 const Document = new DocumentCollection();

@@ -1,3 +1,4 @@
+import { DocumentCollection } from "./DocumentCollection";
 import { LoanApp } from "./LoanApp";
 
 

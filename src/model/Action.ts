@@ -1,6 +1,7 @@
 import sql from 'mssql';
 import { sqlConfig } from '../db/connSQL';
 import { UDT_CLIE_DatoBancario, UDT_CLIE_Individual, UDT_CLIE_Solicitud, UDT_CONT_Direcciones, UDT_CONT_Empresa, UDT_CONT_FirmaElectronica, UDT_CONT_Identificaciones, UDT_CONT_Negocios, UDT_CONT_Oficinas, UDT_CONT_Persona, UDT_CONT_Telefonos, UDT_SPLD_DatosCliente, UTD_CLIE_Clientes, cleanTable } from '../utils/TablesSql';
+import { DocumentCollection } from './DocumentCollection';
 
 
 export default class Action extends DocumentCollection {
@@ -12,6 +13,7 @@ export default class Action extends DocumentCollection {
     _errors: any[];
     _isOk: boolean;
 
+    
     constructor( obj = { } as any){
         super();
         this._id = obj._id || Date.now().toString();

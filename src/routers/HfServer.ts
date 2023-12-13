@@ -2,7 +2,9 @@ import express from 'express';
 import { authorize } from '../middleware/authorize';
 import sql from 'mssql';
 import { sqlConfig } from '../db/connSQL';
+import * as Nano from 'nano';
 
+let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 const router = express.Router();
 
 router.get('/clients/exists', authorize, async (req:any, res:any) => {
@@ -38,7 +40,7 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
         if( !(req.query.branchId && req.query.applicationId) ){
             throw new Error('Query parametrs branchId or groupName are missing!')
         }
-        const data = await getLoanApplicationById(parseInt(req.query.applicationId),parseInt(req.query.branchId));
+        const data:any = await getLoanApplicationById(parseInt(req.query.applicationId as string),parseInt(req.query.branchId as string));
         /**
          * resultsets[0] => Detalle de la solicitud
          * resultsets[1] => Ciclo y estatus 
@@ -76,8 +78,8 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
              
         }
         
-        const members = data[4].map( (i,nCounter) =>{
-                const insuranceMemberInfo = data[5].find( (x)=> x.id_individual === i.id_individual);
+        const members = data[4].map( (i:any,nCounter:number) =>{
+                const insuranceMemberInfo = data[5].find( (x:any)=> x.id_individual === i.id_individual);
                 ///// buscar en la DB local si existe el integrante, como cliente por medio de id_cliente
                 return {
                     _id: `${Date.now() + nCounter}`,
@@ -103,16 +105,16 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
             })
 
         /// retrieves Product information, that is not provided by HF
-        const db = nano.use(process.env.COUCHDB_NAME);
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
 
         await db.createIndex({ index:{  fields:["couchdb_type"] }});
         const productList = await db.find( { selector: { couchdb_type: "PRODUCT" }});
-        const productMaster = productList.docs.find( (prod)=> prod.external_id == loan_application.id_producto_maestro  )
+        const productMaster:any = productList.docs.find( (prod:any)=> prod.external_id == loan_application.id_producto_maestro  )
         if( !productMaster) {
             throw new Error('Se producto maestro no se encontro para id_producto_maestro: '+ loan_application.id_producto_maestro );
         }
         const identifierFreq = loan_application.periodicidad.slice(0,1);
-        const frequency = productMaster.allowed_term_type.find( (i) => i.identifier === identifierFreq)
+        const frequency = productMaster.allowed_term_type.find( (i:any) => i.identifier === identifierFreq)
         /// Uses the same loan application info, except some field, ei: id_solicitud,
 
         const loan_app = {
@@ -158,6 +160,17 @@ router.get('/groups/hf/loanapps', authorize, async(req, res) => {
         res.status(400).send(err);
     }
 })
+
+async function getLoanApplicationById ( loanAppId:number, branchId:number) {
+    
+    const pool = await sql.connect(sqlConfig);
+    const result = await pool.request()
+        .input('id_solicitud', sql.Int, loanAppId)
+        .input('id_oficina', sql.Int, branchId)
+        .execute('CLIE_ObtenerSolicitudClienteServicioFinanciero_V2');
+    return result.recordsets;
+
+}
 
 function mapSocialMedia (id:number) {
     switch(id){
@@ -486,11 +499,11 @@ router.get('/clients/hf/loanapps', authorize, async(req, res) => {
         const loan_application = data[0][0];
         const loan_cycle = data[1][0];
 
-        const db = nano.use(process.env.COUCHDB_NAME);
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
 
         await db.createIndex({ index:{  fields:["couchdb_type"] }});
         const productList = await db.find( { selector: { couchdb_type: "PRODUCT" }});
-        const productMaster = productList.docs.find( (prod:any)=> prod.external_id == loan_application.id_producto_maestro  )
+        const productMaster:any = productList.docs.find( (prod:any)=> prod.external_id == loan_application.id_producto_maestro  )
         
         const identifierFreq = loan_application.periodicidad.slice(0,1);
         const frequency = productMaster.allowed_term_type.find( (i:any) => i.identifier === identifierFreq)
@@ -597,7 +610,8 @@ router.get('/clients/hf/accountstatement', authorize, async (req, res)=> {
         const forceRefresh = !!parseInt(req.query.forceRefresh as string);
         let data:any = {};
 
-        const db = nano.use(process.env.COUCHDB_NAME);
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+
         try{
             data = await db.get(`CONTRACT|${idContract}`);   
             const queryDate = new Date(data.query_at);

@@ -1,5 +1,6 @@
 import sql from 'mssql';
 import { sqlConfig } from '../db/connSQL';
+import { DocumentCollection } from './DocumentCollection';
 
 export class Client extends DocumentCollection {
     _id_cliente: any

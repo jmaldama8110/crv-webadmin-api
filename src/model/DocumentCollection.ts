@@ -1,7 +1,8 @@
+import * as Nano from 'nano';
+let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 
 
-class DocumentCollection {
-
+export class DocumentCollection {
     _id: string;
     _rev: string;
     _created_at: string;
@@ -38,7 +39,7 @@ class DocumentCollection {
 
     save() {
 
-        const db = nano.use(process.env.COUCHDB_NAME);
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         return new Promise(async (resolve, reject) => {
             const data = this.getDataPrivate();
             // console.log('saving: ', data)
@@ -60,7 +61,7 @@ class DocumentCollection {
                     selector = Object.assign(selector, { [key]: { "$eq": value } })
                 }
                 // console.log(selector)
-                const db = nano.use(process.env.COUCHDB_NAME);
+                const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
                 const codeFounds = await db.find({ selector: selector });
 
                 resolve(codeFounds.docs[0]);
@@ -77,7 +78,7 @@ class DocumentCollection {
                 selector = Object.assign(selector, { [key]: { "$eq": value } })
             };
             // console.log({selector})
-            const db = nano.use(process.env.COUCHDB_NAME);
+            const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
             // const codeFounds = await db.find({ selector: selector });
             const codeFounds = await db.find({ selector});
             // console.log(codeFounds.docs)
@@ -89,7 +90,7 @@ class DocumentCollection {
 
     async delete(){
         try {
-            const db = nano.use(process.env.COUCHDB_NAME);
+            const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
             const result = await db.destroy(this._id, this._rev);
 
             return result;
