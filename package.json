@@ -11,6 +11,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0 <17.0.0"
+  },
   "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/cors": "^2.8.14",
