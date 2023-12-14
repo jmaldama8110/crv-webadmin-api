@@ -448,6 +448,202 @@ router.get('/clients/hf/search', authorize, async(req, res) => {
     }
 })
 
+router.get('/catalogs/sync',authorize, async (req,res) => {
+    try{
+        await updateCatalogFromHF('CATA_ActividadEconomica',10000, true)
+        await updateCatalogFromHF('CATA_sexo',10000)
+        await updateCatalogFromHF('CATA_sector',10000)
+        await updateCatalogFromHF('CATA_escolaridad',10000)
+        await updateCatalogFromHF('CATA_estadoCivil',10000)
+        await updateCatalogFromHF('CATA_nacionalidad',10000, true)
+        
+        await updateCatalogFromHF('CATA_parentesco',10000)
+        await updateCatalogFromHF('CATA_profesion',10000, true)
+        await updateCatalogFromHF('CATA_TipoRelacion',10000)
+        await updateCatalogFromHF('CATA_TipoPuesto',10000)
+        await updateCatalogFromHF('CATA_TipoVialidad',10000)
+        await updateCatalogFromHF('CATA_Ciudad_Localidad',10000)
+        await updateCatalogFromHF('CATA_destinoCredito',10000)
+        await updateCatalogFromHF('CATA_ocupacionPLD',10000, true)
+        await updateCatalogFromHF('CATA_banco',10000)
+        await updateCatalogFromHF('CATA_TipoCuentaBancaria',10000)
+
+        await updateCatalogFromHF('CATA_MotivoBajaCastigado',10000)
+        await updateCatalogFromHF('CATA_MotivoBajaCancelacion',10000)
+        await updateCatalogFromHF('CATA_MotivoBajaRechazado',10000)
+
+        await updateCatalogFromHFByRelationship('CATA_asentamiento',1000,'NEIGHBORHOOD', 'CITY', 'ciudad_localidad' );
+        await updateCatalogFromHFByRelationship('CATA_ciudad_localidad',1000,'CITY', 'MUNICIPALITY', 'municipio');
+        await updateCatalogFromHFByRelationship('CATA_municipio',1000,'MUNICIPALITY', 'PROVINCE', 'estado');
+        await updateCatalogFromHFByRelationship('CATA_estado',1000,'PROVINCE', 'COUNTRY', 'pais');
+        await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
+        
+        res.status(201).send('Done!');
+    }
+    catch(error){
+        console.log(error + '');
+        res.status(400).send(error + '')
+    }
+});
+
+
+async function updateCatalogFromHF (name:string, chunk:number, filterActive?:boolean) {
+    try {
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const docsDestroy = await db.find({ selector: { name }, limit: 100000 });
+        if (docsDestroy.docs.length > 0) {
+            const docsEliminate = docsDestroy.docs.map(doc => {
+                const { _id, _rev } = doc;
+                return { _deleted: true, _id, _rev }
+            })
+            db.bulk({ docs: docsEliminate })
+                .then((body) => { console.log('DELETE', name) })
+                .catch((error) => console.log(error));
+        }
+
+        sql.connect(sqlConfig, (err) => {
+            const request = new sql.Request();
+            request.stream = true;//Activarlo al trabajar con varias filas
+
+            if (filterActive) {
+                request.query(`select * from ${name} where estatus_registro = \'ACTIVO\'`);
+            } else {
+                request.query(`select * from ${name}`);
+            }
+
+            let rowData:any = [];
+
+            request.on('row', row => {
+                // console.log(row);
+                rowData.push({ name, couchdb_type: 'CATALOG', ...row });
+                if (rowData.length >= chunk) {
+                    request.pause(); //Pausar la insercción
+
+                    db.bulk({ docs: rowData })
+                        .then((body) => { })
+                        .catch((error) => { throw new Error(error) });
+
+                    rowData = [];
+                    request.resume();//continuar la insercción
+                }
+            })
+
+            request.on("error", (err) => {
+                console.log(err);
+            });
+
+            request.on("done", (result) => {
+                db.bulk({ docs: rowData })
+                    .then((body) => { })
+                    .catch((error) => console.log(error));
+
+                rowData = [];
+                request.resume();
+
+                console.log("Catalog Done!", name, "!!", result);
+            });
+        })
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+async function updateCatalogFromHFByRelationship(name:string, chunk:number, shortname:string, relationship_name?:string, relationship?:string) {
+    try {
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const docsDestroy = await db.find({ selector: { couchdb_type: shortname }, limit: 100000 });
+
+        if (docsDestroy.docs.length > 0) {
+
+            const docsEliminate = docsDestroy.docs.map(doc => {
+                const { _id, _rev } = doc;
+                return { _deleted: true, _id, _rev }
+            })
+            db.bulk({ docs: docsEliminate })
+                .then((body) => { })
+                .catch((error) => console.log(error));
+        }
+
+        sql.connect(sqlConfig, (err) => {
+            const request = new sql.Request();
+            request.stream = true;//Activarlo al trabajar con varias filas
+
+            request.query(`select * from ${name}`);
+
+            let rowData:any = [];
+
+            request.on('row', row => {
+                // relationship
+                const codigo_postal = row.codigo_postal
+                let dataRow:any = relationship ? {
+                    _id: `${shortname.toUpperCase()}|${(row.id).toString()}`,
+                    codigo_postal,
+                    couchdb_type: shortname,
+                    etiqueta: row.etiqueta,
+                    [relationship]: `${relationship_name}|${(row[`id_${relationship}`]).toString()}`,
+                } : {
+                    _id: `${shortname.toUpperCase()}|${(row.id).toString()}`,
+                    // name: shortname,
+                    couchdb_type: shortname,
+                    etiqueta: row.etiqueta
+                }
+                // if(relationship) dataRow.[relationship] = `${relationship_name}|${(row[`id_${relationship}`]).toString()}`;
+                // if(row.codigo_postal || row.abreviatura || row.codigo) console.log(row.codigo_postal, row.abreviatura, row.codigo)
+                if (row.codigo_postal) dataRow.codigo_postal = row.codigo_postal;
+                if (row.codigo) dataRow.codigo = row.codigo;
+                if (row.abreviatura) dataRow.abreviatura = row.abreviatura;
+
+                rowData.push(dataRow)
+
+                // rowData.push(relationship ? codigo_postal ?  {
+                //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
+                //     codigo_postal,
+                //     couchdb_type: shortname,
+                //     etiqueta: row.etiqueta,
+                //     [relationship]: `${relationship_name}|${(row[`id_${relationship}`]).toString()}`,
+                // } : {
+                //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
+                //     couchdb_type: shortname,
+                //     etiqueta: row.etiqueta,
+                //     [relationship]: `${relationship_name}|${(row[`id_${relationship}`]).toString()}`,
+                // } : {
+                //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
+                //     // name: shortname,
+                //     couchdb_type: shortname,
+                //     etiqueta: row.etiqueta
+                // });
+                if (rowData.length >= chunk) {
+                    request.pause(); //Pausar la insercción
+
+                    db.bulk({ docs: rowData })
+                        .then((body) => { })
+                        .catch((error) => { throw new Error(error) });
+
+                    rowData = [];
+                    request.resume();//continuar la insercción
+                }
+            })
+
+            request.on("error", (err) => {
+                console.log(err);
+            });
+
+            request.on("done", (result) => {
+                db.bulk({ docs: rowData })
+                    .then((body) => { })
+                    .catch((error) => console.log(error));
+
+                rowData = [];
+                request.resume();
+
+                console.log("Dones Catalog Special", name, "!!", result);
+            });
+        })
+    } catch (e:any) {
+        console.log(e)
+        throw new Error(e)
+    }
+}
 
 
 router.get('/clients/hf/getBalance', authorize, async(req, res) => {
