@@ -563,6 +563,7 @@ router.get('/products/sync', authorize, async(req, res) => {
         res.send(rowData);
 
     } catch (e) {
+        
         res.status(400).send(e + '');
     }
 
