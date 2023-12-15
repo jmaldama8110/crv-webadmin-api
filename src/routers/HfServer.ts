@@ -588,7 +588,6 @@ router.get('/product', authorize, async (req, res) =>{
     catch(e){
         res.status(401).send( JSON.stringify(e))
     }
-
 })
 
 function mapIdentifierForFrequency (frequencyType:string) {
