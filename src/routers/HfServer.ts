@@ -571,18 +571,25 @@ router.get('/products/sync', authorize, async(req, res) => {
 
 
 async function getProductsWeb (){
-    try{
-        const pool = await sql.connect(sqlConfig);
-        let result = await pool
+    const pool = await sql.connect(sqlConfig);
+    let result = await pool
                         .request()
                         .execute('MOV_ProductsForWeb');
-        
-        return result.recordset;
-    } catch (err) {
-        return err;
-    }
+    return result.recordset;
+    
 }
 
+router.get('/product', authorize, async (req, res) =>{
+
+    try{
+        const product:any = await getProductsWeb();
+        res.send({ count: product.length, result: product});
+    }
+    catch(e){
+        res.status(401).send( JSON.stringify(e))
+    }
+
+})
 
 function mapIdentifierForFrequency (frequencyType:string) {
     switch( frequencyType){
