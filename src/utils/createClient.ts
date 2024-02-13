@@ -360,16 +360,20 @@ function sortDataClient(client:any) {
     const phonePerson = phones[0];
     const phoneBusiness = phones[1] ? phones[1] : phones[0];
 
-    (clientHF.TELEFONO).push(
-        {
-            id: IS_CREATE ? 0 : Funct.validateInt(phoneBusiness._id),
-            idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
-            extension: "",
-            tipo_telefono: phoneBusiness ? phoneBusiness.type ? phoneBusiness.type : " " : " ",
-            compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : " " : " ",
-            sms: 0
-        }
-    )
+    if(phones.length > 0)
+    {
+            (clientHF.TELEFONO).push(
+                {
+                    id: IS_CREATE ? 0 : Funct.validateInt(phoneBusiness._id),
+                    idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
+                    extension: "",
+                    tipo_telefono: phoneBusiness ? phoneBusiness.type ? phoneBusiness.type : " " : " ",
+                    compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : " " : " ",
+                    sms: 0
+                }
+        )        
+    }
+    
 
     const business_data = client.business_data;
     addresses.forEach((campo:any) => {
