@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import jwt from "jsonwebtoken";
 import * as Nano from 'nano';
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);          
-console.log(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`)
+
 export default class User {
 
     constructor(){
