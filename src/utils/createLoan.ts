@@ -76,7 +76,12 @@ export async function createLoanHF(data:any) {
             console.log('ACTUALIZACIÓN');
             loan.id_cliente = client.id_cliente;
         }
-
+        //Guardar Solicitud por creación o renovación antes de validación de estatus
+        typeClient === 1 ? await new LoanAppGroup(loan).save() : await new LoanApp(loan).save();
+        //Validación de estatus previo a actualización de la solicitud
+        let validation_solicitud = await validateSolicitud(loan.id_solicitud);
+        if(!validation_solicitud)
+            return new Error('La solicitud no puede ser modificada por que no está en estatus (TRAMITE ó PREIMPRESO) o en sub_estatus (NUEVO TRAMITE ó SOLICITUD) respectivamente.');
         const disposition = await getDisposicionByOffice(idBranch);
         if (!disposition) return new Error('Failed to get disposition');
 
@@ -510,3 +515,19 @@ async function assignMontoloanHF(data:any) {
         throw new Error(err);
     }
 }
+export async function validateSolicitud(id:any)
+{
+    const pool = await sql.connect(sqlConfig);
+    let result = await pool.request()
+        .input("id", sql.Int(), id)
+        .query("SELECT LTRIM(RTRIM(estatus)) AS estatus,LTRIM(RTRIM(sub_estatus)) AS sub_estatus FROM OTOR_SolicitudPrestamos WHERE id = @id");
+
+    if (result.recordset.length > 0)
+    {
+        if((result.recordset[0].estatus == 'PREIMPRESO' && result.recordset[0].sub_estatus == 'SOLICITUD') ||
+            (result.recordset[0].estatus == 'TRAMITE' && result.recordset[0].sub_estatus == 'NUEVO TRAMITE'))
+            return true;
+    }
+    return false;
+}
+
