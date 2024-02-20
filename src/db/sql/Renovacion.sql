@@ -1,13 +1,11 @@
 ------------------------ PROCEDIMENTO PARA RENOVACION DE GRUPOS ----------------------
 USE HBMFS
 GO
-
 DECLARE @id_oficina INT = 16
 DECLARE @id_oficial_credito INT = 284300
 DECLARE @id_solicitud_actual INT = 227209
 DECLARE @id_solicitud_nueva INT = 234104
 DECLARE @id_cliente INT = 307386
-
 
 -- 1 BUSCAR CLIENTE POR NOMBRE (TOMAR EL PRESTAMO ACTIVO DE PREFERENCIA)
 EXEC CLIE_ObtenerClientesYSolicitudesPorOficina 'HEDOLAS', @id_oficina,1,50

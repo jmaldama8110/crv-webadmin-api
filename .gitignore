@@ -1,4 +1,4 @@
-node_modules/
-src/playground/
-config/
-cert/
+/node_modules
+/config
+/public
+.DS_Store

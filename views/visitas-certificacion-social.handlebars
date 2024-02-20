@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitas de Ceritifacion Social</title>
+
+<style>
+         body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            font-size: 14px;
+            line-height: 1.2rem;
+         }
+         * {
+            margin: 0;
+         }
+        
+         .header {
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #efefef;
+            border-radius: 5px;
+         }
+         .header div{
+            text-align: center;            
+            padding: 1rem;
+         }
+         .det{ padding: 0.5rem }
+        .det-row{
+            display: flex;
+            border-bottom: 1px solid #B6B6B6;
+        }
+        .det-row-item{ 
+            display: flex;
+            
+        }
+        .det-row .info{ width: 400px; }
+        .det-row .info-title { width: 150px; }
+         
+        .img-collage img {  max-width: 150px;  padding: 0.2rem; }
+        .img-collage{  display: flex;}
+
+        .logo-container { width: 200px;}
+         img { width: 100%; }        
+         .txt-center{ text-align: center;}
+         .txt-rigth{ text-align: right;}
+         .fs-lg{ font-size: 18px;}
+         .fs-sm{ font-size: 12px;}
+         .wd5 { max-width: 5px;}
+         .wd10 { width: 10px;}
+         .wd15 { width: 15px;}
+         .wd20 { width: 20px;}
+         .wd30 { width: 30px;}
+         .wd40 { width: 40px;}
+         .wd50 { width: 50px;}
+         .wd75 { width: 75px;}
+         .wd100 { width: 100px;}
+         .wd150 { width: 150px;}
+         .wd250 { width: 250px;}
+         .wd300 { width: 300px;}
+         .wd350 { width: 350px;}
+         .wd400 { width: 400px;}
+         .fw-bold { font-weight: bolder;}
+</style>
+
+</head>
+<body>
+    
+    <header class="header">
+        <div class="logo-container">
+            <img src='{{serverHost}}/docs/img?id=logo-cnsrv-light.png' >
+        </div>
+        <div>
+            <h3>CONSULTORES DE SERVICIOS VARIOS SA de CV SOFOM ENR</h3>
+            <p>Reporte de Visitas de Certificacion Social</p>
+        </div>
+    </header>
+    <div class="det">
+        {{#each queryData}}
+        <div class="det-row">
+            <div class="info">
+                <div class="det-row-item"><p class="info-title">Registrado por:</p><p>{{this.created_by}}</p></div>
+                <div class="det-row-item"><p class="info-title">Registro el:</p><p>{{this.created_at}}</p></div>
+                <div class="det-row-item"><p class="info-title">Coords:</p><a href={{this.mapLink}}>Ver Mapa</a></div>
+                <div class="det-row-item"><p class="info-title">Grupo/Cliente:</p><p>{{this.nombreCliente}}</p></div>
+                <div class="det-row-item"><p class="info-title">Sucursal:</p><p>{{this.sucursal}}</p></div>
+                <div class="det-row-item"><p class="info-title">Ciclo:</p><p>{{this.ciclo}}</p></div>
+                <div class="det-row-item"><p class="info-title">Monto Credito:</p><p>{{this.montoTotalAutorizado}}</p></div>
+            </div>
+            <div class="img-collage">
+                {{#each this.visits_pics}} 
+                    <img src='{{serverHost}}/docs/img?id={{_id}}'>
+                {{/each}}
+            </div>
+        </div>
+        
+        {{/each}}        
+
+    </div>
+    
+</body>
+</html>
