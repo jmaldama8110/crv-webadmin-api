@@ -305,18 +305,18 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
                     0,
                     ""
                 ],
-                income_sales_total: "",
-                income_partner: "",
-                income_job: "",
-                income_remittances: "",
-                income_other: "",
-                income_total: "",
-                expense_family: "",
-                expense_rent: "",
-                expense_business: "",
-                expense_debt: "",
-                expense_credit_cards: "",
-                expense_total: "",
+                income_sales_total: 0,
+                income_partner: 0,
+                income_job: 0,
+                income_remittances: 0,
+                income_other: 0,
+                income_total: 0,
+                expense_family: 0,
+                expense_rent: 0,
+                expense_business: 0,
+                expense_debt: 0,
+                expense_credit_cards: 0,
+                expense_total: 0,
                 keeps_accounting_records: false,
                 has_previous_experience: false,
                 previous_loan_experience: "",
@@ -334,6 +334,70 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
                     occupCap = perSet.occupation ? perSet.occupation.toString() : '';
             }
             if (data.recordsets[7].length) {
+                // const data = 
+                // {
+                //     id_cliente: 265811,
+                //     id_persona: 259410,
+                //     econ_id_actividad_economica: 5,
+                //     econ_sueldo_conyugue: 0,
+                //     econ_otros_ingresos: 0,
+                //     econ_familiares_extranjeros: false,
+                //     econ_parentesco: '',
+                //     econ_envia_dinero: false,
+                //     econ_cantidad_mensual: 0,
+                //     econ_otros_gastos: 0,
+                //     econ_ocupacion: 'ADMINISTRADORA DE SU NEGOCIO',
+                //     econ_dependientes_economicos: 1,
+                //     econ_pago_casa: 0,
+                //     econ_gastos_vivienda: 0,
+                //     econ_gastos_transporte: 0,
+                //     econ_gastos_familiares: 0,
+                //     econ_id_empresa: 292936,
+                //     econ_fecha_inicio_act_productiva: 2018-03-02T10:48:09.097Z,
+                //     econ_id_destino_credito: 5,
+                //     econ_id_ubicacion_negocio: 14,
+                //     econ_id_rol_hogar: 1,
+                //     credito_anteriormente: false,
+                //     mejorado_ingreso: false,
+                //     lengua_indigena: false,
+                //     habilidad_diferente: false,
+                //     utiliza_internet: false,
+                //     utiliza_redes_sociales: false,
+                //     id_actividad_economica: 1057,
+                //     id_ocupacion: 2,
+                //     id_profesion: 245,
+                //     desempenia_funcion_publica: false,
+                //     desempenia_funcion_publica_cargo: '',
+                //     desempenia_funcion_publica_dependencia: '',
+                //     familiar_desempenia_funcion_publica: false,
+                //     familiar_desempenia_funcion_publica_cargo: '',
+                //     familiar_desempenia_funcion_publica_dependencia: '',
+                //     familiar_desempenia_funcion_publica_nombre: '',
+                //     familiar_desempenia_funcion_publica_paterno: '',
+                //     familiar_desempenia_funcion_publica_materno: '',
+                //     familiar_desempenia_funcion_publica_parentesco: '',
+                //     id_instrumento_monetario: 1,
+                //     id_tipo_red_social: 1,
+                //     usuario_red_social: '',
+                //     econ_renta: 0,
+                //     vivienda_piso: false,
+                //     vivienda_techo_losa: false,
+                //     vivienda_bano: false,
+                //     vivienda_letrina: false,
+                //     vivienda_block: false,
+                //     geolocalizacion_domicilio: {
+                //       srid: 4326,
+                //       version: 1,
+                //       points: [ [Point] ],
+                //       figures: [ [Object] ],
+                //       shapes: [ [Object] ],
+                //       segments: []
+                //     },
+                //     nombre_actividad_economica: 'PREPARACIÓN Y SERVICIO DE ALIMENTOS Y BEBIDAS',
+                //     nombre_ocupacion: 'ADMINISTRADORA DE SU NEGOCIO',
+                //     nombre_profesion: 'Ninguna',
+                //     nombre_negocio: 'PREPARACION Y SERVICIO DE ALIMENTOS Y BEBIDAS'
+                //   }
                 business_data.economic_activity = [econActId, econActCap],
                     business_data.profession = [profId, profCap],
                     business_data.business_name = data.recordsets[7][0].nombre_negocio,
@@ -342,8 +406,18 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
                     business_data.business_phone = "",
                     business_data.number_employees = "";
                 business_data.loan_destination = [data.recordsets[7][0].econ_id_destino_credito, ''];
-                business_data.income_sales_total = data.recordsets[7][0].econ_cantidad_mensual;
-                business_data.income_partner = data.recordsets[7][0].econ_sueldo_conyugue;
+                business_data.income_sales_total = data.recordsets[7][0].econ_cantidad_mensual ? data.recordsets[7][0].econ_cantidad_mensual : 0;
+                business_data.income_partner = data.recordsets[7][0].econ_sueldo_conyugue ? data.recordsets[7][0].econ_sueldo_conyugue : 0;
+                business_data.income_other = data.recordsets[7][0].econ_otros_ingresos ? data.recordsets[7][0].econ_otros_ingresos : 0;
+                business_data.income_job = 0;
+                business_data.income_remittances = 0;
+                business_data.income_total = 0;
+                business_data.expense_family = data.recordsets[7][0].econ_gastos_familiares ? data.recordsets[7][0].econ_gastos_familiares : 0;
+                business_data.expense_rent = data.recordsets[7][0].econ_renta ? data.recordsets[7][0].econ_renta : 0;
+                business_data.expense_business = data.recordsets[7][0].econ_otros_gastos ? data.recordsets[7][0].econ_otros_gastos : 0;
+                business_data.expense_debt = data.recordsets[7][0].econ_pago_casa ? data.recordsets[7][0].econ_pago_casa : 0;
+                business_data.expense_credit_cards = 0;
+                business_data.expense_total = 0;
                 household_data.economic_dependants = data.recordsets[7][0].econ_dependientes_economicos.toString();
                 household_data.household_brick = !!data.recordsets[7][0].vivienda_block;
                 household_data.household_floor = !!data.recordsets[7][0].vivienda_piso;

@@ -497,7 +497,7 @@ router.get('/docs/img', (req, res) => __awaiter(void 0, void 0, void 0, function
     try {
         if (!id)
             throw new Error('No img id supplied..');
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE ? process.env.COUCHDB_NAME_PHOTOSTORE : '');
         const imageData = yield db.get(id);
         const img = Buffer.from(imageData.base64str, 'base64');
         res.writeHead(200, {
@@ -513,7 +513,7 @@ router.get('/docs/img', (req, res) => __awaiter(void 0, void 0, void 0, function
 }));
 function loadBase64ImgArrayFromDB(keys) {
     return __awaiter(this, void 0, void 0, function* () {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE ? process.env.COUCHDB_NAME_PHOTOSTORE : '');
         const data = yield db.fetch({ keys: keys });
         const newData = data.rows.map((x) => ({ base64str: x.doc.base64str, mimetype: x.doc.mimetype, title: x.doc.title }));
         return newData;

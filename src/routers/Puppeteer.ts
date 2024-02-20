@@ -194,6 +194,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
     }
   });
 
+
   router.get('/docs/pdf/tarjeton-digital',authorize, async(req:any, res:any) =>{
 
     try{
@@ -241,6 +242,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
         'walmart-logo.png',
         'yza-logo.png'
       ]);
+      
       const banbajioLogo = imgs[0];
       const banorteLogo = imgs [1];
       const bbienestarLogo = imgs[2];
@@ -283,6 +285,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
       res.send({...result } );
     }
     catch(error:any){
+      
       res.status(400).send(error.message);
     }
   
@@ -513,7 +516,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
     
       try{
         if( !id ) throw new Error('No img id supplied..');
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE ? process.env.COUCHDB_NAME_PHOTOSTORE : '');
         const imageData:any = await db.get(id);
         const img = Buffer.from(imageData.base64str,'base64');
         res.writeHead(200,{
@@ -530,7 +533,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   
   
   async function loadBase64ImgArrayFromDB (keys: string[]) {
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE ? process.env.COUCHDB_NAME_PHOTOSTORE : '');
     const data = await db.fetch({keys:keys });
     const newData = data.rows.map( (x:any)=> ( { base64str: x.doc.base64str, mimetype: x.doc.mimetype, title: x.doc.title }))
     return newData;

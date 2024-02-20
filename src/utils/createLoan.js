@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createLoanHF = void 0;
+exports.validateSolicitud = exports.createLoanHF = void 0;
 const mssql_1 = __importDefault(require("mssql"));
 const connSQL_1 = require("../db/connSQL");
 const LoanAppGroup_1 = require("../model/LoanAppGroup");
@@ -84,6 +84,12 @@ function createLoanHF(data) {
                 console.log('ACTUALIZACIÓN');
                 loan.id_cliente = client.id_cliente;
             }
+            //Guardar Solicitud por creación o renovación antes de validación de estatus
+            typeClient === 1 ? yield new LoanAppGroup_1.LoanAppGroup(loan).save() : yield new LoanApp_1.LoanApp(loan).save();
+            //Validación de estatus previo a actualización de la solicitud
+            let validation_solicitud = yield validateSolicitud(loan.id_solicitud);
+            if (!validation_solicitud)
+                return new Error('La solicitud no puede ser modificada por que no está en estatus (TRAMITE ó PREIMPRESO) o en sub_estatus (NUEVO TRAMITE ó SOLICITUD) respectivamente.');
             const disposition = yield getDisposicionByOffice(idBranch);
             if (!disposition)
                 return new Error('Failed to get disposition');
@@ -464,3 +470,18 @@ function assignMontoloanHF(data) {
         }
     });
 }
+function validateSolicitud(id) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        let result = yield pool.request()
+            .input("id", mssql_1.default.Int(), id)
+            .query("SELECT LTRIM(RTRIM(estatus)) AS estatus,LTRIM(RTRIM(sub_estatus)) AS sub_estatus FROM OTOR_SolicitudPrestamos WHERE id = @id");
+        if (result.recordset.length > 0) {
+            if ((result.recordset[0].estatus == 'PREIMPRESO' && result.recordset[0].sub_estatus == 'SOLICITUD') ||
+                (result.recordset[0].estatus == 'TRAMITE' && result.recordset[0].sub_estatus == 'NUEVO TRAMITE'))
+                return true;
+        }
+        return false;
+    });
+}
+exports.validateSolicitud = validateSolicitud;
