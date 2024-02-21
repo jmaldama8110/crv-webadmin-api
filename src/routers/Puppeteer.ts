@@ -7,6 +7,10 @@ import { authorize } from '../middleware/authorize';
 import { create } from 'express-handlebars';
 import { arrayFromStringSize, calculateYearsMonthsFromDates, formatLocalCurrency, formatLocalDate, formatLocalDate2, getRounded } from '../utils/misc';
 import * as Nano from 'nano';
+
+const multer  = require('multer')
+const upload = multer();
+
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 
 const serverHost = `${process.env.WEB_SERVER_HOST}`;
@@ -184,7 +188,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   
       });
   
-      const result = await renderPDf(htmlData);
+      const result = await renderPDf(htmlData,`estado_cuenta_`);
       res.send({...result } );
   
   
@@ -198,27 +202,43 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   router.get('/docs/pdf/tarjeton-digital',authorize, async(req:any, res:any) =>{
 
     try{
-
       const typeReference = req.query.typeReference ? req.query.typeReference as string : '';
       const contractId = req.query.contractId ? req.query.contractId as string : '';
       const clientId = req.query.clientId ? req.query.clientId as string : '';
 
       const id = typeReference === '2' ? parseInt(clientId) : parseInt(contractId);
       const sqlRes = await createReference(typeReference, id);
-  
+      const onlyNumbers = new RegExp(/^\d+$/);
+
+      const referencesData = sqlRes.map( (i:any) => ({
+          id_intermerdiario: i.id_intermerdiario,
+          nombre: i.nombre,
+          no_cuenta: (i.no_cuenta == '0' || !i.no_cuenta ) ? '000000000000': i.no_cuenta,
+          contiene_codigo_barras: i.contiene_codigo_barras,
+          referencia: i.referencia.match(onlyNumbers) ? i.referencia : '00000000000',
+          nombre_cliente: i.nombre_cliente,
+          tipo_evento: i.tipo_evento,
+          tipo_cliente: i.tipo_cliente
+      }))
+      
       const hbs = create();
       
-      const bbienestarInfo = sqlRes.find( x => x.id_intermerdiario == 1 );
-      const banorteInfo = sqlRes.find( x => x.id_intermerdiario == 2 );
-      const bbvaInfo = sqlRes.find( x => x.id_intermerdiario == 4 );
-      const fbienestarInfo = sqlRes.find( x => x.id_intermerdiario == 6 );
-      const bbajioInfo = sqlRes.find( x => x.id_intermerdiario == 7 );
-      const paynetInfo = sqlRes.find( x => x.id_intermerdiario == 8 );
-      const payCashInfo = sqlRes.find( x => x.id_intermerdiario == 9 );
-      const conservaInfo = sqlRes.find( x => x.id_intermerdiario == 11 );
-  
+      const bbienestarInfo = referencesData.find( x => x.id_intermerdiario == 1 && x.nombre == "BANSEFI" );
+      const banorteInfo = referencesData.find( x => x.id_intermerdiario == 15 && x.nombre == 'BANORTE' );
+      const bbvaInfo = referencesData.find( x => x.id_intermerdiario == 4 && x.nombre == "BANCOMER");
+      const fbienestarInfo = referencesData.find( x => x.id_intermerdiario == 6 && x.nombre == "TELECOMM" );
+      const bbajioInfo = referencesData.find( x => x.id_intermerdiario == 7 && x.nombre == 'BAJIO   1288');
+      const paynetInfo = referencesData.find( x => x.id_intermerdiario == 8 && x.nombre == "PAYNET" );
+      const payCashInfo = referencesData.find( x => x.id_intermerdiario == 9 && x.nombre == "PAYCASH" );
+      const conservaInfo = referencesData.find( x => x.id_intermerdiario == 11 && x.nombre == "CONSERVA" );
+      const clubpagoInfo = referencesData.find( x => x.id_intermerdiario == 12 && x.nombre == 'CLUBPAGO' );
+      const santaderInfo = referencesData.find( x => x.id_intermerdiario == 13 && x.nombre == 'SANTANDER');
+      const afirmeInfo = referencesData.find( x => x.id_intermerdiario == 14 && x.nombre == "AFIRME" );
+      const antadInfo = referencesData.find( x => x.id_intermerdiario == 15 && x.nombre == 'ANTAD');
+      
+
       const imgs = await loadBase64ImgArrayFromDB( [
-        'banbajio-logo.png',
+        'banbajio-logo.png',        
         'banorte-logo.jpg',
         'bbienestar-logo.png',
         'bbva-logo.jpg',
@@ -240,8 +260,13 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
         'superama-logo.png',
         'waldos-logo.jpeg',
         'walmart-logo.png',
-        'yza-logo.png'
+        'yza-logo.png',
+        'afirme-logo.png',
+        'spei-logo.png',
+        'antad-logo.jpg',
+        'clubpago-logo.png'
       ]);
+      
       
       const banbajioLogo = imgs[0];
       const banorteLogo = imgs [1];
@@ -266,13 +291,22 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
       const waldosLogo = imgs[20]
       const walmartLogo = imgs[21];
       const yzaLogo = imgs[22];
+      const afirmeLogo = imgs[23];
+      const speiLogo = imgs[24];
+      const antadLogo = imgs[25];
+      const clubpagoLogo = imgs[26];
     
-      const htmlData = await hbs.render('views/tarjeton-digital.handlebars', {
+      const htmlData = await hbs.render('views/tarjeton-2024.handlebars', {
           banbajioLogo,banorteLogo, bbienestarLogo,bbvaLogo,bodegaLogo,circlekLogo,cityclubLogo,extraLogo,farmahorroLogo,waldosLogo,walmartLogo,yzaLogo,
-          farmguadalajaraLogo,fbienestarLogo,cnsrvlightLogo,merzaLogo,paycashLogo,paynetLogo,samsLogo,santanderLogo,sevenLogo,sorianaLogo,superamaLogo,
+          farmguadalajaraLogo,fbienestarLogo,cnsrvlightLogo,merzaLogo,paycashLogo,paynetLogo,samsLogo,santanderLogo,sevenLogo,sorianaLogo,superamaLogo,afirmeLogo,speiLogo,
+          clubpagoLogo,antadLogo,
           clientId,
           serverHost,
           payCashInfo,
+          clubpagoInfo,
+          antadInfo,
+          afirmeInfo,
+          santaderInfo,
           paynetInfo,
           bbienestarInfo,
           fbienestarInfo,
@@ -281,7 +315,8 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
           bbvaInfo,
           conservaInfo
        });
-      const result = await renderPDf(htmlData); 
+
+      const result = await renderPDf(htmlData,'tarjeton-pago'); 
       res.send({...result } );
     }
     catch(error:any){
@@ -290,6 +325,134 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
     }
   
   })
+
+  router.get('/docs/html/tarjeton-digital', async(req:any, res:any) =>{
+
+    try{
+
+      const typeReference = req.query.typeReference ? req.query.typeReference as string : '';
+      const contractId = req.query.contractId ? req.query.contractId as string : '';
+      const clientId = req.query.clientId ? req.query.clientId as string : '';
+
+      const id = typeReference === '2' ? parseInt(clientId) : parseInt(contractId);
+      const sqlRes = await createReference(typeReference, id);
+      const onlyNumbers = new RegExp(/^\d+$/);
+
+      const referencesData = sqlRes.map( (i:any) => ({
+          id_intermerdiario: i.id_intermerdiario,
+          nombre: i.nombre,
+          no_cuenta: (i.no_cuenta == '0' || !i.no_cuenta ) ? '000000000000': i.no_cuenta,
+          contiene_codigo_barras: i.contiene_codigo_barras,
+          referencia: i.referencia.match(onlyNumbers) ? i.referencia : '00000000000',
+          nombre_cliente: i.nombre_cliente,
+          tipo_evento: i.tipo_evento,
+          tipo_cliente: i.tipo_cliente
+      }))
+      
+      const hbs = create();
+      
+      const bbienestarInfo = referencesData.find( x => x.id_intermerdiario == 1 && x.nombre == "BANSEFI" );
+      const banorteInfo = referencesData.find( x => x.id_intermerdiario == 15 && x.nombre == 'BANORTE' );
+      const bbvaInfo = referencesData.find( x => x.id_intermerdiario == 4 && x.nombre == "BANCOMER");
+      const fbienestarInfo = referencesData.find( x => x.id_intermerdiario == 6 && x.nombre == "TELECOMM" );
+      const bbajioInfo = referencesData.find( x => x.id_intermerdiario == 7 && x.nombre == 'BAJIO   1288');
+      const paynetInfo = referencesData.find( x => x.id_intermerdiario == 8 && x.nombre == "PAYNET" );
+      const payCashInfo = referencesData.find( x => x.id_intermerdiario == 9 && x.nombre == "PAYCASH" );
+      const conservaInfo = referencesData.find( x => x.id_intermerdiario == 11 && x.nombre == "CONSERVA" );
+      const clubpagoInfo = referencesData.find( x => x.id_intermerdiario == 12 && x.nombre == 'CLUBPAGO' );
+      const santaderInfo = referencesData.find( x => x.id_intermerdiario == 13 && x.nombre == 'SANTANDER');
+      const afirmeInfo = referencesData.find( x => x.id_intermerdiario == 14 && x.nombre == "AFIRME" );
+      const antadInfo = referencesData.find( x => x.id_intermerdiario == 15 && x.nombre == 'ANTAD');
+      
+
+      const imgs = await loadBase64ImgArrayFromDB( [
+        'banbajio-logo.png',        
+        'banorte-logo.jpg',
+        'bbienestar-logo.png',
+        'bbva-logo.jpg',
+        'bodega-logo.png',
+        'circlek-logo.png',
+        'cityclub-logo.png',
+        'extra-logo.png',
+        'farmahorro-logo.jpeg',
+        'farmguadalajara-logo.jpeg',
+        'fbienestar-logo.jpg',
+        'logo-cnsrv-light.png',
+        'merza-logo.png',
+        'paycash-logo.png',
+        'paynet-logo.jpg',
+        'sams-logo.png',
+        'santander-logo.png',
+        'seven-logo.png',
+        'soriana-logo.png',
+        'superama-logo.png',
+        'waldos-logo.jpeg',
+        'walmart-logo.png',
+        'yza-logo.png',
+        'afirme-logo.png',
+        'spei-logo.png',
+        'antad-logo.jpg',
+        'clubpago-logo.png'
+      ]);
+      
+      
+      const banbajioLogo = imgs[0];
+      const banorteLogo = imgs [1];
+      const bbienestarLogo = imgs[2];
+      const bbvaLogo = imgs[3];
+      const bodegaLogo = imgs[4];
+      const circlekLogo = imgs[5];
+      const cityclubLogo = imgs[6];
+      const extraLogo = imgs[7]
+      const farmahorroLogo = imgs[8]
+      const farmguadalajaraLogo = imgs[9]
+      const fbienestarLogo = imgs[10]
+      const cnsrvlightLogo = imgs[11];
+      const merzaLogo = imgs[12];
+      const paycashLogo = imgs[13];
+      const paynetLogo = imgs[14];
+      const samsLogo = imgs[15];
+      const santanderLogo = imgs[16];
+      const sevenLogo = imgs[17];
+      const sorianaLogo = imgs[18];
+      const superamaLogo = imgs[19]
+      const waldosLogo = imgs[20]
+      const walmartLogo = imgs[21];
+      const yzaLogo = imgs[22];
+      const afirmeLogo = imgs[23];
+      const speiLogo = imgs[24];
+      const antadLogo = imgs[25];
+      const clubpagoLogo = imgs[26];
+    
+      const htmlData = await hbs.render('views/tarjeton-2024.handlebars', {
+          banbajioLogo,banorteLogo, bbienestarLogo,bbvaLogo,bodegaLogo,circlekLogo,cityclubLogo,extraLogo,farmahorroLogo,waldosLogo,walmartLogo,yzaLogo,
+          farmguadalajaraLogo,fbienestarLogo,cnsrvlightLogo,merzaLogo,paycashLogo,paynetLogo,samsLogo,santanderLogo,sevenLogo,sorianaLogo,superamaLogo,afirmeLogo,speiLogo,
+          clubpagoLogo,antadLogo,
+          clientId,
+          serverHost,
+          payCashInfo,
+          clubpagoInfo,
+          antadInfo,
+          afirmeInfo,
+          santaderInfo,
+          paynetInfo,
+          bbienestarInfo,
+          fbienestarInfo,
+          bbajioInfo,
+          banorteInfo,
+          bbvaInfo,
+          conservaInfo
+       });
+      // const result = await renderPDf(htmlData); 
+      res.send(htmlData );
+    }
+    catch(error:any){
+      
+      res.status(400).send(error.message);
+    }
+  
+  })
+
 
   router.get('/docs/pdf/mujeres-de-palabra',authorize, async(req:any, res:any) =>{
 
@@ -440,7 +603,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
           serverHost,
           clientsData: clientsData,
        });
-       const result = await renderPDf(htmlData);
+       const result = await renderPDf(htmlData,`solicitud_grupo_solidario`);
        res.send({...result } );
   
     }
@@ -451,7 +614,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   })
   
 
-  async function renderPDf( htmlData:string ) {
+  async function renderPDf( htmlData:string, fileName:string ) {
 
     const serverEnv = process.env.SERVER_ENV || 'development'
   
@@ -465,7 +628,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
    
     //To reflect CSS used for screens instead of print
     await page.emulateMediaType('print');
-    const fileNamePathPdf = `./public/pdfs/accstatement_${Date.now().toString()}.pdf`
+    const fileNamePathPdf = `./public/pdfs/${fileName}${Date.now().toString()}.pdf`
     
     const pdf = await page.pdf({
       path: fileNamePathPdf,
@@ -480,34 +643,34 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
     return { downloadPath: fileNamePathPdf.replace('./public/','') }
   }
   
-  // router.post('/photos/upload', authorize, upload.array('photos', 24), async function (req, res, next) {
-  //   try{
+  router.post('/photos/upload', authorize, upload.array('photos', 24), async function (req:any, res:any, next) {
+    try{
   
-  //     const newListDocs = [];
-  //     for( let i=0; i< req.files.length; i++ ){
-  //       /// ignores files that are not images PNG or JPEG
-  //       if( !(req.files[i].mimetype === 'image/png' || 
-  //           req.files[i].mimetype === 'image/jpeg')
-  //        ) continue;
+      const newListDocs = [];
+      for( let i=0; i< req.files.length; i++ ){
+        /// ignores files that are not images PNG or JPEG
+        if( !(req.files[i].mimetype === 'image/png' || 
+            req.files[i].mimetype === 'image/jpeg')
+         ) continue;
   
-  //       const base64str = req.files[i].buffer.toString('base64');
-  //       const item = {
-  //         _id: req.files[i].originalname,
-  //         base64str,
-  //         title: req.files[i].originalname,
-  //         mimetype: req.files[i].mimetype
-  //       }
-  //       newListDocs.push(item);
-  //     }
-  //     const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE);
-  //     await db.bulk( {docs: newListDocs} );
-  //     res.send({ uploads: newListDocs.length });
-  //   }
-  //   catch(e){
-  //     res.status(400).send({ error: e.message, note:'try upload less than 24 photo files'});
-  //   }
+        const base64str = req.files[i].buffer.toString('base64');
+        const item = {
+          _id: req.files[i].originalname,
+          base64str,
+          title: req.files[i].originalname,
+          mimetype: req.files[i].mimetype
+        }
+        newListDocs.push(item);
+      }
+      const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE?process.env.COUCHDB_NAME_PHOTOSTORE: '');
+      await db.bulk( {docs: newListDocs} );
+      res.send({ uploads: newListDocs.length });
+    }
+    catch(e:any){
+      res.status(400).send({ error: e.message, note:'try upload less than 24 photo files'});
+    }
     
-  // });
+  });
   
   
   router.get('/docs/img', async (req, res) =>{

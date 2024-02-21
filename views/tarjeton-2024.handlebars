@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjeton Digital CONSERVA</title>
+    <script
+        src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"
+    >
+
+    </script>
+
+<style>
+         body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 1020px;
+            margin: auto;
+            font-size: 10px;
+         }
+         * {
+            margin: 0;
+         }
+        @media print {
+        .card {
+            break-inside: avoid;
+        }
+        }
+        /* Contenido principal**/
+         .content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 1rem;
+            margin: 2rem 2rem;
+         }
+         /****/
+
+         /*** Titulos alto contraste ***/
+         .title-black { background-color: black; padding: 0.5rem 0.5rem; }
+         .title-black h3, .title-black p { 
+            color:white;
+            text-align: center;
+            
+         }
+
+
+        .card-reference {
+            text-align: center;
+            width: 200px;
+        }
+        .card-brandlogos {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .card-row{
+            display: flex;
+            justify-content: space-between;
+            
+        }
+        .card-row .caption{
+            width: 150px;
+        }
+        .card-row .val {
+            width: 100%;
+            font-weight: bolder;
+        }
+
+        .card-banks {
+            padding: 0.5rem;
+            margin: auto; 
+        }
+        .tabla1 {
+            display: grid;
+            grid-template-columns: 150px 120px;
+            
+        }
+        .tabla1 div {
+            border: 1px solid #9E9E9E;
+            padding: 0.3rem;
+        }
+        
+        .tabla2 {
+            display: grid;
+            grid-template-columns: 100px 80px 100px;
+            
+        }
+        .tabla2 div {
+            border: 1px solid #9E9E9E;
+            padding: 0.3rem;
+        }
+        .tabla2 div p { 
+            font-weight: bolder;
+            font-size: 8px;
+        }
+
+        .logo-container { width: 90px; padding: 0.1rem }
+         img { width: 100%;} 
+         svg { height: 60px;width: 100%;}
+        .pt-sm { padding-top: 0.5rem; }
+        .pd-nm { padding: 1rem; }
+        .fw-bold { font-weight: bolder;}
+        .margin-top { margin-top: 0.5rem}
+        .text-center { text-align: center; }
+        .fs-sm { font-size: 8px; }
+        .fs-md { font-size: 16px; }
+        .fs-xl { font-size: 22px; }
+        .lh-sm {  line-height: 0.7rem;}
+
+        table, th, td {
+            border: 1px solid #9e9e9e95;
+            border-collapse: collapse;
+            max-width: 300px;
+        }
+
+
+        .bank-logo-container {
+            width: 80px;
+        }
+        .table-note {
+            font-size: 8px;
+            line-height: 0.8rem;
+            padding: 0.7rem;
+            text-align: center;
+        }
+ 
+</style>
+
+</head>
+<body>
+
+    <div class="content"> 
+          <table>
+            <tr>
+                 <td>    
+                        <div class="logo-container caption">
+                            <img src="data:{{cnsrvlightLogo.mimetype}};base64,{{cnsrvlightLogo.base64str}}"/>
+                        </div>
+                    </td>
+                <td colspan="2">
+                    <div class="title-black val">
+                        <p>TARJETÓN DE REFERENCIAS</p>
+                    <h3 class="fs-xl">{{payCashInfo.tipo_evento}}</h3>
+                </div>
+                </td>
+                
+            </tr>
+            <tr>
+                <td>ID Cliente</td>
+                <td colspan="2">{{clientId}}</td>
+                
+            </tr>
+            <tr>
+                <td>Nombre Cliente</td>
+                <td colspan="2">{{payCashInfo.nombre_cliente}}</td>
+                
+            </tr>
+            <tr>
+                <td>Tipo Depósito</td>
+                <td colspan="2">{{payCashInfo.tipo_evento}}</td>
+            </tr>
+            <tr>
+                <td>BANCO</td>
+                <td>No. SERVICIO</td>
+                <td>REFERENCIA GRUPO</td>
+            </tr>
+            <tr>
+                <td> <div class="bank-logo-container"><img src="data:{{bbienestarLogo.mimetype}};base64,{{bbienestarLogo.base64str}}"/></div></td>
+                <td>{{bbienestarInfo.no_cuenta}}</td>
+                <td>{{bbienestarInfo.referencia}}</td>
+            </tr>
+            <tr>
+                <td><div class="bank-logo-container"><img src="data:{{bbvaLogo.mimetype}};base64,{{bbvaLogo.base64str}}"/></div></td>
+                <td>{{bbvaInfo.no_cuenta}}</td>
+                <td>{{bbvaInfo.referencia}}</td>
+            </tr>
+            <tr>
+                <td><div class="bank-logo-container"><img src="data:{{fbienestarLogo.mimetype}};base64,{{fbienestarLogo.base64str}}"/></div></td>
+                <td>{{fbienestarInfo.no_cuenta}}</td>
+                <td>{{fbienestarInfo.referencia}}</td>
+            </tr>
+            <tr>
+                <td><div class="bank-logo-container"><img src="data:{{banbajioLogo.mimetype}};base64,{{banbajioLogo.base64str}}"/></div></td>
+                <td>{{bbajioInfo.no_cuenta}}</td>
+                <td>{{bbajioInfo.referencia}}</td>
+            </tr>
+            <tr>
+                <td><div class="bank-logo-container"><img src="data:{{santanderLogo.mimetype}};base64,{{santanderLogo.base64str}}"/></div></td>
+                <td>{{santaderInfo.no_cuenta}}</td>
+                <td>{{santaderInfo.referencia}}</td>
+            </tr>
+            <tr>
+                <td><div class="bank-logo-container"><img src="data:{{afirmeLogo.mimetype}};base64,{{afirmeLogo.base64str}}"/></div></td>
+                <td>{{afirmeInfo.no_cuenta}}</td>
+                <td>{{afirmeInfo.referencia}}</td>
+            </tr>
+            <tr>
+                <td><div class="bank-logo-container"><img src="data:{{banorteLogo.mimetype}};base64,{{banorteLogo.base64str}}"/></div></td>
+                <td>{{banorteInfo.no_cuenta}}</td>
+                <td>{{banorteInfo.referencia}}</td>
+            </tr>
+            <tr>
+                <td><div class="bank-logo-container"><img src="data:{{speiLogo.mimetype}};base64,{{speiLogo.base64str}}"/></div></td>
+                <td>BANCO STP</td>
+                <td class="text-center"><span class="fs-sm">CLABE INTERBANCARIA</span><br/>{{clubpagoInfo.no_cuenta}}</td>
+
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <div class="table-note">
+                        El presente Tarjetón es de carácter informativo, no es transferible y está designado para el depósito de <strong>{{payCashInfo.tipo_evento}}</strong> con referencias propias, únicamente para el cliente: <strong>{{payCashInfo.nombre_cliente}}</strong>
+                        <br/><strong>DUDAS Y ACLARACIONES 800 290 9000</strong>
+                    </div>
+                </td>
+                
+            </tr>
+          </table>
+
+          <table>
+            <tr>
+                <td colspan="3">
+                    <div class="title-black val">
+                        <h3 class="fs-xl">{{payCashInfo.tipo_evento}}</h3>
+                        <p class="lh-sm">Al recibir tu COMPROBANTE DE PAGO o TICKET revisa que el monto, referencia e institución sean correctos</p>
+                    </div>
+                </td>
+
+            </tr>
+            <tr>
+                <td> <div class="bank-logo-container"><img src="data:{{paycashLogo.mimetype}};base64,{{paycashLogo.base64str}}"/></div></td>
+                <td colspan="2">
+                    <div class="card-reference">
+                        <svg id="barcodePaycash"></svg>
+                        <h4>{{payCashInfo.referencia}}</h4>
+                        <p class="fs-sm">Escribir la referencia en caso de fallo del codigo.</p>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td> <div class="bank-logo-container"><img src="data:{{clubpagoLogo.mimetype}};base64,{{clubpagoLogo.base64str}}"/></div></td>
+                <td colspan="2">
+                    <div class="card-reference">
+                        <svg id="barcodeClubpago"></svg>
+                        <h4>{{clubpagoInfo.referencia}}</h4>
+                        <p class="fs-sm">Escribir la referencia en caso de fallo del codigo.</p>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td> <div class="bank-logo-container"><img src="data:{{paynetLogo.mimetype}};base64,{{paynetLogo.base64str}}"/></div></td>
+                <td colspan="2">
+                    <div class="card-reference">
+                        <svg id="barcodePaynet"></svg>
+                        <h4>{{paynetInfo.referencia}}</h4>
+                        <p class="fs-sm">Escribir la referencia en caso de fallo del codigo.</p>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td> <div class="bank-logo-container"><img src="data:{{antadLogo.mimetype}};base64,{{antadLogo.base64str}}"/></div></td>
+                <td colspan="2">
+                    <div class="card-reference">
+                        <svg id="barcodeAntad"></svg>
+                        <h4>{{antadInfo.referencia}}</h4>
+                        <p class="fs-sm">Escribir la referencia en caso de fallo del codigo.</p>
+                    </div>
+                </td>
+            </tr>
+
+
+            <tr>
+                <td colspan="3">
+                    <div class="table-note">
+                        
+                        <br/><strong>EL PROMOTOR NO RECIBE EFECTIVO</strong>
+                    </div>
+                </td>
+                
+            </tr>
+          </table>
+
+          <table>
+            <tr>
+                <td> 
+                    <div class="logo-container caption">
+                        <img src="data:{{cnsrvlightLogo.mimetype}};base64,{{cnsrvlightLogo.base64str}}"/>
+                    </div>
+                </td>
+                <td colspan="2" class="text-center">
+                    <h3>TARJETÓN DE PAGO EN CAJA</h3>
+                    <p class="fs-sm">CONSULTORES DE SERVICIOS VARIOS S.A. DE C.V. SOFOM ENR</p>
+                    <p class="fs-sm">EL EJECUTIVO NO RECIBE EFECTIVO</p>
+                    <h4>{{payCashInfo.tipo_evento}}</h4>
+                </td>
+            </tr>
+            <tr>
+                <td>ID Cliente</td>
+                <td colspan="2">{{clientId}}</td>
+                
+            </tr>
+            <tr>
+                <td>Nombre Cliente</td>
+                <td colspan="2">{{payCashInfo.nombre_cliente}}</td>
+                
+            </tr>
+            <tr>
+                <td>Tipo Depósito</td>
+                <td colspan="2">{{payCashInfo.tipo_evento}}</td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="logo-container caption">
+                        <img src="data:{{cnsrvlightLogo.mimetype}};base64,{{cnsrvlightLogo.base64str}}"/>
+                    </div>  
+                </td>
+                <td colspan="2">
+                    <div class="card-reference">
+                        <svg id="barcodeConserva"></svg>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Referencia</td>
+                <td colspan="2">
+                    {{conservaInfo.referencia}}
+                    <p class="fs-sm">Escribir la referencia en caso de fallo del codigo.</p>
+                </td>
+
+            </tr>
+            <tr>
+                <td colspan="3"><p class="text-center">Puede realizar su depósito de <strong>{{payCashInfo.tipo_evento}}</strong> en nuestras sucursales</p></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <div class="table-note">
+                        El presente Tarjetón es de carácter informativo, no es transferible y está designado para el depósito de <strong>{{payCashInfo.tipo_evento}}</strong> con referencias propias, únicamente para el cliente: <strong>{{payCashInfo.nombre_cliente}}</strong>
+                        <br/><strong>DUDAS Y ACLARACIONES 800 290 9000</strong>
+                    </div>
+                </td>                
+            </tr>
+          </table>
+
+
+    </div>
+
+    <script>
+        JsBarcode("#barcodePaycash", {{payCashInfo.referencia}},{ fontSize: 24, displayValue: false });
+        JsBarcode("#barcodeClubpago", {{clubpagoInfo.referencia}},{ fontSize: 24, displayValue: false });
+        JsBarcode("#barcodePaynet", {{paynetInfo.referencia}},{ fontSize: 24, displayValue: false });
+        JsBarcode("#barcodeAntad", {{antadInfo.referencia}},{ fontSize: 24, displayValue: false });
+        JsBarcode("#barcodeConserva", {{conservaInfo.referencia}},{ fontSize: 24,displayValue: false });
+    </script>
+</body>
+</html>
