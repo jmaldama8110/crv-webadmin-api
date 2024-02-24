@@ -89,6 +89,8 @@ export default class User {
           branch: [loanOfficerData.id_oficina,loanOfficerData.nombre_oficina],
           officer_rank: [loanOfficerData.id_nivel_puesto, loanOfficerData.nivel_puesto]
         };
+
+
         return userReponse;
       
     }

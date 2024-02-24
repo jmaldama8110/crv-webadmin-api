@@ -44,8 +44,8 @@ const authorize_1 = require("../middleware/authorize");
 const express_handlebars_1 = require("express-handlebars");
 const misc_1 = require("../utils/misc");
 const Nano = __importStar(require("nano"));
-const multer = require('multer');
-const upload = multer();
+// const multer  = require('multer')
+// const upload = multer();
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 const serverHost = `${process.env.WEB_SERVER_HOST}`;
 const router = express_1.default.Router();
@@ -609,33 +609,31 @@ function renderPDf(htmlData, fileName) {
         return { downloadPath: fileNamePathPdf.replace('./public/', '') };
     });
 }
-router.post('/photos/upload', authorize_1.authorize, upload.array('photos', 24), function (req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const newListDocs = [];
-            for (let i = 0; i < req.files.length; i++) {
-                /// ignores files that are not images PNG or JPEG
-                if (!(req.files[i].mimetype === 'image/png' ||
-                    req.files[i].mimetype === 'image/jpeg'))
-                    continue;
-                const base64str = req.files[i].buffer.toString('base64');
-                const item = {
-                    _id: req.files[i].originalname,
-                    base64str,
-                    title: req.files[i].originalname,
-                    mimetype: req.files[i].mimetype
-                };
-                newListDocs.push(item);
-            }
-            const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE ? process.env.COUCHDB_NAME_PHOTOSTORE : '');
-            yield db.bulk({ docs: newListDocs });
-            res.send({ uploads: newListDocs.length });
-        }
-        catch (e) {
-            res.status(400).send({ error: e.message, note: 'try upload less than 24 photo files' });
-        }
-    });
-});
+// router.post('/photos/upload', authorize, upload.array('photos', 24), async function (req:any, res:any, next) {
+//   try{
+//     const newListDocs = [];
+//     for( let i=0; i< req.files.length; i++ ){
+//       /// ignores files that are not images PNG or JPEG
+//       if( !(req.files[i].mimetype === 'image/png' || 
+//           req.files[i].mimetype === 'image/jpeg')
+//        ) continue;
+//       const base64str = req.files[i].buffer.toString('base64');
+//       const item = {
+//         _id: req.files[i].originalname,
+//         base64str,
+//         title: req.files[i].originalname,
+//         mimetype: req.files[i].mimetype
+//       }
+//       newListDocs.push(item);
+//     }
+//     const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE?process.env.COUCHDB_NAME_PHOTOSTORE: '');
+//     await db.bulk( {docs: newListDocs} );
+//     res.send({ uploads: newListDocs.length });
+//   }
+//   catch(e:any){
+//     res.status(400).send({ error: e.message, note:'try upload less than 24 photo files'});
+//   }
+// });
 router.get('/docs/img', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     /// server images based on the _id
     const id = req.query.id;
