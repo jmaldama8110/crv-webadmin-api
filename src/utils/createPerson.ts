@@ -177,7 +177,7 @@ async function sortDataPerson(client:any) {
                 id_oficina: client.branch && client.branch[0] ? client.branch[0] : 1,
                 curp_fisica: 0,
                 datos_personales_diferentes_curp: 0,
-                id_entidad_nacimiento: client.province_of_birth[0] ? getId(client.province_of_birth[0]) : dirDomi[0].province[0] ? getId(dirDomi[0].province) : 5,
+                id_entidad_nacimiento: client.province_of_birth[0] ? getId(client.province_of_birth[0]) : dirDomi[0].province[0] ? getId(dirDomi[0].province[0]) : 5,
                 id_nacionalidad: client.nationality[0] ? client.nationality[0] : 1,
                 id_pais_nacimiento: client.country_of_birth[0] ? getId(client.country_of_birth[0]) : 1,
                 es_pep: 0,
