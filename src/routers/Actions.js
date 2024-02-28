@@ -156,14 +156,24 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                             if (client.id_cliente == 0 || client.id_persona == 0) {
                                 // Create person and client
                                 const personCreatedHF = yield (0, createPerson_1.createPersonHF)({ "_id": row.client_id });
-                                const clientSaved = yield (0, createClient_1.createClientHF)({ "_id": row.client_id });
-                                RSP_ResultClient.status = "OK";
-                                // Validate creation person and
-                                if (!personCreatedHF || !clientSaved || personCreatedHF instanceof Error || clientSaved instanceof Error) {
+                                //Validar error al crear persona
+                                if (!personCreatedHF || personCreatedHF instanceof Error) {
                                     action.status = 'Error';
-                                    action.errors = [personCreatedHF.message, clientSaved.message];
+                                    action.errors = [personCreatedHF.message];
                                     RSP_ResultClient.status = 'ERROR';
                                     RSP_ResultNewMembers.push(RSP_ResultClient);
+                                }
+                                //Si no hay error crear cliente
+                                else {
+                                    const clientSaved = yield (0, createClient_1.createClientHF)({ "_id": row.client_id });
+                                    RSP_ResultClient.status = "OK";
+                                    //Validar creación del cliente
+                                    if (!clientSaved || clientSaved instanceof Error) {
+                                        action.status = 'Error';
+                                        action.errors = [clientSaved.message];
+                                        RSP_ResultClient.status = 'ERROR';
+                                        RSP_ResultNewMembers.push(RSP_ResultClient);
+                                    }
                                 }
                             }
                             else
@@ -204,7 +214,7 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                             action.status = 'Error';
                             action.errors = [loan.message];
                             RSP_Result.status = 'ERROR';
-                            console.log(loan);
+                            yield new Action_1.default(action).save();
                         }
                         else {
                             RSP_Result.status = 'OK';
@@ -215,18 +225,27 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                     case 'CREATE_UPDATE_CLIENT':
                         // Create person and client
                         const personCreatedHF = yield (0, createPerson_1.createPersonHF)(action.data);
-                        const clientSaved = yield (0, createClient_1.createClientHF)(action.data);
-                        // Validate creation person and
-                        if (!personCreatedHF || !clientSaved || personCreatedHF instanceof Error || clientSaved instanceof Error) {
+                        //Validar error al crear persona
+                        if (!personCreatedHF || personCreatedHF instanceof Error) {
                             action.status = 'Error';
-                            action.errors = [personCreatedHF.message, clientSaved.message];
+                            action.errors = [personCreatedHF.message];
                             RSP_Result.status = 'ERROR';
-                            console.log('Error :', { personCreatedHF, clientSaved });
                         }
+                        //Si no hay error crear cliente
                         else {
-                            RSP_Result.status = 'OK';
-                            action.status = 'Done';
-                            action.errors = [];
+                            const clientSaved = yield (0, createClient_1.createClientHF)(action.data);
+                            //Validar creación del cliente
+                            if (!clientSaved || clientSaved instanceof Error) {
+                                action.status = 'Error';
+                                action.errors = [clientSaved.message];
+                                RSP_Result.status = 'ERROR';
+                                console.log('Error :', { personCreatedHF, clientSaved });
+                            }
+                            else {
+                                RSP_Result.status = 'OK';
+                                action.status = 'Done';
+                                action.errors = [];
+                            }
                         }
                         break;
                     default:

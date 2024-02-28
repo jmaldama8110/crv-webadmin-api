@@ -329,7 +329,7 @@ export async function createClientHF(data:any) {
         clientCouch["province_of_birth"] = [`PROVINCE|${personData.id_province_of_birth}`, personData.province_of_birth];
         clientCouch["country_of_birth"] = [`COUNTRY|${personData.id_country_of_birth}`, personData.country_of_birth];
         clientCouch["status"] = [2, "Aprobado"];
-        await new Client(clientCouch).save();
+        // await new Client(clientCouch).save();
 
         return result.recordsets;
         //#endregion
@@ -441,7 +441,7 @@ function sortDataClient(client:any) {
         {
             id_cliente: IS_CREATE ? 0 : client.id_cliente,
             id_persona: IS_CREATE ? id : client.id_persona,
-            econ_ocupacion: client.ocupation[1] ? client.ocupation[1] : "EMPLEADO",
+            econ_ocupacion: business_data.ocupation[1] ? business_data.ocupation[1] : "EMPLEADO",
             econ_id_actividad_economica: business_data.economic_activity[0],
             econ_id_destino_credito: business_data.loan_destination[0],
             econ_id_ubicacion_negocio: business_data.bis_location[0],
@@ -468,14 +468,14 @@ function sortDataClient(client:any) {
             id_actividad_economica: business_data.economic_activity[0],
             id_ocupacion: business_data.ocupation[0],
             id_profesion: business_data.profession[0],
-            id_tipo_red_social: business_data.prefered_social[0],
-            usuario_red_social:business_data.user_social,
+            id_tipo_red_social: client.prefered_social[0],
+            usuario_red_social:client.user_social,
             econ_renta: business_data.expense_rent,
-            vivienda_piso: business_data.household_floor,
-            vivienda_techo_losa: business_data.household_roof,
-            vivienda_bano: business_data.household_toilet,
-            vivienda_letrina: business_data.household_latrine,
-            vivienda_block: business_data.household_brick,
+            vivienda_piso: client.household_floor,
+            vivienda_techo_losa: client.household_roof,
+            vivienda_bano: client.household_toilet,
+            vivienda_letrina: client.household_latrine,
+            vivienda_block: client.household_brick,
             longitud_titular: client.coordinates[0],
             latitud_titular: client.coordinates[1],
             

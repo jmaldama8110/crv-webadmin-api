@@ -135,7 +135,7 @@ export async function createPersonHF(data:any) {
         console.log('Id Person: ', result.recordsets[0][0].id);
 
         clientCouch["id_persona"] = result.recordsets[0][0].id;
-        await new Client(clientCouch).save();
+        // await new Client(clientCouch).save();
 
         return result.recordsets;
     } catch (error:any) {

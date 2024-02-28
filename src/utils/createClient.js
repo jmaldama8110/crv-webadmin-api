@@ -52,7 +52,7 @@ function createClientHF(data) {
             TablesSql_1.UDT_CONT_Direcciones.rows.length = 0;
             TablesSql_1.UDT_CONT_Oficinas.rows.length = 0;
             TablesSql_1.UDT_CONT_Telefonos.rows.length = 0;
-            TablesSql_1.UDT_CONT_Empresa.rows.add(dataSort["NEGOCIO"][0].id, dataSort["NEGOCIO"][0].nombre, dataSort["NEGOCIO"][0].rfc, '', 0, dataSort["NEGOCIO"][0].id_actividad_economica, '', dataSort["NEGOCIO"][0].ventas_totales_cantidad, dataSort["NEGOCIO"][0].ventas_totales_unidad.toString(), dataSort["NEGOCIO"][0].revolvencia, dataSort["NEGOCIO"][0].numero_empleados, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, '', dataSort["NEGOCIO"][0].econ_registro_egresos_ingresos, // 0/1
+            TablesSql_1.UDT_CONT_Empresa.rows.add(dataSort["NEGOCIO"][0].id, dataSort["NEGOCIO"][0].nombre.slice(0, 80), dataSort["NEGOCIO"][0].rfc.slice(0, 13), '', 0, dataSort["NEGOCIO"][0].id_actividad_economica, '', dataSort["NEGOCIO"][0].ventas_totales_cantidad, dataSort["NEGOCIO"][0].ventas_totales_unidad.toString(), dataSort["NEGOCIO"][0].revolvencia, dataSort["NEGOCIO"][0].numero_empleados, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, '', dataSort["NEGOCIO"][0].econ_registro_egresos_ingresos, // 0/1
             '');
             TablesSql_1.UDT_CONT_Direcciones.rows.add(dataSort["NEGOCIO"][0].id_dir, '', dataSort["NEGOCIO"][0].id_pais, dataSort["NEGOCIO"][0].id_estado, dataSort["NEGOCIO"][0].id_municipio, dataSort["NEGOCIO"][0].id_ciudad, dataSort["NEGOCIO"][0].id_colonia, dataSort["NEGOCIO"][0].calle, //direccion
             dataSort["NEGOCIO"][0].letra_exterior, dataSort["NEGOCIO"][0].letra_interior, dataSort["NEGOCIO"][0].referencia, dataSort["NEGOCIO"][0].casa_situacion, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, dataSort["NEGOCIO"][0].correo_electronico, dataSort["NEGOCIO"][0].num_exterior, dataSort["NEGOCIO"][0].num_interior, dataSort["NEGOCIO"][0].id_vialidad);
@@ -110,7 +110,7 @@ function createClientHF(data) {
             dataSort['IDENTIFICACIONES'][0].id_entidad, 'PROSPERA', dataSort['IDENTIFICACIONES'][0].id_numero, 0, 1);
             // console.log('IDEN: ', tbl.UDT_CONT_Identificaciones)
             TablesSql_1.UDT_CONT_Telefonos.rows.add(dataSort["TELEFONO"][0].id, dataSort["TELEFONO"][0].idcel_telefono, dataSort["TELEFONO"][0].extension, dataSort["TELEFONO"][0].tipo_telefono, dataSort["TELEFONO"][0].compania, dataSort["TELEFONO"][0].sms);
-            TablesSql_1.UDT_CONT_Negocios.rows.add(dataSort["NEGOCIO"][0].id, dataSort["PERSONA"][0].id, id_oficina, dataSort["NEGOCIO"][0].nombre_oficina.slice(0, 50), /// obligatorio menos de 50
+            TablesSql_1.UDT_CONT_Negocios.rows.add(Funct.validateInt(clientCouch.data_company[0]["id_empleado"]), dataSort["PERSONA"][0].id, id_oficina, dataSort["NEGOCIO"][0].nombre_oficina.slice(0, 50), /// obligatorio menos de 50
             dataSort["NEGOCIO"][0].nombre_puesto, dataSort["NEGOCIO"][0].departamento, id_empresa, dataSort["NEGOCIO"][0].numero_empleados, dataSort["NEGOCIO"][0].registro_egresos, dataSort["NEGOCIO"][0].revolvencia, dataSort["NEGOCIO"][0].ventas_totales_cantidad, dataSort["NEGOCIO"][0].ventas_totales_unidad, dataSort["NEGOCIO"][0].id_actividad_economica, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, dataSort["NEGOCIO"][0].latitud_negocio, dataSort["NEGOCIO"][0].longitud_negocio);
             TablesSql_1.UTD_CLIE_Clientes.rows.add(dataSort["CLIENTE"][0].id_cliente, null, null, null, dataSort["CLIENTE"][0].id_oficina, dataSort["CLIENTE"][0].id_oficial_credito, '0000000000', // En desuso
             null);
@@ -197,7 +197,7 @@ function createClientHF(data) {
             clientCouch["province_of_birth"] = [`PROVINCE|${personData.id_province_of_birth}`, personData.province_of_birth];
             clientCouch["country_of_birth"] = [`COUNTRY|${personData.id_country_of_birth}`, personData.country_of_birth];
             clientCouch["status"] = [2, "Aprobado"];
-            yield new Client_1.Client(clientCouch).save();
+            // await new Client(clientCouch).save();
             return result.recordsets;
             //#endregion
         }
@@ -297,7 +297,7 @@ function sortDataClient(client) {
         {
             id_cliente: IS_CREATE ? 0 : client.id_cliente,
             id_persona: IS_CREATE ? id : client.id_persona,
-            econ_ocupacion: client.ocupation[1] ? client.ocupation[1] : "EMPLEADO",
+            econ_ocupacion: business_data.ocupation[1] ? business_data.ocupation[1] : "EMPLEADO",
             econ_id_actividad_economica: business_data.economic_activity[0],
             econ_id_destino_credito: business_data.loan_destination[0],
             econ_id_ubicacion_negocio: business_data.bis_location[0],
@@ -324,14 +324,14 @@ function sortDataClient(client) {
             id_actividad_economica: business_data.economic_activity[0],
             id_ocupacion: business_data.ocupation[0],
             id_profesion: business_data.profession[0],
-            id_tipo_red_social: business_data.prefered_social[0],
-            usuario_red_social: business_data.user_social,
+            id_tipo_red_social: client.prefered_social[0],
+            usuario_red_social: client.user_social,
             econ_renta: business_data.expense_rent,
-            vivienda_piso: business_data.household_floor,
-            vivienda_techo_losa: business_data.household_roof,
-            vivienda_bano: business_data.household_toilet,
-            vivienda_letrina: business_data.household_latrine,
-            vivienda_block: business_data.household_brick,
+            vivienda_piso: client.household_floor,
+            vivienda_techo_losa: client.household_roof,
+            vivienda_bano: client.household_toilet,
+            vivienda_letrina: client.household_latrine,
+            vivienda_block: client.household_brick,
             longitud_titular: client.coordinates[0],
             latitud_titular: client.coordinates[1],
         }
