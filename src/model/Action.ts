@@ -701,6 +701,10 @@ export default class Action extends DocumentCollection {
                 "ORIENTE"
             ],
             business_data: {
+                ocupation: [
+                    28,
+                    "PROMOTORA DE VENTAS (VENTAS POR CATALOGO)"
+                ],    
                 economic_activity: [
                     1,
                     "AGRICULTURA"
@@ -712,8 +716,39 @@ export default class Action extends DocumentCollection {
                 business_start_date: "2021-01-19T23:58:00-06:00",
                 business_name: "NEGOCIO 1",
                 business_owned: false,
-                business_phone: "1234567890"
+                business_phone: "1234567890",
+
+                bis_location: [1,"CASA DEL CLIENTE"],
+                number_employees: '',
+                loan_destination: [1,'COMPRAR O REMODELAR'],
+                income_sales_total: 0,
+                income_partner: 0,
+                income_job: 0,
+                income_remittances: 0,
+                income_other: 0,
+                income_total: 0,
+                expense_family: 0,
+                expense_rent: 0,
+                expense_business: 0,
+                expense_debt: 0,
+                expense_credit_cards: 0,
+                expense_total: 0,
+                keeps_accounting_records: false,
+                has_previous_experience: false
             },
+            household_floor: false,
+            household_roof: false,
+            household_toilet: false,
+            household_latrine: false,
+            household_brick: false,
+            economic_dependants: '',
+            internet_access: false,
+            prefered_social: [1,"NINGUNA"],
+            rol_hogar: [1,"JEFE DE FAMILIA"],
+            user_social: '',
+            has_disable: false,
+            speaks_dialect: false,
+            has_improved_income: false,
             client_type: [
                 2,
                 "INDIVIDUAL"
@@ -763,10 +798,6 @@ export default class Action extends DocumentCollection {
                 0,
                 ""
             ],
-            ocupation: [
-                28,
-                "PROMOTORA DE VENTAS (VENTAS POR CATALOGO)"
-            ],
             phones: [
                 {
                     _id: 1,
@@ -795,6 +826,7 @@ export default class Action extends DocumentCollection {
             identity_pics: [],
             comprobante_domicilio_pics: []
         }
+        
         let errors = [];
         errors = await this.validateModel(dataExample,data)
         let action_type;

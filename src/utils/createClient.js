@@ -111,7 +111,7 @@ function createClientHF(data) {
             // console.log('IDEN: ', tbl.UDT_CONT_Identificaciones)
             TablesSql_1.UDT_CONT_Telefonos.rows.add(dataSort["TELEFONO"][0].id, dataSort["TELEFONO"][0].idcel_telefono, dataSort["TELEFONO"][0].extension, dataSort["TELEFONO"][0].tipo_telefono, dataSort["TELEFONO"][0].compania, dataSort["TELEFONO"][0].sms);
             TablesSql_1.UDT_CONT_Negocios.rows.add(dataSort["NEGOCIO"][0].id, dataSort["PERSONA"][0].id, id_oficina, dataSort["NEGOCIO"][0].nombre_oficina.slice(0, 50), /// obligatorio menos de 50
-            dataSort["NEGOCIO"][0].nombre_puesto, dataSort["NEGOCIO"][0].departamento, id_empresa, dataSort["NEGOCIO"][0].numero_empleados, dataSort["NEGOCIO"][0].registro_egresos, dataSort["NEGOCIO"][0].revolvencia, dataSort["NEGOCIO"][0].ventas_totales_cantidad, dataSort["NEGOCIO"][0].ventas_totales_unidad, dataSort["NEGOCIO"][0].id_actividad_economica, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, '', '');
+            dataSort["NEGOCIO"][0].nombre_puesto, dataSort["NEGOCIO"][0].departamento, id_empresa, dataSort["NEGOCIO"][0].numero_empleados, dataSort["NEGOCIO"][0].registro_egresos, dataSort["NEGOCIO"][0].revolvencia, dataSort["NEGOCIO"][0].ventas_totales_cantidad, dataSort["NEGOCIO"][0].ventas_totales_unidad, dataSort["NEGOCIO"][0].id_actividad_economica, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, dataSort["NEGOCIO"][0].latitud_negocio, dataSort["NEGOCIO"][0].longitud_negocio);
             TablesSql_1.UTD_CLIE_Clientes.rows.add(dataSort["CLIENTE"][0].id_cliente, null, null, null, dataSort["CLIENTE"][0].id_oficina, dataSort["CLIENTE"][0].id_oficial_credito, '0000000000', // En desuso
             null);
             TablesSql_1.UDT_CLIE_Individual.rows.add(dataSort["INDIVIDUAL"][0].id_cliente, //id cliente
@@ -131,7 +131,7 @@ function createClientHF(data) {
             dataSort["INDIVIDUAL"][0].utiliza_redes_sociales, // 0/1 (NO/SI)
             dataSort["INDIVIDUAL"][0].id_actividad_economica, // 0/1 (NO/SI)
             dataSort["INDIVIDUAL"][0].id_ocupacion, // CATA_ocupacionPLD
-            dataSort["INDIVIDUAL"][0].id_profesion, 1, '', 0, 0, 0, 0, 0, 0, '', '');
+            dataSort["INDIVIDUAL"][0].id_profesion, dataSort["INDIVIDUAL"][0].id_tipo_red_social, dataSort["INDIVIDUAL"][0].usuario_red_socia, dataSort["INDIVIDUAL"][0].econ_renta, dataSort["INDIVIDUAL"][0].vivienda_piso, dataSort["INDIVIDUAL"][0].vivienda_techo_losa, dataSort["INDIVIDUAL"][0].vivienda_bano, dataSort["INDIVIDUAL"][0].vivienda_letrina, dataSort["INDIVIDUAL"][0].vivienda_block, dataSort["INDIVIDUAL"][0].longitud_titular, dataSort["INDIVIDUAL"][0].latitud_titular);
             TablesSql_1.UDT_CLIE_Solicitud.rows.add(0, null, null, null, null, null, null);
             // tbl.UDT_CLIE_DatoBancario.rows.add(0, null,
             //     null,
@@ -258,20 +258,22 @@ function sortDataClient(client) {
                     econ_registro_egresos_ingresos: 0,
                     casa_situacion: campo.ownership ? campo.ownership === true ? 1 : 0 : 0,
                     correo_electronico: client.email ? client.email : "",
-                    id_vialidad: 1,
+                    id_vialidad: campo.road[0],
                     nombre_oficina: business_data.business_name ? `${business_data.business_name}` : "OFICINA...",
                     nombre_puesto: business_data.position ? business_data.position : "dueño",
                     departamento: business_data.department ? business_data.department : "cobranza",
-                    numero_empleados: business_data.employees ? business_data.employees : 10,
+                    numero_empleados: business_data.number_employees ? business_data.number_employees : 0,
                     registro_egresos: 0,
                     revolvencia: "QUINCENAL",
-                    ventas_totales_cantidad: 0.0,
+                    ventas_totales_cantidad: business_data.income_sales_total,
                     ventas_totales_unidad: 0.0,
                     id_actividad_economica: business_data.economic_activity[0] ? business_data.economic_activity[0] : 716,
                     tiempo_actividad_incio: business_data.business_start_date ? (0, createPerson_1.getDates)(business_data.business_start_date) : "1970-01-01",
                     tiempo_actividad_final: business_data.business_end_date ? (0, createPerson_1.getDates)(business_data.business_end_date) : "1970-01-01",
                     id_empresa: IS_CREATE ? 0 : Funct.validateInt(client.data_company[0].id_empresa),
-                    id_oficina_empresa: IS_CREATE ? 0 : Funct.validateInt(client.data_company[0].id_oficina_empresa)
+                    id_oficina_empresa: IS_CREATE ? 0 : Funct.validateInt(client.data_company[0].id_oficina_empresa),
+                    longitud_negocio: '0',
+                    latitud_negocio: '0'
                 }
             ];
         }
@@ -296,48 +298,58 @@ function sortDataClient(client) {
             id_cliente: IS_CREATE ? 0 : client.id_cliente,
             id_persona: IS_CREATE ? id : client.id_persona,
             econ_ocupacion: client.ocupation[1] ? client.ocupation[1] : "EMPLEADO",
-            econ_id_actividad_economica: 5,
-            econ_id_destino_credito: 5,
-            econ_id_ubicacion_negocio: 14,
-            econ_id_rol_hogar: 1,
-            econ_id_empresa: 1,
-            econ_cantidad_mensual: 0.0,
-            econ_sueldo_conyugue: 0.0,
-            econ_otros_ingresos: 0.0,
-            econ_otros_gastos: 0.0,
+            econ_id_actividad_economica: business_data.economic_activity[0],
+            econ_id_destino_credito: business_data.loan_destination[0],
+            econ_id_ubicacion_negocio: business_data.bis_location[0],
+            econ_id_rol_hogar: client.rol_hogar[0],
+            econ_id_empresa: 0,
+            econ_cantidad_mensual: business_data.income_remittances,
+            econ_sueldo_conyugue: business_data.income_partner,
+            econ_otros_ingresos: business_data.income_other,
+            econ_otros_gastos: business_data.expense_business,
             econ_familiares_extranjeros: 0,
             econ_parentesco: "",
             envia_dinero: 0,
-            econ_dependientes_economicos: 1,
-            econ_pago_casa: 0.0,
-            econ_gastos_vivienda: 0.0,
-            econ_gastos_familiares: 0.0,
-            econ_gastos_transporte: 0.0,
-            credito_anteriormente: 0,
-            mejorado_ingreso: 0,
+            econ_dependientes_economicos: client.economic_dependants,
+            econ_pago_casa: business_data.income_job,
+            econ_gastos_vivienda: business_data.expense_debt,
+            econ_gastos_familiares: business_data.expense_family,
+            econ_gastos_transporte: business_data.expense_credit_cards,
+            credito_anteriormente: business_data.has_previous_experience,
+            mejorado_ingreso: false,
             lengua_indigena: 0,
             habilidad_diferente: 0,
-            utiliza_internet: 0,
-            utiliza_redes_sociales: 0,
-            id_actividad_economica: business_data.economic_activity[0] != undefined ? business_data.economic_activity[0] : 5,
-            id_ocupacion: client.ocupation[0] ? client.ocupation[0] : 12,
-            id_profesion: business_data.profession[0] ? business_data.profession[0] : 5
+            utiliza_internet: client.internet_access,
+            utiliza_redes_sociales: !!client.prefered_social[0],
+            id_actividad_economica: business_data.economic_activity[0],
+            id_ocupacion: business_data.ocupation[0],
+            id_profesion: business_data.profession[0],
+            id_tipo_red_social: business_data.prefered_social[0],
+            usuario_red_social: business_data.user_social,
+            econ_renta: business_data.expense_rent,
+            vivienda_piso: business_data.household_floor,
+            vivienda_techo_losa: business_data.household_roof,
+            vivienda_bano: business_data.household_toilet,
+            vivienda_letrina: business_data.household_latrine,
+            vivienda_block: business_data.household_brick,
+            longitud_titular: client.coordinates[0],
+            latitud_titular: client.coordinates[1],
         }
     ];
     clientHF.PLD = [
         {
             id_cliente: IS_CREATE ? 0 : client.id_cliente,
-            desempenia_funcion_publica: 0,
-            desempenia_funcion_publica_cargo: "",
-            desempenia_funcion_publica_dependencia: "",
-            familiar_desempenia_funcion_publica: 0,
-            familiar_desempenia_funcion_publica_cargo: "",
-            familiar_desempenia_funcion_publica_dependencia: "",
-            familiar_desempenia_funcion_publica_nombre: "",
-            familiar_desempenia_funcion_publica_paterno: "",
-            familiar_desempenia_funcion_publica_materno: "",
-            familiar_desempenia_funcion_publica_parentesco: "",
-            id_instrumento_monetario: 1
+            desempenia_funcion_publica: !!client.spld.desempenia_funcion_publica_cargo,
+            desempenia_funcion_publica_cargo: client.spld.desempenia_funcion_publica_cargo,
+            desempenia_funcion_publica_dependencia: client.spld.desempenia_funcion_publica_dependencia,
+            familiar_desempenia_funcion_publica: !!client.spld.familiar_desempenia_funcion_publica_cargo,
+            familiar_desempenia_funcion_publica_cargo: client.spld.familiar_desempenia_funcion_publica_cargo,
+            familiar_desempenia_funcion_publica_dependencia: client.spld.familiar_desempenia_funcion_publica_dependencia,
+            familiar_desempenia_funcion_publica_nombre: client.spld.familiar_desempenia_funcion_publica_nombre,
+            familiar_desempenia_funcion_publica_paterno: client.spld.familiar_desempenia_funcion_publica_paterno,
+            familiar_desempenia_funcion_publica_materno: client.familiar_desempenia_funcion_publica_materno,
+            familiar_desempenia_funcion_publica_parentesco: client.familiar_desempenia_funcion_publica_parentesco,
+            id_instrumento_monetario: client.spld.instrumento_monetario[0]
         }
     ];
     clientHF.BANCARIO = [];
