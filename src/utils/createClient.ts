@@ -40,8 +40,8 @@ export async function createClientHF(data:any) {
         UDT_CONT_Telefonos.rows.length = 0;
         UDT_CONT_Empresa.rows.add(
             dataSort["NEGOCIO"][0].id,
-            dataSort["NEGOCIO"][0].nombre,
-            dataSort["NEGOCIO"][0].rfc,
+            dataSort["NEGOCIO"][0].nombre.slice(0,80),
+            dataSort["NEGOCIO"][0].rfc.slice(0,13),
             '',
             0,
             dataSort["NEGOCIO"][0].id_actividad_economica,
@@ -170,7 +170,7 @@ export async function createClientHF(data:any) {
         );
 
         UDT_CONT_Negocios.rows.add(
-            dataSort["NEGOCIO"][0].id,
+            Funct.validateInt(clientCouch.data_company[0]["id_empleado"]),
             dataSort["PERSONA"][0].id,
             id_oficina,
             dataSort["NEGOCIO"][0].nombre_oficina.slice(0,50), /// obligatorio menos de 50

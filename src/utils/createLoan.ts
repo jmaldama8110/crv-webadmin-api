@@ -82,6 +82,9 @@ export async function createLoanHF(data:any) {
         let validation_solicitud = await validateSolicitud(loan.id_solicitud);
         if(!validation_solicitud)
             return new Error('La solicitud no puede ser modificada por que no está en estatus (TRAMITE ó PREIMPRESO) o en sub_estatus (NUEVO TRAMITE ó SOLICITUD) respectivamente.');
+        loan = typeClient === 1 ? await loanAppGroup.findOne({ _id: id_loan }) :  await loanApp.findOne({ _id: id_loan });
+        if (loan === undefined) return new Error('Loan not found');
+
         const disposition = await getDisposicionByOffice(idBranch);
         if (!disposition) return new Error('Failed to get disposition');
 
