@@ -237,8 +237,8 @@ export async function createClientHF(data:any) {
             dataSort["INDIVIDUAL"][0].vivienda_bano,
             dataSort["INDIVIDUAL"][0].vivienda_letrina,
             dataSort["INDIVIDUAL"][0].vivienda_block,
-            dataSort["INDIVIDUAL"][0].longitud_titular,
-            dataSort["INDIVIDUAL"][0].latitud_titular
+            dataSort["INDIVIDUAL"][0].longitud_titular ? dataSort["INDIVIDUAL"][0].longitud_titular.toString(): "",
+            dataSort["INDIVIDUAL"][0].latitud_titular ? dataSort["INDIVIDUAL"][0].latitud_titular.toString(): ""
         );
 
         UDT_CLIE_Solicitud.rows.add(0, null, null, null, null, null, null);
