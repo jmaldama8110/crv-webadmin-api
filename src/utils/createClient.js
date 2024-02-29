@@ -347,8 +347,8 @@ function sortDataClient(client) {
             familiar_desempenia_funcion_publica_dependencia: client.spld.familiar_desempenia_funcion_publica_dependencia,
             familiar_desempenia_funcion_publica_nombre: client.spld.familiar_desempenia_funcion_publica_nombre,
             familiar_desempenia_funcion_publica_paterno: client.spld.familiar_desempenia_funcion_publica_paterno,
-            familiar_desempenia_funcion_publica_materno: client.familiar_desempenia_funcion_publica_materno,
-            familiar_desempenia_funcion_publica_parentesco: client.familiar_desempenia_funcion_publica_parentesco,
+            familiar_desempenia_funcion_publica_materno: client.spld.familiar_desempenia_funcion_publica_materno,
+            familiar_desempenia_funcion_publica_parentesco: client.spld.familiar_desempenia_funcion_publica_parentesco,
             id_instrumento_monetario: client.spld.instrumento_monetario[0]
         }
     ];
