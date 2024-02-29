@@ -21,18 +21,18 @@ class Group extends DocumentCollection_1.DocumentCollection {
         super();
         this._id = obj._id || Date.now().toString(),
             this._rev = obj._rev,
-            this._couchdb_type = 'GROUP',
-            this._id_cliente = obj.id_cliente,
-            this._group_name = obj.group_name,
-            this._weekday_meet = obj.weekday_meet,
-            this._hour_meet = obj.hour_meet,
-            this._loan_officer = obj.loan_officer,
-            this._loan_cycle = obj.loan_cycle,
-            this._address = obj.address,
-            this._created_by = obj.created_by,
-            this._branch = obj.branch,
-            this._status = obj.status,
-            this._coordinates = obj.coordinates;
+            this.couchdb_type = 'GROUP',
+            this.id_cliente = obj.id_cliente,
+            this.group_name = obj.group_name,
+            this.weekday_meet = obj.weekday_meet,
+            this.hour_meet = obj.hour_meet,
+            this.loan_officer = obj.loan_officer,
+            this.loan_cycle = obj.loan_cycle,
+            this.address = obj.address,
+            this.created_by = obj.created_by,
+            this.branch = obj.branch,
+            this.status = obj.status,
+            this.coordinates = obj.coordinates;
     }
     /**
      *

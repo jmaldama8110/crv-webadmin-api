@@ -4,54 +4,54 @@ import { LoanApp } from "./LoanApp";
 
 export class LoanAppGroup extends DocumentCollection {
 
-    _apply_by: any;
-    _id_solicitud: any;
-    _id_cliente: any;
-    _loan_officer: any;
-    _branch: any;
-    _id_producto: any;
-    _id_disposicion: any;
-    _apply_amount: any;
-    _approved_total: any;
-    _term: any;
-    _estatus: any;
-    _sub_estatus: any;
-    _renovation: any;
-    _frequency: any;
-    _first_repay_date: any;
-    _disbursment_date: any;
-    _disbursment_mean: any;
-    _liquid_guarantee: any;
-    _product: any;
-    _created_by: any;
-    _status: any;
-    _dropout: any;
-    _members: any;
+    apply_by: any;
+    id_solicitud: any;
+    id_cliente: any;
+    loan_officer: any;
+    branch: any;
+    id_producto: any;
+    id_disposicion: any;
+    apply_amount: any;
+    approved_total: any;
+    term: any;
+    estatus: any;
+    sub_estatus: any;
+    renovation: any;
+    frequency: any;
+    first_repay_date: any;
+    disbursment_date: any;
+    disbursment_mean: any;
+    liquid_guarantee: any;
+    product: any;
+    created_by: any;
+    status: any;
+    dropout: any;
+    members: any;
     
     constructor(obj = {} as any) {
         super()
         this._id = obj._id || Date.now().toString(),
             this._rev = obj._rev,
-            this._couchdb_type = 'LOANAPP_GROUP',
-            this._apply_by = obj.apply_by,
-            this._id_solicitud = obj.id_solicitud || 0,
-            this._id_cliente = obj.id_cliente || 0,
-            this._loan_officer = obj.loan_officer || 0,
-            this._branch = obj.branch || [1, 'ORIENTE'],
-            this._id_producto = obj.id_producto || 0, // Product HF, Se crea cuando pasa a estatus Por Autorizar
-            this._id_disposicion = obj.id_disposicion || 0, // Se obtiene dependiendo el producto maestro
-            this._apply_amount = obj.apply_amount || 0,  // En caso de grupos es la suma total de monto de lo integrantes
-            this._approved_total = obj.approved_total || 0,
-            this._term = obj.term || 0,
-            this._estatus = obj.estatus || 'TRAMITE',
-            this._sub_estatus = obj.sub_estatus || 'NUEVO TRAMITE',
-            this._renovation = obj.renovation || false,
-            this._frequency = obj.frequency || ['S', 'Semana(s)'],
-            this._first_repay_date = obj.first_repay_date || '', // type Date
-            this._disbursment_date = obj.disbursment_date || '', // type Date
-            this._disbursment_mean = obj.disbursment_mean || 'ORP', // ORP/
-            this._liquid_guarantee = obj.liquid_guarantee || 0, // ORP/
-            this._product = obj.product || {
+            this.couchdb_type = 'LOANAPP_GROUP',
+            this.apply_by = obj.apply_by,
+            this.id_solicitud = obj.id_solicitud || 0,
+            this.id_cliente = obj.id_cliente || 0,
+            this.loan_officer = obj.loan_officer || 0,
+            this.branch = obj.branch || [1, 'ORIENTE'],
+            this.id_producto = obj.id_producto || 0, // Product HF, Se crea cuando pasa a estatus Por Autorizar
+            this.id_disposicion = obj.id_disposicion || 0, // Se obtiene dependiendo el producto maestro
+            this.apply_amount = obj.apply_amount || 0,  // En caso de grupos es la suma total de monto de lo integrantes
+            this.approved_total = obj.approved_total || 0,
+            this.term = obj.term || 0,
+            this.estatus = obj.estatus || 'TRAMITE',
+            this.sub_estatus = obj.sub_estatus || 'NUEVO TRAMITE',
+            this.renovation = obj.renovation || false,
+            this.frequency = obj.frequency || ['S', 'Semana(s)'],
+            this.first_repay_date = obj.first_repay_date || '', // type Date
+            this.disbursment_date = obj.disbursment_date || '', // type Date
+            this.disbursment_mean = obj.disbursment_mean || 'ORP', // ORP/
+            this.liquid_guarantee = obj.liquid_guarantee || 0, // ORP/
+            this.product = obj.product || {
                 external_id: 1,
                 min_amount: 2000,
                 max_amount: 58000,
@@ -65,9 +65,9 @@ export class LoanAppGroup extends DocumentCollection {
                 GL_financeable: true,
                 liquid_guarantee: 10
             }, // TODO Buscar el extenal id en couch al sincronizar, Product Couch
-            this._created_by = obj.created_by || 'promotor@grupoconserva.mx',
-            this._status = obj.status || [1, 'Pendiente'],
-            this._dropout = obj.dropout || [],
+            this.created_by = obj.created_by || 'anonimo@grupoconserva.mx',
+            this.status = obj.status || [1, 'Pendiente'],
+            this.dropout = obj.dropout || [],
             // this.group = obj.group || {
             //     id: 0,
             //     cicle: 0,
@@ -93,7 +93,7 @@ export class LoanAppGroup extends DocumentCollection {
             //     ]
 
             // },
-            this._members = obj.members || [{
+            this.members = obj.members || [{
                 client_id: '', // id client couch
                 id_cliente: 0, // id cliente/individual HF
                 id_persona: 0,

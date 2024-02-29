@@ -197,7 +197,7 @@ function createClientHF(data) {
             clientCouch["province_of_birth"] = [`PROVINCE|${personData.id_province_of_birth}`, personData.province_of_birth];
             clientCouch["country_of_birth"] = [`COUNTRY|${personData.id_country_of_birth}`, personData.country_of_birth];
             clientCouch["status"] = [2, "Aprobado"];
-            // await new Client(clientCouch).save();
+            yield new Client_1.Client(clientCouch).save();
             return result.recordsets;
             //#endregion
         }

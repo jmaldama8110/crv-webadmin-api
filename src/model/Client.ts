@@ -139,56 +139,134 @@ export class Client extends DocumentCollection {
     constructor( newDoc?: Client  ) {
 
         super();
-        this.address =  newDoc!.address
-        this.branch = newDoc!.branch
-        this.business_data = newDoc!.business_data;
-        this.client_type = newDoc!.client_type
-        this.coordinates = newDoc!.coordinates
-        this.couchdb_type = newDoc!.couchdb_type
-        this.country_of_birth = newDoc!.country_of_birth
-        this.curp = newDoc!.curp
-        this.data_company = newDoc!.data_company
-        this.data_efirma = newDoc!.data_efirma
-        this.dob = newDoc!.dob
-        this.education_level = newDoc!.education_level
-        this.id_cliente = newDoc!.id_cliente
-        this.id_persona = newDoc!.id_persona
-        this.ife_details = newDoc!.ife_details
-        this.clave_ine = newDoc!.clave_ine
-        this.numero_vertical = newDoc!.numero_vertical
-        this.numero_emisiones = newDoc!.numero_emisiones
-        this.email = newDoc!.email
-        this.lastname = newDoc!.lastname
-        this.loan_cycle = newDoc!.loan_cycle
-        this.marital_status = newDoc!.marital_status
-        this.name = newDoc!.name
-        this.nationality = newDoc!.nationality
-        this.phones = newDoc!.phones
-        this.identities = newDoc!.identities
-        this.province_of_birth = newDoc!.province_of_birth
-        this.rfc = newDoc!.rfc
-        this.second_lastname = newDoc!.second_lastname
-        this.sex = newDoc!.sex
-        this.status = newDoc!.status
+        this.address =  newDoc ? newDoc.address : []
+        this.branch = newDoc ? newDoc!.branch : [0,'']
+        this.business_data = newDoc ? 
+          newDoc!.business_data : 
+          {
+            bis_location: [0,""],
+            economic_activity: ['',''], 
+            profession: ['',''],
+            ocupation: ["", ""],
+            business_start_date: '',
+            business_name: '',
+            business_owned: false,
+            business_phone: '',
+            number_employees: '',
+            loan_destination: [0,''],
+            income_sales_total: 0,
+            income_partner: 0,
+            income_job: 0,
+            income_remittances: 0,
+            income_other: 0,
+            income_total: 0,
+            expense_family: 0,
+            expense_rent: 0,
+            expense_business: 0,
+            expense_debt: 0,
+            expense_credit_cards: 0,
+            expense_total: 0,
+            keeps_accounting_records: false,
+            has_previous_experience: false,
+            previous_loan_experience: '',
+            bis_season_type: '',
+            bis_quality_sales_monthly: {
+              month_sale_jan: '',
+              month_sale_feb: '',
+              month_sale_mar: '',
+              month_sale_apr: '',
+              month_sale_may: '',
+              month_sale_jun: '',
+              month_sale_jul: '',
+              month_sale_aug: '',
+              month_sale_sep: '',
+              month_sale_oct: '',
+              month_sale_nov: '',
+              month_sale_dic: '',
+            }},
+        this.client_type = newDoc ? newDoc!.client_type : [0,'']
+        this.coordinates = newDoc ? newDoc!.coordinates : [0,0]
+        this.couchdb_type = newDoc ? newDoc!.couchdb_type : "CLIENT"
+        this.country_of_birth = newDoc ? newDoc!.country_of_birth : ["",""]
+        this.curp = newDoc ? newDoc!.curp : ""
+        this.data_company = newDoc ? newDoc!.data_company : [{}]
+        this.data_efirma = newDoc ? newDoc!.data_efirma : [{}]
+        this.dob = newDoc ? newDoc!.dob : ''
+        this.education_level = newDoc ? newDoc!.education_level : ["",""]
+        this.id_cliente = newDoc ? newDoc!.id_cliente : 0
+        this.id_persona = newDoc ? newDoc!.id_persona : 0
+        this.ife_details = newDoc? newDoc!.ife_details : [{}]
+        this.clave_ine = newDoc ? newDoc!.clave_ine : ''
+        this.numero_vertical = newDoc ? newDoc!.numero_vertical : ''
+        this.numero_emisiones = newDoc ? newDoc!.numero_emisiones : ''
+        this.email = newDoc ? newDoc!.email : ''
+        this.lastname = newDoc ? newDoc!.lastname : ''
+        this.loan_cycle = newDoc ? newDoc!.loan_cycle : 0
+        this.marital_status = newDoc ? newDoc!.marital_status : [0, '']
+        this.name = newDoc ? newDoc!.name : ''
+        this.nationality = newDoc ? newDoc!.nationality : [0,""]
+        this.phones = newDoc ? newDoc!.phones : []
+        this.identities = newDoc ? newDoc!.identities : []
+        this.province_of_birth = newDoc? newDoc!.province_of_birth : ["",""]
+        this.rfc = newDoc ? newDoc!.rfc : ''
+        this.second_lastname = newDoc ? newDoc!.second_lastname : ''
+        this.sex = newDoc ? newDoc!.sex : [0,""]
+        this.status = newDoc ? newDoc!.status : [0,'']
         
-        this.household_floor = newDoc!.household_floor
-        this.household_roof = newDoc!.household_floor
-        this.household_toilet = newDoc!.household_toilet
-        this.household_latrine = newDoc!.household_latrine
-        this.household_brick = newDoc!.household_brick
-        this.economic_dependants = newDoc!.economic_dependants
-        this.internet_access = newDoc!.internet_access
-        this.prefered_social = newDoc!.prefered_social
-        this.rol_hogar = newDoc!.rol_hogar
-        this.user_social = newDoc!.user_social
-        this.has_disable = newDoc!.has_disable
-        this.speaks_dialect = newDoc!.speaks_dialect
-        this.has_improved_income = newDoc!.has_improved_income
-        this.spld = newDoc!.spld
-        this.comment = newDoc!.comment
-        this.identity_pics = newDoc!.identity_pics
-        this.identity_verification = newDoc!.identity_verification
-        this.comprobante_domicilio_pics = newDoc!.comprobante_domicilio_pics
+        this.household_floor = newDoc ? newDoc!.household_floor : false
+        this.household_roof = newDoc ? newDoc!.household_roof : false
+        this.household_toilet = newDoc ? newDoc!.household_toilet : false
+        this.household_latrine = newDoc ? newDoc!.household_latrine : false
+        this.household_brick = newDoc ? newDoc!.household_brick : false
+        this.economic_dependants = newDoc ? newDoc!.economic_dependants : '0'
+        this.internet_access = newDoc ? newDoc!.internet_access : false
+        this.prefered_social = newDoc? newDoc!.prefered_social: [0,""]
+        this.rol_hogar = newDoc? newDoc!.rol_hogar: [0,""]
+        this.user_social = newDoc? newDoc!.user_social : ''
+        this.has_disable = newDoc? newDoc!.has_disable : false
+        this.speaks_dialect = newDoc ? newDoc!.speaks_dialect: false
+        this.has_improved_income = newDoc ? newDoc!.has_improved_income : false
+        this.spld = newDoc ? newDoc!.spld : {
+          desempenia_funcion_publica_cargo: "",
+          desempenia_funcion_publica_dependencia: "",
+          familiar_desempenia_funcion_publica_cargo: "",
+          familiar_desempenia_funcion_publica_dependencia: "",
+          familiar_desempenia_funcion_publica_nombre: "",
+          familiar_desempenia_funcion_publica_paterno: "",
+          familiar_desempenia_funcion_publica_materno: "",
+          familiar_desempenia_funcion_publica_parentesco: "",
+          instrumento_monetario: [0, ""],
+          
+        },
+
+        this.comment = newDoc ? newDoc!.comment : ''
+        this.identity_pics = newDoc ? newDoc!.identity_pics : []
+        this.identity_verification = newDoc ? newDoc!.identity_verification : {
+          uuid: '',
+          status: 'pending',
+          result: 'waiting',
+          created_at: '',
+          updated_at: '',
+          documentData: {
+            age: '',
+            voter_key: '',
+            nationality: '',
+            name: '',
+            lastname: '',
+            second_lastname: '',
+            dob: '',
+            doc_number: '',
+            duplicates: '',
+            expiration_date: '',
+            folio_number: '',
+            ocr_number: '',
+            sex: '',
+            curp: '',
+            street_address: '',
+            suburb_address: ''
+          }
+        },
+        this.comprobante_domicilio_pics = newDoc ? newDoc!.comprobante_domicilio_pics: []
 
     }
 

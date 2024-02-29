@@ -21,13 +21,13 @@ class Action extends DocumentCollection_1.DocumentCollection {
         super();
         this._id = obj._id || Date.now().toString();
         this._rev = obj._rev;
-        this._couchdb_type = 'ACTION';
-        this._name = obj.name;
-        this._data = obj.data;
-        this._created_by = obj.created_by;
-        this._status = obj.status || 'Pending';
-        this._errors = obj.errors || [];
-        this._isOk = obj.isOk || false;
+        this.couchdb_type = 'ACTION';
+        this.name = obj.name;
+        this.data = obj.data;
+        this.created_by = obj.created_by;
+        this.status = obj.status || 'Pending';
+        this.errors = obj.errors || [];
+        this.isOk = obj.isOk || false;
     }
     getClientHFById(externalId) {
         return __awaiter(this, void 0, void 0, function* () {

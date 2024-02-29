@@ -6,25 +6,25 @@ import { DocumentCollection } from './DocumentCollection';
 
 export default class Action extends DocumentCollection {
 
-    _name: string;
-    _data: any;
-    _created_by: string;
-    _status: string;
-    _errors: any[];
-    _isOk: boolean;
+    name: string;
+    data: any;
+    created_by: string;
+    status: string;
+    errors: any[];
+    isOk: boolean;
 
     
     constructor( obj = { } as any){
         super();
         this._id = obj._id || Date.now().toString();
         this._rev = obj._rev;
-        this._couchdb_type = 'ACTION';
-        this._name = obj.name;
-        this._data = obj.data;
-        this._created_by = obj.created_by;
-        this._status = obj.status || 'Pending';
-        this._errors = obj.errors || [];
-        this._isOk = obj.isOk || false;
+        this.couchdb_type = 'ACTION';
+        this.name = obj.name;
+        this.data = obj.data;
+        this.created_by = obj.created_by;
+        this.status = obj.status || 'Pending';
+        this.errors = obj.errors || [];
+        this.isOk = obj.isOk || false;
     }
 
     async getClientHFById(externalId:number) {

@@ -93,7 +93,7 @@ function createPersonHF(data) {
             // Actualizamos el Client de Couch con el id de Persona creado en HF
             console.log('Id Person: ', result.recordsets[0][0].id);
             clientCouch["id_persona"] = result.recordsets[0][0].id;
-            // await new Client(clientCouch).save();
+            yield new Client_1.Client(clientCouch).save();
             return result.recordsets;
         }
         catch (error) {

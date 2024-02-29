@@ -21,26 +21,26 @@ class LoanApp extends DocumentCollection_1.DocumentCollection {
         super();
         this._id = obj._id || Date.now().toString(),
             this._rev = obj._rev,
-            this._couchdb_type = 'LOANAPP',
-            this._apply_by = obj.apply_by,
-            this._id_solicitud = obj.id_solicitud || 0,
-            this._id_cliente = obj.id_cliente || 0,
-            this._loan_officer = obj.loan_officer || 0,
-            this._branch = obj.branch || [1, 'ORIENTE'],
-            this._id_producto = obj.id_producto || 0, // Product HF, Se crea cuando pasa a estatus Por Autorizar
-            this._id_disposicion = obj.id_disposicion || 0, // Se obtiene dependiendo el producto maestro
-            this._apply_amount = obj.apply_amount || 0, // En caso de grupos es la suma total de monto de lo integrantes
-            this._approved_total = obj.approved_total || 0,
-            this._term = obj.term || 0,
-            this._estatus = obj.estatus || 'TRAMITE',
-            this._sub_estatus = obj.sub_estatus || 'NUEVO TRAMITE',
-            this._renovation = obj.renovation || false,
-            this._frequency = obj.frequency || ['S', 'Semana(s)'],
-            this._first_repay_date = obj.first_repay_date || '', // type Date
-            this._disbursment_date = obj.disbursment_date || '', // type Date
-            this._disbursment_mean = obj.disbursment_mean || 'ORP', // ORP/
-            this._liquid_guarantee = obj.liquid_guarantee || 0, // ORP/
-            this._product = obj.product || {
+            this.couchdb_type = 'LOANAPP',
+            this.apply_by = obj.apply_by,
+            this.id_solicitud = obj.id_solicitud || 0,
+            this.id_cliente = obj.id_cliente || 0,
+            this.loan_officer = obj.loan_officer || 0,
+            this.branch = obj.branch || [1, 'ORIENTE'],
+            this.id_producto = obj.id_producto || 0, // Product HF, Se crea cuando pasa a estatus Por Autorizar
+            this.id_disposicion = obj.id_disposicion || 0, // Se obtiene dependiendo el producto maestro
+            this.apply_amount = obj.apply_amount || 0, // En caso de grupos es la suma total de monto de lo integrantes
+            this.approved_total = obj.approved_total || 0,
+            this.term = obj.term || 0,
+            this.estatus = obj.estatus || 'TRAMITE',
+            this.sub_estatus = obj.sub_estatus || 'NUEVO TRAMITE',
+            this.renovation = obj.renovation || false,
+            this.frequency = obj.frequency || ['S', 'Semana(s)'],
+            this.first_repay_date = obj.first_repay_date || '', // type Date
+            this.disbursment_date = obj.disbursment_date || '', // type Date
+            this.disbursment_mean = obj.disbursment_mean || 'ORP', // ORP/
+            this.liquid_guarantee = obj.liquid_guarantee || 0, // ORP/
+            this.product = obj.product || {
                 external_id: 1,
                 min_amount: 2000,
                 max_amount: 58000,
@@ -54,10 +54,10 @@ class LoanApp extends DocumentCollection_1.DocumentCollection {
                 GL_financeable: true,
                 liquid_guarantee: 10
             }, // TODO Buscar el extenal id en couch al sincronizar, Product Couch
-            this._created_by = obj.created_by || 'promotor@grupoconserva.mx',
-            this._status = obj.status || [1, 'Pendiente'],
-            this._dropout = obj.dropout || [],
-            this._members = obj.members || [{
+            this.created_by = obj.created_by || 'promotor@grupoconserva.mx',
+            this.status = obj.status || [1, 'Pendiente'],
+            this.dropout = obj.dropout || [],
+            this.members = obj.members || [{
                     client_id: '',
                     id_cliente: 0,
                     id_persona: 0,
