@@ -5,36 +5,24 @@ let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB
 export class DocumentCollection {
     _id: string;
     _rev: string;
-    _created_at: string;
-    _updated_at: string;
-    _couchdb_type?: string;
+    created_at: string;
+    updated_at: string;
+    couchdb_type?: string;
 
     constructor(obj = {} as any) {
         this._id = obj._id || Date.now().toString(),
         this._rev = obj._rev
         // this._couchdb_type = couchdb_type,
-        this._created_at = new Date(Date.now()).toISOString()
-        this._updated_at = obj.updated_at || new Date(Date.now()).toISOString()
+        this.created_at = new Date(Date.now()).toISOString()
+        this.updated_at = obj.updated_at || new Date(Date.now()).toISOString()
     }
 
     getDataPrivate() {
-        const data = this;
-        let obj = {};
-        for (let [key, value] of Object.entries(data)) {
-            if (key != '_id' && key != '_rev') key = key.replace('_', '');
-            obj = Object.assign(obj, { [key]: value });
-        }
-        return obj;
+        return {...this }
     }
 
     getDataPublic() {
-        const data = this;
-        let obj = {};
-        for (let [key, value] of Object.entries(data)) {
-            if (key != '_id') key = key.replace('_', '');
-            obj = Object.assign(obj, { [key]: value });
-        }
-        return obj;
+        return { ...this }
     }
 
     save() {
@@ -56,7 +44,7 @@ export class DocumentCollection {
     async findOne(data:any) {
         return new Promise(async (resolve, reject) => {
             try {
-                let selector = { couchdb_type: { "$eq": this._couchdb_type } }
+                let selector = { couchdb_type: { "$eq": this.couchdb_type } }
                 for (const [key, value] of Object.entries(data)) {
                     selector = Object.assign(selector, { [key]: { "$eq": value } })
                 }
@@ -72,7 +60,7 @@ export class DocumentCollection {
     }
 
     async find(data:any) {
-            let selector = { couchdb_type: { "$eq": this._couchdb_type } };
+            let selector = { couchdb_type: { "$eq": this.couchdb_type } };
 
             for (const [key, value] of Object.entries(data)) {
                 selector = Object.assign(selector, { [key]: { "$eq": value } })
