@@ -83,7 +83,10 @@ function createPersonHF(data) {
                 .input('DATOSTelefono', TablesSql_1.UDT_CONT_Telefonos)
                 .input('etiqueta_opcion', mssql_1.default.VarChar(50), action2) // INSERTAR_PERSONA/ACTUALIZAR_PERSONA
                 .input('id_session', mssql_1.default.Int, 0) // Quien manda la informacion
+                .input('_id_client', mssql_1.default.BigInt, _id)
                 .execute("MOV_AdministrarInformacionPersona");
+            if (result.recordsets[0][0].Resultado.trim().toUpperCase() === "VALIDATE")
+                return new Error(result.recordsets[0][0].Mensaje);
             (0, TablesSql_1.cleanTable)(TablesSql_1.UDT_CONT_DireccionContacto);
             (0, TablesSql_1.cleanTable)(TablesSql_1.UDT_CONT_Persona);
             (0, TablesSql_1.cleanTable)(TablesSql_1.UDT_CONT_Identificaciones);

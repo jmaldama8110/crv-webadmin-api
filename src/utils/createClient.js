@@ -22,12 +22,15 @@ const createPerson_1 = require("./createPerson");
 let ClientDoc = new Client_1.Client();
 const Funct = new Functions_1.Functions();
 function createClientHF(data) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const { _id } = data;
             const clientCouch = yield ClientDoc.findOne({ _id });
             if (!clientCouch)
                 return new Error('Client not found in Couch');
+            if (((_a = clientCouch.id_persona) !== null && _a !== void 0 ? _a : 0) == 0)
+                return new Error('Model Client does not have id_persona or it is 0');
             const dataSort = yield sortDataClient(clientCouch);
             if (!dataSort)
                 return new Error('Error sort data client');
@@ -171,10 +174,13 @@ function createClientHF(data) {
                 .input('info_firma_electronica', TablesSql_1.UDT_CONT_FirmaElectronica)
                 .input('id_opcion', mssql_1.default.Int, 0)
                 .input('uid', mssql_1.default.Int, 0)
+                .input('_id_client', mssql_1.default.BigInt, _id)
                 .execute('MOV_insertarInformacionClienteV2');
             if (!result)
                 return new Error('Error create client');
             cleanAllTables();
+            if (result.recordset[0].mensaje.trim().toUpperCase() === "VALIDATE")
+                return new Error(result.recordset[0].evento);
             const idClientCreated = result.recordset[0].id_cliente;
             console.log('Id Client', idClientCreated);
             //Creado el cliente agregamos sus datos del hf
