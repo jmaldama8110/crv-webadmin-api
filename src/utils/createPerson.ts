@@ -122,8 +122,11 @@ export async function createPersonHF(data:any) {
             .input('DATOSTelefono', UDT_CONT_Telefonos)
             .input('etiqueta_opcion', sql.VarChar(50), action2) // INSERTAR_PERSONA/ACTUALIZAR_PERSONA
             .input('id_session', sql.Int, 0) // Quien manda la informacion
+            .input('_id_client', sql.BigInt, _id)
             .execute("MOV_AdministrarInformacionPersona")
 
+        if(result.recordsets[0][0].Resultado.trim().toUpperCase() === "VALIDATE")
+            return new Error(result.recordsets[0][0].Mensaje);
         cleanTable(UDT_CONT_DireccionContacto);
         cleanTable(UDT_CONT_Persona);
         cleanTable(UDT_CONT_Identificaciones);

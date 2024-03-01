@@ -139,6 +139,10 @@ export class Client extends DocumentCollection {
     constructor( newDoc?: Client  ) {
 
         super();
+
+        this._id = newDoc ? newDoc._id : Date.now().toString()
+        this._rev = newDoc ? newDoc._rev : ''
+        this.couchdb_type = 'CLIENT'
         this.address =  newDoc ? newDoc.address : []
         this.branch = newDoc ? newDoc!.branch : [0,'']
         this.business_data = newDoc ? 

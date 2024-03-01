@@ -13,7 +13,8 @@ export async function createClientHF(data:any) {
         const { _id } = data;
         const clientCouch:any = await ClientDoc.findOne({ _id });
         if (!clientCouch) return new Error('Client not found in Couch');
-
+        if((clientCouch.id_persona ?? 0) == 0)
+            return new Error('Model Client does not have id_persona or it is 0');
         const dataSort = await sortDataClient(clientCouch);
         if(!dataSort) return new Error('Error sort data client');
 
@@ -299,11 +300,15 @@ export async function createClientHF(data:any) {
             .input('info_firma_electronica', UDT_CONT_FirmaElectronica)
             .input('id_opcion', sql.Int, 0)
             .input('uid', sql.Int, 0)
+            .input('_id_client', sql.BigInt, _id)
             .execute('MOV_insertarInformacionClienteV2')
 
         if(!result) return new Error('Error create client')
 
         cleanAllTables();
+
+        if(result.recordset[0].mensaje.trim().toUpperCase() === "VALIDATE")
+            return new Error(result.recordset[0].evento);
 
         const idClientCreated = result.recordset[0].id_cliente;
             console.log('Id Client',idClientCreated)
