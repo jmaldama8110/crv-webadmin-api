@@ -134,7 +134,7 @@ function createClientHF(data) {
             dataSort["INDIVIDUAL"][0].utiliza_redes_sociales, // 0/1 (NO/SI)
             dataSort["INDIVIDUAL"][0].id_actividad_economica, // 0/1 (NO/SI)
             dataSort["INDIVIDUAL"][0].id_ocupacion, // CATA_ocupacionPLD
-            dataSort["INDIVIDUAL"][0].id_profesion, dataSort["INDIVIDUAL"][0].id_tipo_red_social, dataSort["INDIVIDUAL"][0].usuario_red_socia, dataSort["INDIVIDUAL"][0].econ_renta, dataSort["INDIVIDUAL"][0].vivienda_piso, dataSort["INDIVIDUAL"][0].vivienda_techo_losa, dataSort["INDIVIDUAL"][0].vivienda_bano, dataSort["INDIVIDUAL"][0].vivienda_letrina, dataSort["INDIVIDUAL"][0].vivienda_block, dataSort["INDIVIDUAL"][0].longitud_titular ? dataSort["INDIVIDUAL"][0].longitud_titular.toString() : "", dataSort["INDIVIDUAL"][0].latitud_titular ? dataSort["INDIVIDUAL"][0].latitud_titular.toString() : "");
+            dataSort["INDIVIDUAL"][0].id_profesion, dataSort["INDIVIDUAL"][0].id_tipo_red_social, dataSort["INDIVIDUAL"][0].usuario_red_social, dataSort["INDIVIDUAL"][0].econ_renta, dataSort["INDIVIDUAL"][0].vivienda_piso, dataSort["INDIVIDUAL"][0].vivienda_techo_losa, dataSort["INDIVIDUAL"][0].vivienda_bano, dataSort["INDIVIDUAL"][0].vivienda_letrina, dataSort["INDIVIDUAL"][0].vivienda_block, dataSort["INDIVIDUAL"][0].longitud_titular ? dataSort["INDIVIDUAL"][0].longitud_titular.toString() : "", dataSort["INDIVIDUAL"][0].latitud_titular ? dataSort["INDIVIDUAL"][0].latitud_titular.toString() : "");
             TablesSql_1.UDT_CLIE_Solicitud.rows.add(0, null, null, null, null, null, null);
             // tbl.UDT_CLIE_DatoBancario.rows.add(0, null,
             //     null,
@@ -322,9 +322,9 @@ function sortDataClient(client) {
             econ_gastos_familiares: business_data.expense_family,
             econ_gastos_transporte: business_data.expense_credit_cards,
             credito_anteriormente: business_data.has_previous_experience,
-            mejorado_ingreso: false,
-            lengua_indigena: 0,
-            habilidad_diferente: 0,
+            mejorado_ingreso: client.has_improved_income,
+            lengua_indigena: client.speaks_dialect,
+            habilidad_diferente: client.has_disable,
             utiliza_internet: client.internet_access,
             utiliza_redes_sociales: !!client.prefered_social[0],
             id_actividad_economica: business_data.economic_activity[0],
