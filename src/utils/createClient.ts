@@ -231,7 +231,7 @@ export async function createClientHF(data:any) {
             dataSort["INDIVIDUAL"][0].id_ocupacion, // CATA_ocupacionPLD
             dataSort["INDIVIDUAL"][0].id_profesion,
             dataSort["INDIVIDUAL"][0].id_tipo_red_social,
-            dataSort["INDIVIDUAL"][0].usuario_red_socia,
+            dataSort["INDIVIDUAL"][0].usuario_red_social,
             dataSort["INDIVIDUAL"][0].econ_renta,
             dataSort["INDIVIDUAL"][0].vivienda_piso,
             dataSort["INDIVIDUAL"][0].vivienda_techo_losa,
@@ -465,9 +465,9 @@ function sortDataClient(client:any) {
             econ_gastos_familiares: business_data.expense_family,
             econ_gastos_transporte: business_data.expense_credit_cards,
             credito_anteriormente: business_data.has_previous_experience,
-            mejorado_ingreso: false, // es un bit Ha mejora su ingreso desde que solicito un credito?
-            lengua_indigena: 0,  // es un bit Habla alguna lengua indígena?
-            habilidad_diferente: 0, // es un bit Habilidades diferentes?
+            mejorado_ingreso: client.has_improved_income, // es un bit Ha mejora su ingreso desde que solicito un credito?
+            lengua_indigena: client.speaks_dialect,  // es un bit Habla alguna lengua indígena?
+            habilidad_diferente: client.has_disable, // es un bit Habilidades diferentes?
             utiliza_internet: client.internet_access, // 
             utiliza_redes_sociales: !!client.prefered_social[0],
             id_actividad_economica: business_data.economic_activity[0],
@@ -483,7 +483,6 @@ function sortDataClient(client:any) {
             vivienda_block: client.household_brick,
             longitud_titular: client.coordinates[0],
             latitud_titular: client.coordinates[1],
-            
 
         }
     ]
