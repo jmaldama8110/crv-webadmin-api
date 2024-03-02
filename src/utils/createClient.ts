@@ -323,6 +323,7 @@ export async function createClientHF(data:any) {
 
         clientCouch["id_cliente"] = dataHF[0][0].id;
         clientCouch["phones"] = phonesHF;
+        // Guardar sólo los ids.
         clientCouch["address"] = addressHF;
         clientCouch["identities"] = identificationsHF;
         clientCouch["ife_details"] = ife_details;
