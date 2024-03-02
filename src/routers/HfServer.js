@@ -189,18 +189,6 @@ function getLoanApplicationById(loanAppId, branchId) {
         return result.recordsets;
     });
 }
-function mapSocialMedia(id) {
-    switch (id) {
-        case 2:
-            return 'WHATSAPP';
-        case 3:
-            return 'FACEBOOK';
-        case 4:
-            return 'INSTAGRAM';
-        default:
-            return '';
-    }
-}
 router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //  get the Client Data with identityNumber and externalId
     /*
@@ -257,8 +245,10 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
                     city: [`CITY|${add.id_ciudad_localidad}`, add.nombre_ciudad_localidad],
                     colony: [`NEIGHBORHOOD|${add.id_asentamiento}`, add.nombre_asentamiento],
                     address_line1: add.direccion,
-                    ext_number: add.numero_exterior,
-                    int_number: add.numero_interior,
+                    exterior_number: add.numero_exterior.trim(),
+                    interior_number: add.numero_interior.trim(),
+                    ext_number: add.num_exterior,
+                    int_number: add.num_interior,
                     street_reference: add.referencia,
                     ownership_type: add.casa_situacion,
                     post_code: add.codigo_postal,
@@ -508,6 +498,7 @@ router.get('/catalogs/sync', authorize_1.authorize, (req, res) => __awaiter(void
         yield updateCatalogFromHF('CATA_TipoRelacion', 10000);
         yield updateCatalogFromHF('CATA_TipoPuesto', 10000);
         yield updateCatalogFromHF('CATA_TipoVialidad', 10000);
+        yield updateCatalogFromHF('CATA_TipoDomicilio', 10000);
         yield updateCatalogFromHF('CATA_Ciudad_Localidad', 10000);
         yield updateCatalogFromHF('CATA_destinoCredito', 10000);
         yield updateCatalogFromHF('CATA_ocupacionPLD', 10000, true);

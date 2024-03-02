@@ -172,18 +172,6 @@ async function getLoanApplicationById ( loanAppId:number, branchId:number) {
 
 }
 
-function mapSocialMedia (id:number) {
-    switch(id){
-        case 2: 
-            return 'WHATSAPP';
-        case 3:
-            return 'FACEBOOK';
-        case 4: 
-            return 'INSTAGRAM';
-        default: 
-            return '';
-    }
-}
 
 router.get("/clients/hf", authorize, async(req, res) => {
 
@@ -575,6 +563,7 @@ router.get('/catalogs/sync',authorize, async (req,res) => {
         await updateCatalogFromHF('CATA_TipoRelacion',10000)
         await updateCatalogFromHF('CATA_TipoPuesto',10000)
         await updateCatalogFromHF('CATA_TipoVialidad',10000)
+        await updateCatalogFromHF('CATA_TipoDomicilio',10000)
         await updateCatalogFromHF('CATA_Ciudad_Localidad',10000)
         await updateCatalogFromHF('CATA_destinoCredito',10000)
         await updateCatalogFromHF('CATA_ocupacionPLD',10000, true)

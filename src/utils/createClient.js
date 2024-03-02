@@ -58,7 +58,7 @@ function createClientHF(data) {
             TablesSql_1.UDT_CONT_Empresa.rows.add(dataSort["NEGOCIO"][0].id, dataSort["NEGOCIO"][0].nombre.slice(0, 80), dataSort["NEGOCIO"][0].rfc.slice(0, 13), '', 0, dataSort["NEGOCIO"][0].id_actividad_economica, '', dataSort["NEGOCIO"][0].ventas_totales_cantidad, dataSort["NEGOCIO"][0].ventas_totales_unidad.toString(), dataSort["NEGOCIO"][0].revolvencia, dataSort["NEGOCIO"][0].numero_empleados, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, '', dataSort["NEGOCIO"][0].econ_registro_egresos_ingresos, // 0/1
             '');
             TablesSql_1.UDT_CONT_Direcciones.rows.add(dataSort["NEGOCIO"][0].id_dir, '', dataSort["NEGOCIO"][0].id_pais, dataSort["NEGOCIO"][0].id_estado, dataSort["NEGOCIO"][0].id_municipio, dataSort["NEGOCIO"][0].id_ciudad, dataSort["NEGOCIO"][0].id_colonia, dataSort["NEGOCIO"][0].calle, //direccion
-            dataSort["NEGOCIO"][0].letra_exterior, dataSort["NEGOCIO"][0].letra_interior, dataSort["NEGOCIO"][0].referencia, dataSort["NEGOCIO"][0].casa_situacion, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, dataSort["NEGOCIO"][0].correo_electronico, dataSort["NEGOCIO"][0].num_exterior, dataSort["NEGOCIO"][0].num_interior, dataSort["NEGOCIO"][0].id_vialidad);
+            dataSort["NEGOCIO"][0].letra_exterior, dataSort["NEGOCIO"][0].letra_interior, dataSort["NEGOCIO"][0].referencia, dataSort["NEGOCIO"][0].casa_situacion, dataSort["NEGOCIO"][0].tiempo_actividad_incio, dataSort["NEGOCIO"][0].tiempo_actividad_final, dataSort["NEGOCIO"][0].correo_electronico, dataSort["NEGOCIO"][0].num_interior, dataSort["NEGOCIO"][0].num_exterior, dataSort["NEGOCIO"][0].id_vialidad);
             TablesSql_1.UDT_CONT_Oficinas.rows.add(dataSort["NEGOCIO"][0].id_oficina_empresa, //id_oficina
             dataSort["NEGOCIO"][0].id_empresa, //id_empresa
             dataSort["NEGOCIO"][0].id_dir, //id_direccion
@@ -192,6 +192,7 @@ function createClientHF(data) {
             const personData = dataHF[0][0];
             clientCouch["id_cliente"] = dataHF[0][0].id;
             clientCouch["phones"] = phonesHF;
+            // Guardar sólo los ids.
             clientCouch["address"] = addressHF;
             clientCouch["identities"] = identificationsHF;
             clientCouch["ife_details"] = ife_details;
@@ -250,10 +251,10 @@ function sortDataClient(client) {
                     nombre: business_data.business_name ? business_data.business_name.trim() : "NEGOCIO",
                     calle: campo.address_line1 ? campo.address_line1 : "Calle ...",
                     referencia: campo.address_line1 ? campo.address_line1 : "Calle ...",
-                    letra_exterior: campo.ext_number ? campo.ext_number.toString() : "SN",
-                    letra_interior: campo.int_number ? campo.int_number.toString() : "SN",
-                    num_exterior: 0,
-                    num_interior: 0,
+                    letra_exterior: campo.exterior_number ? campo.exterior_number.toString() : "SN",
+                    letra_interior: campo.interior_number ? campo.interior_number.toString() : "SN",
+                    num_exterior: Funct.validateInt(Funct.ConvertInt(campo.ext_number)),
+                    num_interior: Funct.validateInt(Funct.ConvertInt(campo.int_number)),
                     id_pais: campo.country[0] ? (0, createPerson_1.getId)(campo.country[0]) : 1,
                     id_estado: campo.province[0] ? (0, createPerson_1.getId)(campo.province[0]) : 5,
                     id_municipio: campo.municipality[0] ? (0, createPerson_1.getId)(campo.municipality[0]) : 946,
@@ -428,8 +429,10 @@ const addAddressClientHF = (addressMongo, addressHF) => {
             city: [!(add.id_ciudad_localidad.toString()).includes('CITY') ? `CITY|${add.id_ciudad_localidad}` : add.id_ciudad_localidad, add.nombre_ciudad_localidad],
             colony: [!(add.id_asentamiento.toString()).includes('NEIGHBORHOOD') ? `NEIGHBORHOOD|${add.id_asentamiento}` : add.id_asentamiento, add.nombre_asentamiento],
             address_line1: add.direccion,
-            ext_number: add.numero_exterior.trim(),
-            int_number: add.numero_interior.trim(),
+            exterior_number: add.numero_exterior.trim(),
+            interior_number: add.numero_interior.trim(),
+            ext_number: add.num_exterior,
+            int_number: add.num_interior,
             street_reference: add.referencia,
             ownership: add.casa_situacion === 'PROPIO' ? true : false,
             post_code: add.codigo_postal,
