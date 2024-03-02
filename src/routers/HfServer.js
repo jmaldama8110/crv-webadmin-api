@@ -46,6 +46,10 @@ const router = express_1.default.Router();
 exports.hfRouter = router;
 router.get('/clients/exists', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        /**
+         * when IdentityNumber used CURP, returns { id_cliente (persona) } or empty when not found
+         * when claveIne used, returns id:[] array of listed Ids for identity
+         */
         if (!req.query.identityNumber && !req.query.claveIne) {
             throw new Error('Identity Number or Clave INE parameter is required..');
         }
