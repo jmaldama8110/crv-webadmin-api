@@ -719,7 +719,7 @@ export default class Action extends DocumentCollection {
                 business_phone: "1234567890",
 
                 bis_location: [1,"CASA DEL CLIENTE"],
-                number_employees: '',
+                number_employees: 0,
                 loan_destination: [1,'COMPRAR O REMODELAR'],
                 income_sales_total: 0,
                 income_partner: 0,
@@ -741,7 +741,7 @@ export default class Action extends DocumentCollection {
             household_toilet: false,
             household_latrine: false,
             household_brick: false,
-            economic_dependants: '',
+            economic_dependants: 0,
             internet_access: false,
             prefered_social: [1,"NINGUNA"],
             rol_hogar: [1,"JEFE DE FAMILIA"],
