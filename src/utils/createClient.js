@@ -418,7 +418,7 @@ const addAddressClientHF = (addressMongo, addressHF) => {
             add.nombre_asentamiento = domicilio.colony[1];
             add.direccion = domicilio.address_line1;
             add.codigo_postal = domicilio.post_code;
-            add.casa_situacion = domicilio.ownership ? 'PROPIO' : 'RENTADO';
+            add.casa_situacion = domicilio.casa_situacion;
         }
         address.push({
             _id: add.id,
