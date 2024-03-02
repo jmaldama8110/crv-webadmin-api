@@ -74,8 +74,8 @@ export async function createClientHF(data:any) {
             dataSort["NEGOCIO"][0].tiempo_actividad_incio,
             dataSort["NEGOCIO"][0].tiempo_actividad_final,
             dataSort["NEGOCIO"][0].correo_electronico,
-            dataSort["NEGOCIO"][0].num_exterior,
             dataSort["NEGOCIO"][0].num_interior,
+            dataSort["NEGOCIO"][0].num_exterior,
             dataSort["NEGOCIO"][0].id_vialidad
         );
 
@@ -390,10 +390,10 @@ function sortDataClient(client:any) {
                     nombre: business_data.business_name ? business_data.business_name.trim() : "NEGOCIO",
                     calle: campo.address_line1 ? campo.address_line1 : "Calle ...",
                     referencia: campo.address_line1 ? campo.address_line1 : "Calle ...",
-                    letra_exterior: campo.ext_number ? campo.ext_number.toString() : "SN",
-                    letra_interior: campo.int_number ? campo.int_number.toString() : "SN",
-                    num_exterior: 0,
-                    num_interior: 0,
+                    letra_exterior: campo.exterior_number ? campo.exterior_number.toString() : "SN",
+                    letra_interior: campo.interior_number ? campo.interior_number.toString() : "SN",
+                    num_exterior: Funct.validateInt(Funct.ConvertInt(campo.ext_number)),
+                    num_interior: Funct.validateInt(Funct.ConvertInt(campo.int_number)),
                     id_pais: campo.country[0] ? getId(campo.country[0]) : 1,
                     id_estado: campo.province[0] ? getId(campo.province[0]) : 5,
                     id_municipio: campo.municipality[0] ? getId(campo.municipality[0]) : 946,
@@ -587,8 +587,10 @@ const addAddressClientHF = (addressMongo:any, addressHF:any) => {
             colony: [!(add.id_asentamiento.toString()).includes('NEIGHBORHOOD') ? `NEIGHBORHOOD|${add.id_asentamiento}` : add.id_asentamiento, add.nombre_asentamiento],
 
             address_line1: add.direccion,
-            ext_number: add.numero_exterior.trim(),
-            int_number: add.numero_interior.trim(),
+            exterior_number: add.numero_exterior.trim(),
+            interior_number: add.numero_interior.trim(),
+            ext_number: add.num_exterior,
+            int_number: add.num_interior,
             street_reference: add.referencia,
             ownership: add.casa_situacion === 'PROPIO' ? true : false,
             post_code: add.codigo_postal,
