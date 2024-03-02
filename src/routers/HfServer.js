@@ -46,17 +46,34 @@ const router = express_1.default.Router();
 exports.hfRouter = router;
 router.get('/clients/exists', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!req.query.identityNumber) {
-            throw new Error('Identity Number parameter is required..');
+        if (!req.query.identityNumber && !req.query.claveIne) {
+            throw new Error('Identity Number or Clave INE parameter is required..');
         }
-        let data = yield findClientByCurp(req.query.identityNumber);
-        if (data.rowsAffected[0] == 1) {
-            /// recordsets[0][0] contains personal Info from HF
-            const personalData = Object.assign({}, data.recordset[0]);
-            res.send({ id_cliente: personalData.id });
+        let data = undefined;
+        if (req.query.identityNumber) {
+            data = yield findClientByCurp(req.query.identityNumber);
+            if (data.rowsAffected[0] == 1) {
+                /// recordsets[0][0] contains personal Info from HF
+                const personalData = Object.assign({}, data.recordset[0]);
+                res.send({ id_cliente: personalData.id });
+            }
+            else {
+                res.send({ id_cliente: '' });
+            }
         }
-        else {
-            res.send({ id_cliente: '' });
+        if (req.query.claveIne) {
+            data = yield findClientByClaveIne(req.query.claveIne);
+            if (data.rowsAffected[0] > 0) {
+                if (data.recordsets[0].length > 0) {
+                    res.send({ ids: data.recordsets[0][0].id });
+                }
+                else {
+                    res.send({ ids: '' });
+                }
+            }
+            else {
+                res.send({ ids: '' });
+            }
         }
     }
     catch (error) {
@@ -1038,6 +1055,23 @@ function findClientByExternalId(externalId) {
                 .request()
                 .input("idCliente", mssql_1.default.Int, externalId)
                 .execute("MOV_ObtenerDatosPersona");
+            return result;
+        }
+        catch (err) {
+            console.log(err);
+            return err;
+        }
+    });
+}
+;
+function findClientByClaveIne(claveIne) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            let pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+            let result = yield pool
+                .request()
+                .input("clave_ife", mssql_1.default.VarChar, claveIne)
+                .execute("CLIE_getPersonByIFE");
             return result;
         }
         catch (err) {

@@ -9,22 +9,45 @@ const router = express.Router();
 
 router.get('/clients/exists', authorize, async (req:any, res:any) => {
     try {
+        /**
+         * when IdentityNumber used CURP, returns { id_cliente (persona) } or empty when not found
+         * when claveIne used, returns id:[] array of listed Ids for identity
+         */
 
-        if( !req.query.identityNumber ){
-            throw new Error('Identity Number parameter is required..');
+        if( !req.query.identityNumber && !req.query.claveIne ){
+            throw new Error('Identity Number or Clave INE parameter is required..');
+        }
+        let data:any = undefined
+        if( req.query.identityNumber ){
+            data = await findClientByCurp(req.query.identityNumber);
+            if( data.rowsAffected[0] == 1 ){
+                /// recordsets[0][0] contains personal Info from HF
+                const personalData = {
+                    ...data.recordset[0],
+                };
+            
+                res.send({ id_cliente: personalData.id });
+            } else {
+                res.send({id_cliente: ''});
+            }
+
+        }
+        if( req.query.claveIne){
+            data = await findClientByClaveIne(req.query.claveIne);
+            if( data.rowsAffected[0] > 0){
+                if( data.recordsets[0].length > 0){
+                    res.send({ ids: data.recordsets[0][0].id})
+                }
+                else {
+                    res.send({ ids: ''})
+                }
+            }
+            else {
+                res.send({ ids: ''})
+            }
         }
 
-        let data = await findClientByCurp(req.query.identityNumber);
-        if( data.rowsAffected[0] == 1 ){
-            /// recordsets[0][0] contains personal Info from HF
-            const personalData = {
-                ...data.recordset[0],
-            };
         
-            res.send({ id_cliente: personalData.id });
-        } else {
-            res.send({id_cliente: ''});
-        }
 
     }
     catch(error){
@@ -1173,6 +1196,21 @@ async function findClientByExternalId (externalId:number) {
             .request()
             .input("idCliente", sql.Int, externalId)
             .execute("MOV_ObtenerDatosPersona");
+        return result;
+    } catch (err) {
+        console.log(err)
+        return err;
+    }
+};
+
+async function findClientByClaveIne (claveIne:string) {
+    try {
+
+        let pool = await sql.connect(sqlConfig);
+        let result = await pool
+            .request()
+            .input("clave_ife", sql.VarChar, claveIne)
+            .execute("CLIE_getPersonByIFE");
         return result;
     } catch (err) {
         console.log(err)
