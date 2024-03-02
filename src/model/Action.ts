@@ -654,8 +654,11 @@ export default class Action extends DocumentCollection {
                         "NEIGHBORHOOD|113",
                         "carlos salinas de gortari"
                     ],
-                    ext_number: "ext",
-                    int_number: "int",
+                    ext_number: 10,
+                    int_number: 10,
+                    exterior_number: "AA",
+                    interior_number: "BB",
+                    ownership_type: [1,"PROPIA"],
                     street_reference: "reference",
                     road:[
                         5,
@@ -687,8 +690,11 @@ export default class Action extends DocumentCollection {
                         "carlos salinas de gortari"
                     ],
                     post_code: "29500",
-                    ext_number: "ext",
-                    int_number: "int",
+                    ext_number: 10,
+                    int_number: 10,
+                    exterior_number: "AA",
+                    interior_number: "BB",
+                    ownership_type: [1,"PROPIA"],
                     street_reference: "reference",
                     road:[
                         5,
