@@ -593,7 +593,7 @@ const addAddressClientHF = (addressMongo:any, addressHF:any) => {
             ext_number: add.num_exterior,
             int_number: add.num_interior,
             street_reference: add.referencia,
-            ownership: add.casa_situacion === 'PROPIO' ? true : false,
+            ownership_type: [add.casa_situacion, add.casa_situacion_etiqueta],
             post_code: add.codigo_postal,
             residence_since: add.tiempo_habitado_inicio,
             residence_to: add.tiempo_habitado_final,
