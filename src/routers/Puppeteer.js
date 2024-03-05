@@ -520,7 +520,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                 lastname: x.doc.lastname,
                 second_lastname: x.doc.second_lastname,
                 branch: loanApp.branch[1],
-                apply_at: (0, misc_1.formatLocalDate2)(loanApp.apply_at).split("/"),
+                apply_at: (0, misc_1.formatLocalDate2)(loanApp.apply_at ? loanApp.apply_at : (new Date()).toISOString()).split("/"),
                 loan_cycle: loanCycle,
                 economicDependants: x.doc.economic_dependants,
                 internetAccess: x.doc.internet_access ? 'Si' : 'No',

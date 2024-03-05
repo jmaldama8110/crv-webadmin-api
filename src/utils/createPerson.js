@@ -107,6 +107,7 @@ function createPersonHF(data) {
 }
 exports.createPersonHF = createPersonHF;
 function sortDataPerson(client) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let person = {};
@@ -116,6 +117,10 @@ function sortDataPerson(client) {
             const dirDomi = yield addresses.filter((addresses) => addresses.type == 'DOMICILIO');
             const dirIfe = yield addresses.filter((addresses) => addresses.type == 'IFE');
             const dirRfc = yield addresses.filter((addresses) => addresses.type == 'RFC');
+            const identities = client.identities;
+            const ife = yield client.identities.filter((id) => id.tipo_id == 'IFE' && id.status.trim().toUpperCase() == "ACTIVO");
+            const rfc = yield client.identities.filter((id) => id.tipo_id == 'RFC' && id.status.trim().toUpperCase() == "ACTIVO");
+            const curp = yield client.identities.filter((id) => id.tipo_id == 'CURP' && id.status.trim().toUpperCase() == "ACTIVO");
             const phones = client.phones;
             const entidad_nac = dirDomi[0].province[0] ? dirDomi[0].province[0] : 'PROVINCE|5';
             // console.log({entidad_nac})
@@ -148,17 +153,17 @@ function sortDataPerson(client) {
             ];
             person.IDENTIFICACIONES = [];
             person.IDENTIFICACIONES.push({
-                id: IS_CREATE ? 0 : (client.identities.length < 3 ? 0 : Funct.validateInt(client.identities[2]._id)),
+                id: IS_CREATE ? 0 : (curp.length < 1 ? 0 : Funct.validateInt(curp[0]._id)),
                 id_entidad: IS_CREATE ? 0 : client.id_persona,
                 tipo_identificacion: "CURP",
                 id_numero: client.curp
             }, {
-                id: IS_CREATE ? 0 : (client.identities.length < 1 ? 0 : Funct.validateInt(client.identities[0]._id)),
+                id: IS_CREATE ? 0 : (ife.length < 1 ? 0 : Funct.validateInt(ife[0]._id)),
                 id_entidad: IS_CREATE ? 0 : client.id_persona,
                 tipo_identificacion: "IFE",
                 id_numero: client.clave_ine.slice(0, 18) // ine_clave
             }, {
-                id: IS_CREATE ? 0 : (client.identities.length < 2 ? 0 : Funct.validateInt(client.identities[1]._id)),
+                id: IS_CREATE ? 0 : (rfc.length < 1 ? 0 : Funct.validateInt(rfc[0]._id)),
                 id_entidad: IS_CREATE ? 0 : client.id_persona,
                 tipo_identificacion: "RFC",
                 id_numero: client.rfc && client.rfc != "" ? client.rfc : client.curp.slice(0, 13)
@@ -231,7 +236,7 @@ function sortDataPerson(client) {
             });
             person.DATOS_IFE = [
                 {
-                    id: IS_CREATE ? 0 : Funct.validateInt(client.ife_details.id),
+                    id: IS_CREATE ? 0 : Funct.validateInt((_b = (_a = client.ife_details[0]) === null || _a === void 0 ? void 0 : _a.id) !== null && _b !== void 0 ? _b : '0'),
                     numero_emision: client.numero_emisiones ? client.numero_emisiones.slice(0, 2) : "00",
                     numero_vertical_ocr: client.numero_vertical ? client.numero_vertical.slice(0, 13) : "0000000000000" // .numero_vertical
                 }

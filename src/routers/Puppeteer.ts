@@ -543,7 +543,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
           lastname: x.doc.lastname,
           second_lastname: x.doc.second_lastname,
           branch: loanApp.branch[1],
-          apply_at: formatLocalDate2(loanApp.apply_at).split("/"),
+          apply_at: formatLocalDate2(loanApp.apply_at ? loanApp.apply_at: (new Date()).toISOString() ).split("/"),
           loan_cycle: loanCycle,
           economicDependants: x.doc.economic_dependants,
           internetAccess: x.doc.internet_access ? 'Si' : 'No',
