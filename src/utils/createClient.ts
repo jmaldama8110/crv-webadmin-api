@@ -433,13 +433,13 @@ function sortDataClient(client:any) {
             id_oficial_credito: 0
         }
     ]
-
+    const prospera = client.identities.filter((id:any) => id.tipo_id == 'PROSPERA' && id.status.trim().toUpperCase() == "ACTIVO");
     clientHF.IDENTIFICACIONES = [
         {
-            id: IS_CREATE ? 0 : Funct.validateInt(client.identities[3]._id),
+            id: IS_CREATE ? 0 : (prospera.length < 1 ? 0 : Funct.validateInt(prospera[0]._id)),
             id_entidad: IS_CREATE ? 0 : client.id_persona,
             tipo_identificacion: "PROSPERA",
-            id_numero: ""
+            id_numero:  (prospera.length < 1 ? '' : prospera[0].numero_id ?? '')
         }
     ]
 
