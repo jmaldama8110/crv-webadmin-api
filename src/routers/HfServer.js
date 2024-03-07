@@ -210,6 +210,37 @@ function getLoanApplicationById(loanAppId, branchId) {
         return result.recordsets;
     });
 }
+router.get('/products/hf', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!(req.query.branchId && req.query.clientType)) {
+            throw new Error('Query parametrs branchId or ClientType are missing!');
+        }
+        const data = yield getProductsByBranch(parseFloat(req.query.branchId.toString()), parseFloat(req.query.clientType.toString()));
+        res.send(data[0]);
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).send(err);
+    }
+}));
+function getProductsByBranch(branchId, clientType) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        const result = yield pool.request()
+            .input('id_producto', mssql_1.default.Int, 0)
+            .input('id_fondeador', mssql_1.default.Int, 0)
+            .input('id_disposicion', mssql_1.default.Int, 0)
+            .input('id_servicio_financiero', mssql_1.default.Int, 0)
+            .input('id_tipo_cliente', mssql_1.default.Int, clientType)
+            .input('id_oficina', mssql_1.default.Int, branchId)
+            .input('id_periodicidad', mssql_1.default.Int, 0)
+            .input('id_tipo_contrato', mssql_1.default.Int, 0)
+            .input('visible', mssql_1.default.Int, 1)
+            .input('producto_maestro', mssql_1.default.Int, 1)
+            .execute('CATA_obtenerProducto');
+        return result.recordsets;
+    });
+}
 router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     //  get the Client Data with identityNumber and externalId
     /*
@@ -1111,3 +1142,63 @@ function searchGroupLoanByName(groupName, branchId) {
         }
     });
 }
+router.get("/reset/group", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.query.actionId) {
+            throw new Error('acionId param is missing');
+        }
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const docAction = yield db.get(req.query.actionId);
+        if (docAction.couchdb_type !== 'ACTION') {
+            throw new Error(`${docAction._id} is not an ACTION type`);
+        }
+        if (docAction.name === 'CREATE_UPDATE_CLIENT') {
+            throw new Error(`${docAction._id} is an ACTION but CREATE/UPDATE CLIENT  is not supported`);
+        }
+        if (docAction.name === 'CREATE_UPDATE_LOAN') {
+            const loanApp = yield db.get(docAction.data.id_loan);
+            const ClientApplyby = yield db.get(loanApp.apply_by);
+            if (ClientApplyby.couchdb_type !== 'GROUP') {
+                throw new Error(`${docAction._id} is an ACTION but APPLY_BY is not GROUP`);
+            }
+            const idCliente = loanApp.id_cliente;
+            const idSolicitud = loanApp.id_solicitud;
+            /// crear lo indices de busqueda
+            yield db.createIndex({ index: { fields: [
+                        "couchdb_type", "idCliente"
+                    ] } });
+            yield db.createIndex({ index: { fields: [
+                        "couchdb_type", "apply_by"
+                    ] } });
+            /// obtiene todos los Loans de ese grupo
+            const queryLoans = yield db.find({ selector: {
+                    couchdb_type: "LOANAPP_GROUP",
+                    apply_by: loanApp.apply_by
+                } });
+            //// obtiene todos los contratos de este grupo
+            const queryContracts = yield db.find({ selector: {
+                    couchdb_type: "CONTRACT",
+                    idCliente
+                } });
+            ///
+            const queryGroup = yield db.get(loanApp.apply_by);
+            const actionDelete = { _id: docAction._id, _rev: docAction._rev, deleted: true };
+            const groupDelete = { _id: queryGroup._id, _rev: queryGroup._rev, deleted: true };
+            const loansDelete = queryLoans.docs.map((i) => ({ _id: i._id, _rev: i._rev, deleted: true }));
+            const contractsDelete = queryContracts.docs.map((i) => ({ _id: i._id, _rev: i._rev, deleted: true }));
+            /// Eliminar CONTRATO
+            /// Eliminar TODOS los loans
+            ////Eliminar el GRUPO
+            /// Eliminar la ACTION
+            const documents = [
+                actionDelete, groupDelete, ...loansDelete, ...contractsDelete
+            ];
+            const response = yield db.bulk({ docs: documents });
+            res.send(response);
+        }
+        // res.send('OK')
+    }
+    catch (e) {
+        res.status(400).send(e.message);
+    }
+}));
