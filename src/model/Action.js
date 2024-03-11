@@ -341,9 +341,9 @@ class Action extends DocumentCollection_1.DocumentCollection {
                 liquid_guarantee: 10,
                 product: {
                     external_id: 3,
-                    min_amount: "10000",
+                    min_amount: 10000,
                     max_amount: 160000,
-                    step_amount: "1000",
+                    step_amount: 1000,
                     min_term: 4,
                     max_term: 36,
                     product_name: "CONSERVA TE ACTIVA",

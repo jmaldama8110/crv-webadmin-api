@@ -216,7 +216,15 @@ router.get('/products/hf', authorize_1.authorize, (req, res) => __awaiter(void 0
             throw new Error('Query parametrs branchId or ClientType are missing!');
         }
         const data = yield getProductsByBranch(parseFloat(req.query.branchId.toString()), parseFloat(req.query.clientType.toString()));
-        res.send(data[0]);
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const productsQuery = yield db.find({ selector: {
+                couchdb_type: "PRODUCT"
+            } });
+        const newData = data[0].map((x) => {
+            const i = productsQuery.docs.find((y) => y.external_id == x.id);
+            return Object.assign({}, i);
+        });
+        res.send(newData);
     }
     catch (err) {
         console.log(err);
@@ -601,10 +609,10 @@ router.get('/products/sync', authorize_1.authorize, (req, res) => __awaiter(void
                 product_type: "1",
                 product_name: data.nombre,
                 external_id: data.id,
-                min_amount: data.valor_minimo.toString(),
-                max_amount: data.valor_maximo.toString(),
-                default_amount: data.valor_minimo.toString(),
-                step_amount: "1000",
+                min_amount: data.valor_minimo,
+                max_amount: data.valor_maximo,
+                default_amount: data.valor_minimo,
+                step_amount: 1000,
                 min_term: data.periodo_min,
                 max_term: data.periodo_max,
                 default_term: data.periodo_min,
