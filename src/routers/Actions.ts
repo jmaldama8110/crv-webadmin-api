@@ -456,9 +456,10 @@ router.get('/actions/fix', authorize, async (req,res)=> {
 
         }
 
-        res.send({ updated: clientActions.length, docs: clientActions})
+        res.send(clientActions)
     }
     catch(e:any){
+        
         res.status(400).send(e.message);
     }
 })
