@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hfRouter = void 0;
+exports.hfRouter = exports.datsRStoJson = exports.findClientByExternalId = void 0;
 const express_1 = __importDefault(require("express"));
 const authorize_1 = require("../middleware/authorize");
 const mssql_1 = __importDefault(require("mssql"));
@@ -386,71 +386,6 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
                 familiar_desempenia_funcion_publica_parentesco: "",
                 instrumento_monetario: [0, ""]
             };
-            // RECORDSETS[7][0] / Datos socioeconomicos que devuelve HF
-            // {
-            //     id_cliente: 383985,
-            //     id_persona: 367327,
-            //     econ_id_actividad_economica: 0,
-            //     econ_sueldo_conyugue: 0,
-            //     econ_otros_ingresos: 0,
-            //     econ_familiares_extranjeros: false,
-            //     econ_parentesco: '',
-            //     econ_envia_dinero: false,
-            //     econ_cantidad_mensual: 0,
-            //     econ_otros_gastos: 4000,
-            //     econ_ocupacion: 'ADMINISTRADORA DE SU NEGOCIO',
-            //     econ_dependientes_economicos: 1,
-            //     econ_pago_casa: 8000,
-            //     econ_gastos_vivienda: 0,
-            //     econ_gastos_transporte: 0,
-            //     econ_gastos_familiares: 3400,
-            //     econ_id_empresa: 506905,
-            //     econ_fecha_inicio_act_productiva: 2024-01-25T14:56:23.693Z,
-            //     econ_id_destino_credito: 1,
-            //     econ_id_ubicacion_negocio: 14,
-            //     econ_id_rol_hogar: 1,
-            //     credito_anteriormente: false,
-            //     mejorado_ingreso: false,
-            //     lengua_indigena: false,
-            //     habilidad_diferente: false,
-            //     utiliza_internet: true,
-            //     utiliza_redes_sociales: true,
-            //     id_actividad_economica: 776,
-            //     id_ocupacion: 2,
-            //     id_profesion: 245,
-            //     desempenia_funcion_publica: false,
-            //     desempenia_funcion_publica_cargo: '',
-            //     desempenia_funcion_publica_dependencia: '',
-            //     familiar_desempenia_funcion_publica: false,
-            //     familiar_desempenia_funcion_publica_cargo: '',
-            //     familiar_desempenia_funcion_publica_dependencia: '',
-            //     familiar_desempenia_funcion_publica_nombre: '',
-            //     familiar_desempenia_funcion_publica_paterno: '',
-            //     familiar_desempenia_funcion_publica_materno: '',
-            //     familiar_desempenia_funcion_publica_parentesco: '',
-            //     id_instrumento_monetario: 1,
-            //     id_tipo_red_social: 2,
-            //     usuario_red_social: '9618478547',
-            //     econ_renta: 500,
-            //     vivienda_piso: true,
-            //     vivienda_techo_losa: true,
-            //     vivienda_bano: true,
-            //     vivienda_letrina: false,
-            //     vivienda_block: true,
-            //     geolocalizacion_domicilio: {
-            //       srid: 4326,
-            //       version: 1,
-            //       points: [ [Point] ],
-            //       figures: [ [Object] ],
-            //       shapes: [ [Object] ],
-            //       segments: []
-            //     },
-            //     nombre_actividad_economica: 'COMPRAVENTA DE PERFUMES',
-            //     nombre_ocupacion: 'ADMINISTRADORA DE SU NEGOCIO',
-            //     nombre_profesion: 'Ninguna',
-            //     nombre_negocio: 'COMPRAVENTA DE PERFUMES',
-            //     econ_ventas_totales_cantidad: 6800
-            //   }        
             let econActId = 0, econActCap = '', profId = 0, profCap = '', occupId = 0, occupCap = '', bisLoc = 0;
             if (data.recordsets[7].length > 0) {
                 if (data.recordsets[7][0].id_actividad_economica) {
@@ -1106,6 +1041,7 @@ function findClientByExternalId(externalId) {
         }
     });
 }
+exports.findClientByExternalId = findClientByExternalId;
 ;
 function findClientByClaveIne(claveIne) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -1151,6 +1087,7 @@ function searchGroupLoanByName(groupName, branchId) {
     });
 }
 router.get("/reset/group", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    /** BASADO EN UN ACTION _id elimina informacion de la misma y sus dependencias */
     try {
         if (!req.query.actionId) {
             throw new Error('acionId param is missing');
@@ -1210,3 +1147,196 @@ router.get("/reset/group", authorize_1.authorize, (req, res) => __awaiter(void 0
         res.status(400).send(e.message);
     }
 }));
+function datsRStoJson(data) {
+    if (data.recordset.length == 1) {
+        /// extract CURP and Ine Folio
+        const curp = data.recordsets[1].find((i) => i.tipo_identificacion === "CURP");
+        const ife = data.recordsets[1].find((i) => i.tipo_identificacion === "IFE");
+        const rfc = data.recordsets[1].find((i) => i.tipo_identificacion === "RFC");
+        /// busca el detalle de la IFE/INE
+        const ineDetail = data.recordsets[2];
+        const ine_detalle = ineDetail.find((i) => i.id_identificacion_oficial === ife.id_numero);
+        const identities = [];
+        for (let i = 0; i < data.recordsets[1].length; i++) {
+            const itemIdentity = data.recordsets[1][i];
+            identities.push({
+                _id: itemIdentity.id,
+                id_persona: itemIdentity.id_persona,
+                tipo_id: itemIdentity.tipo_identificacion,
+                numero_id: itemIdentity.id_numero,
+                id_direccion: itemIdentity.id_direccion,
+                status: itemIdentity.estatus_registro
+            });
+        }
+        const address = [];
+        let email = '';
+        for (let i = 0; i < data.recordsets[3].length; i++) {
+            const add = data.recordsets[3][i];
+            if (add.correo_electronico) {
+                email = add.correo_electronico;
+            }
+            address.push({
+                _id: add.id,
+                type: add.tipo.trim(),
+                country: [`COUNTRY|${add.id_pais}`, add.nombre_pais],
+                province: [`PROVINCE|${add.id_estado}`, add.nombre_estado],
+                municipality: [`MUNICIPALITY|${add.id_municipio}`, add.nombre_municipio],
+                city: [`CITY|${add.id_ciudad_localidad}`, add.nombre_ciudad_localidad],
+                colony: [`NEIGHBORHOOD|${add.id_asentamiento}`, add.nombre_asentamiento],
+                address_line1: add.direccion,
+                exterior_number: add.numero_exterior.trim(),
+                interior_number: add.numero_interior.trim(),
+                ext_number: add.num_exterior,
+                int_number: add.num_interior,
+                street_reference: add.referencia,
+                ownership_type: [add.casa_situacion, add.casa_situacion_etiqueta],
+                post_code: add.codigo_postal,
+                residence_since: add.tiempo_habitado_inicio,
+                residence_to: add.tiempo_habitado_final,
+                road: [add.vialidad, add.etiqueta_vialidad],
+                email
+            });
+        }
+        const phones = [];
+        for (let l = 0; l < data.recordsets[4].length; l++) {
+            const phoneAdd = data.recordsets[4][l];
+            if (phoneAdd.idcel_telefono.trim()) {
+                phones.push({
+                    _id: phoneAdd.id,
+                    phone: phoneAdd.idcel_telefono.trim(),
+                    type: phoneAdd.tipo_telefono.trim(),
+                    company: phoneAdd.compania.trim(),
+                    validated: false
+                });
+            }
+        }
+        const perSet = Object.assign({}, data.recordsets[0][0]);
+        let household_data = {
+            household_floor: false,
+            household_roof: false,
+            household_toilet: false,
+            household_latrine: false,
+            household_brick: false,
+            economic_dependants: '',
+            internet_access: false,
+            prefered_social: [0, ""],
+            rol_hogar: [0, ""],
+            user_social: '',
+            has_disable: false,
+            speaks_dialect: false,
+            has_improved_income: false,
+        };
+        let business_data = {
+            bis_location: [0, ""],
+            economic_activity: ['', ''],
+            profession: ['', ''],
+            ocupation: ["", ""],
+            business_start_date: '',
+            business_name: '',
+            business_owned: false,
+            business_phone: '',
+            number_employees: '',
+            loan_destination: [0, ''],
+            income_sales_total: 0,
+            income_partner: 0,
+            income_job: 0,
+            income_remittances: 0,
+            income_other: 0,
+            income_total: 0,
+            expense_family: 0,
+            expense_rent: 0,
+            expense_business: 0,
+            expense_debt: 0,
+            expense_credit_cards: 0,
+            expense_total: 0,
+            keeps_accounting_records: false,
+            has_previous_experience: false,
+            previous_loan_experience: '',
+            bis_season_type: ''
+        };
+        let spld = {
+            desempenia_funcion_publica_cargo: "",
+            desempenia_funcion_publica_dependencia: "",
+            familiar_desempenia_funcion_publica_cargo: "",
+            familiar_desempenia_funcion_publica_dependencia: "",
+            familiar_desempenia_funcion_publica_nombre: "",
+            familiar_desempenia_funcion_publica_paterno: "",
+            familiar_desempenia_funcion_publica_materno: "",
+            familiar_desempenia_funcion_publica_parentesco: "",
+            instrumento_monetario: [0, ""]
+        };
+        let econActId = 0, econActCap = '', profId = 0, profCap = '', occupId = 0, occupCap = '', bisLoc = 0;
+        if (data.recordsets[7].length > 0) {
+            if (data.recordsets[7][0].id_actividad_economica) {
+                econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
+                    econActCap = data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString() : '';
+            }
+            profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
+                profCap = data.recordsets[7][0].nombre_profesion ? data.recordsets[7][0].nombre_profesion.toString() : '';
+            occupId = perSet.id_occupation ? perSet.id_occupation : 0,
+                occupCap = perSet.occupation ? perSet.occupation.toString() : '';
+            bisLoc = !!data.recordsets[7][0].econ_id_ubicacion_negocio ? data.recordsets[7][0].econ_id_ubicacion_negocio : 0;
+        }
+        if (data.recordsets[7].length) {
+            business_data.bis_location = [bisLoc, ''];
+            business_data.economic_activity = [econActId, econActCap];
+            business_data.profession = [profId, profCap];
+            business_data.ocupation = [occupId, occupCap];
+            business_data.business_name = data.recordsets[7][0].nombre_negocio;
+            business_data.business_start_date = data.recordsets[7][0].econ_fecha_inicio_act_productiva,
+                business_data.business_owned = false,
+                business_data.business_phone = "",
+                business_data.number_employees = data.recordsets[7][0].econ_numero_empleados;
+            business_data.loan_destination = [data.recordsets[7][0].econ_id_destino_credito, ''];
+            business_data.income_sales_total = data.recordsets[7][0].econ_ventas_totales_cantidad ? data.recordsets[7][0].econ_ventas_totales_cantidad : 0;
+            business_data.income_partner = data.recordsets[7][0].econ_sueldo_conyugue ? data.recordsets[7][0].econ_sueldo_conyugue : 0;
+            business_data.income_other = data.recordsets[7][0].econ_otros_ingresos ? data.recordsets[7][0].econ_otros_ingresos : 0;
+            business_data.income_job = data.recordsets[7][0].econ_pago_casa ? data.recordsets[7][0].econ_pago_casa : 0;
+            business_data.income_remittances = data.recordsets[7][0].econ_cantidad_mensual ? data.recordsets[7][0].econ_cantidad_mensual : 0;
+            business_data.income_total = 0;
+            business_data.expense_family = data.recordsets[7][0].econ_gastos_familiares ? data.recordsets[7][0].econ_gastos_familiares : 0;
+            business_data.expense_rent = data.recordsets[7][0].econ_renta ? data.recordsets[7][0].econ_renta : 0;
+            business_data.expense_business = data.recordsets[7][0].econ_otros_gastos ? data.recordsets[7][0].econ_otros_gastos : 0;
+            business_data.expense_debt = data.recordsets[7][0].econ_gastos_vivienda ? data.recordsets[7][0].econ_gastos_vivienda : 0;
+            business_data.expense_credit_cards = data.recordsets[7][0].econ_gastos_transporte ? data.recordsets[7][0].econ_gastos_transporte : 0;
+            ;
+            business_data.expense_total = 0;
+            household_data.economic_dependants = data.recordsets[7][0].econ_dependientes_economicos.toString();
+            household_data.household_brick = !!data.recordsets[7][0].vivienda_block;
+            household_data.household_floor = !!data.recordsets[7][0].vivienda_piso;
+            household_data.household_latrine = !!data.recordsets[7][0].vivienda_letrina;
+            household_data.household_roof = !!data.recordsets[7][0].vivienda_techo_losa;
+            household_data.household_toilet = !!data.recordsets[7][0].vivienda_bano;
+            household_data.internet_access = !!data.recordsets[7][0].utiliza_internet;
+            household_data.prefered_social = [data.recordsets[7][0].id_tipo_red_social, ""];
+            household_data.user_social = data.recordsets[7][0].usuario_red_social;
+            household_data.rol_hogar = [data.recordsets[7][0].econ_id_rol_hogar, ""];
+            household_data.has_disable = data.recordsets[7][0].habilidad_diferente;
+            household_data.speaks_dialect = data.recordsets[7][0].lengua_indigena;
+            household_data.has_improved_income = data.recordsets[7][0].mejorado_ingreso;
+            spld.desempenia_funcion_publica_cargo = data.recordsets[7][0].desempenia_funcion_publica_cargo,
+                spld.desempenia_funcion_publica_dependencia = data.recordsets[7][0].desempenia_funcion_publica_dependencia,
+                spld.familiar_desempenia_funcion_publica_cargo = data.recordsets[7][0].familiar_desempenia_funcion_publica_cargo,
+                spld.familiar_desempenia_funcion_publica_dependencia = data.recordsets[7][0].familiar_desempenia_funcion_publica_dependencia,
+                spld.familiar_desempenia_funcion_publica_nombre = data.recordsets[7][0].familiar_desempenia_funcion_publica_nombre,
+                spld.familiar_desempenia_funcion_publica_paterno = data.recordsets[7][0].familiar_desempenia_funcion_publica_paterno,
+                spld.familiar_desempenia_funcion_publica_materno = data.recordsets[7][0].familiar_desempenia_funcion_publica_materno,
+                spld.familiar_desempenia_funcion_publica_parentesco = data.recordsets[7][0].familiar_desempenia_funcion_publica_parentesco,
+                spld.instrumento_monetario = [data.recordsets[7][0].id_instrumento_monetario, ""];
+        }
+        const cicloData = data.recordsets[6];
+        const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0;
+        const result = Object.assign(Object.assign({ id_persona: perSet.id_persona, id_cliente: perSet.id, name: perSet.name, lastname: perSet.lastname, second_lastname: perSet.second_lastname, email, curp: curp ? curp.id_numero : "", clave_ine: ife ? ife.id_numero : "", numero_emisiones: ine_detalle ? ine_detalle.numero_emision : '', numero_vertical: ine_detalle ? ine_detalle.numero_vertical_ocr : '', rfc: rfc ? rfc.id_numero : "", dob: perSet.dob, loan_cycle, branch: [perSet.id_oficina, perSet.nombre_oficina], sex: [perSet.id_gender, perSet.gender], education_level: [perSet.id_scholarship, perSet.scholarship], identities,
+            address,
+            phones, tributary_regime: [], not_bis: false, client_type: [2, 'INDIVIDUAL'], nationality: [perSet.id_nationality, perSet.nationality], province_of_birth: [
+                `PROVINCE|${perSet.id_province_of_birth}`,
+                perSet.province_of_birth,
+            ], country_of_birth: [
+                `COUNTRY|${perSet.id_country_of_birth}`,
+                perSet.country_of_birth,
+            ], marital_status: [perSet.id_marital_status, perSet.marital_status], identification_type: [], guarantor: [], business_data }, household_data), { spld, beneficiaries: [], personal_references: [], guarantee: [], ife_details: ineDetail, data_company: [data.recordsets[8][0]], data_efirma: [data.recordsets[9][0]] });
+        return (result);
+    }
+    return undefined;
+}
+exports.datsRStoJson = datsRStoJson;

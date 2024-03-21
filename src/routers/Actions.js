@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -22,6 +45,9 @@ const LoanApp_1 = require("../model/LoanApp");
 const createPerson_1 = require("../utils/createPerson");
 const createClient_1 = require("../utils/createClient");
 const createLoan_1 = require("../utils/createLoan");
+const Nano = __importStar(require("nano"));
+const HfServer_1 = require("./HfServer");
+let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 let loanAppGroup = new LoanAppGroup_1.LoanAppGroup();
 let ClientDoc = new Client_1.Client();
 let ActionDoc = new Action_1.default();
@@ -265,5 +291,180 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
     catch (err) {
         let RSP_Result = yield ActionDoc.generarErrorRSP(err.message, req.query);
         res.status(400).send(RSP_Result);
+    }
+}));
+const clientDataDef = {
+    address: [],
+    branch: [0, ''],
+    business_data: {
+        bis_location: [0, ""],
+        economic_activity: ['', ''],
+        profession: ['', ''],
+        ocupation: ["", ""],
+        business_start_date: '',
+        business_name: '',
+        business_owned: false,
+        business_phone: '',
+        number_employees: 0,
+        loan_destination: [0, ''],
+        income_sales_total: 0,
+        income_partner: 0,
+        income_job: 0,
+        income_remittances: 0,
+        income_other: 0,
+        income_total: 0,
+        expense_family: 0,
+        expense_rent: 0,
+        expense_business: 0,
+        expense_debt: 0,
+        expense_credit_cards: 0,
+        expense_total: 0,
+        keeps_accounting_records: false,
+        has_previous_experience: false,
+        previous_loan_experience: '',
+        bis_season_type: '',
+        bis_quality_sales_monthly: {
+            month_sale_jan: '',
+            month_sale_feb: '',
+            month_sale_mar: '',
+            month_sale_apr: '',
+            month_sale_may: '',
+            month_sale_jun: '',
+            month_sale_jul: '',
+            month_sale_aug: '',
+            month_sale_sep: '',
+            month_sale_oct: '',
+            month_sale_nov: '',
+            month_sale_dic: '',
+        }
+    },
+    client_type: [0, ''],
+    coordinates: [0, 0],
+    couchdb_type: "CLIENT",
+    country_of_birth: ['', ''],
+    curp: "",
+    data_company: [{}],
+    data_efirma: [{}],
+    dob: "",
+    education_level: ['', ''],
+    id_cliente: 0,
+    id_persona: 0,
+    ife_details: [{}],
+    clave_ine: "",
+    numero_vertical: "",
+    numero_emisiones: "",
+    email: '',
+    lastname: "",
+    loan_cycle: 0,
+    marital_status: [1, ''],
+    name: "",
+    nationality: [0, ''],
+    phones: [],
+    identities: [],
+    province_of_birth: ['', ''],
+    rfc: "",
+    second_lastname: "",
+    sex: [0, ''],
+    status: [0, ''],
+    household_floor: false,
+    household_roof: false,
+    household_toilet: false,
+    household_latrine: false,
+    household_brick: false,
+    economic_dependants: 0,
+    internet_access: false,
+    prefered_social: [0, ""],
+    rol_hogar: [0, ""],
+    user_social: '',
+    has_disable: false,
+    speaks_dialect: false,
+    has_improved_income: false,
+    spld: {
+        desempenia_funcion_publica_cargo: "",
+        desempenia_funcion_publica_dependencia: "",
+        familiar_desempenia_funcion_publica_cargo: "",
+        familiar_desempenia_funcion_publica_dependencia: "",
+        familiar_desempenia_funcion_publica_nombre: "",
+        familiar_desempenia_funcion_publica_paterno: "",
+        familiar_desempenia_funcion_publica_materno: "",
+        familiar_desempenia_funcion_publica_parentesco: "",
+        instrumento_monetario: [0, ""],
+    },
+    comment: '',
+    identity_pics: [],
+    identity_verification: {
+        uuid: '',
+        status: 'pending',
+        result: 'waiting',
+        created_at: '',
+        updated_at: '',
+        documentData: {
+            age: '',
+            voter_key: '',
+            nationality: '',
+            name: '',
+            lastname: '',
+            second_lastname: '',
+            dob: '',
+            doc_number: '',
+            duplicates: '',
+            expiration_date: '',
+            folio_number: '',
+            ocr_number: '',
+            sex: '',
+            curp: '',
+            street_address: '',
+            suburb_address: ''
+        }
+    },
+    comprobante_domicilio_pics: [],
+    _id: "",
+    _rev: ""
+};
+router.get('/actions/fix', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const queryActions = yield db.find({
+            selector: {
+                couchdb_type: "ACTION",
+            }
+        });
+        const clientActions = queryActions.docs.filter((i) => i.name === 'CREATE_UPDATE_CLIENT' && i.status == 'Done');
+        // const dataSql = await findClientByExternalId();
+        /**
+         * paso 1. Recuperar todas las actions CREATE UPDATE CLIENT y solo actions con status Done!
+         * PASO 2. usar el data.id_cliente para hacer una peticion a HF
+         * Paso 3. Actualizar los datos devueltos al couch.
+         *
+         * */
+        let docs = [];
+        /** Read CLIENT docs from Actions */
+        for (let x = 0; x < clientActions.length; x++) {
+            const _id = clientActions[x].data._id;
+            const idCliente = clientActions[x].data.id_cliente;
+            const doc = yield db.get(_id);
+            const _rev = doc._rev;
+            /** Condition only if branch Field has been corrupted, and id_cliente = 0 */
+            if (!doc.branch[0] && doc.id_cliente == 0) {
+                const dataSql = yield (0, HfServer_1.findClientByExternalId)(idCliente);
+                const newDoc = (0, HfServer_1.datsRStoJson)(dataSql);
+                docs.push({
+                    _id,
+                    _rev,
+                    id_cliente: clientActions[x].data.id_cliente,
+                    id_cliente_old: doc.id_cliente,
+                    clientName: clientActions[x].data.client_name,
+                    branch_old: doc.branch,
+                    branch: newDoc.branch,
+                });
+                /** updates according to model defined at App Reducer ClientDataDefault values object */
+                yield db.insert(Object.assign(Object.assign(Object.assign({}, clientDataDef), newDoc), { business_data: Object.assign(Object.assign({}, clientDataDef.business_data), newDoc.business_data), couchdb_type: 'CLIENT', status: [2, 'Aprovado'], _id,
+                    _rev }));
+            }
+        }
+        res.send(docs);
+    }
+    catch (e) {
+        res.status(400).send(e.message);
     }
 }));
