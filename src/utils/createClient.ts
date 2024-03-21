@@ -310,8 +310,15 @@ export async function createClientHF(data:any) {
         if(result.recordset[0].mensaje.trim().toUpperCase() === "VALIDATE")
             return new Error(result.recordset[0].evento);
 
+        if(result.recordset[0].mensaje.trim().toUpperCase() === "ERROR")
+            return new Error("Consultar Log de HF");
+
         const idClientCreated = result.recordset[0].id_cliente;
             console.log('Id Client',idClientCreated)
+
+        if(Funct.ConvertInt(idClientCreated) == 0)
+            return new Error("Cliente obtenido con id 0");
+
         //Creado el cliente agregamos sus datos del hf
         const dataHF:any = await getClientHFById(idClientCreated);
 
