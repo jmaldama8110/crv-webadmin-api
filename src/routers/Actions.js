@@ -426,43 +426,35 @@ router.get('/actions/fix', authorize_1.authorize, (req, res) => __awaiter(void 0
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         const queryActions = yield db.find({
             selector: {
-                couchdb_type: "ACTION",
-            }
+                couchdb_type: "LOANAPP_GROUP",
+            },
+            limit: 100000
         });
-        const clientActions = queryActions.docs.filter((i) => i.name === 'CREATE_UPDATE_CLIENT' && i.status == 'Done');
-        // const dataSql = await findClientByExternalId();
-        /**
-         * paso 1. Recuperar todas las actions CREATE UPDATE CLIENT y solo actions con status Done!
-         * PASO 2. usar el data.id_cliente para hacer una peticion a HF
-         * Paso 3. Actualizar los datos devueltos al couch.
-         *
-         * */
-        let docs = [];
-        /** Read CLIENT docs from Actions */
-        for (let x = 0; x < clientActions.length; x++) {
-            const _id = clientActions[x].data._id;
-            const idCliente = clientActions[x].data.id_cliente;
-            const doc = yield db.get(_id);
-            const _rev = doc._rev;
-            /** Condition only if branch Field has been corrupted, and id_cliente = 0 */
-            if (!doc.branch[0] && doc.id_cliente == 0) {
-                const dataSql = yield (0, HfServer_1.findClientByExternalId)(idCliente);
-                const newDoc = (0, HfServer_1.datsRStoJson)(dataSql);
-                docs.push({
-                    _id,
-                    _rev,
-                    id_cliente: clientActions[x].data.id_cliente,
-                    id_cliente_old: doc.id_cliente,
-                    clientName: clientActions[x].data.client_name,
-                    branch_old: doc.branch,
-                    branch: newDoc.branch,
-                });
-                /** updates according to model defined at App Reducer ClientDataDefault values object */
-                yield db.insert(Object.assign(Object.assign(Object.assign({}, clientDataDef), newDoc), { business_data: Object.assign(Object.assign({}, clientDataDef.business_data), newDoc.business_data), couchdb_type: 'CLIENT', status: [2, 'Aprovado'], _id,
-                    _rev }));
+        let clientActions = [];
+        for (let w = 0; w < queryActions.docs.length; w++) {
+            const loanappGrpDoc = queryActions.docs[w];
+            for (let y = 0; y < loanappGrpDoc.members.length; y++) {
+                const _id = loanappGrpDoc.members[y].client_id;
+                const doc = yield db.get(_id);
+                const _rev = doc._rev;
+                if (!doc.branch[0] && doc.id_cliente == 0) {
+                    const idCliente = loanappGrpDoc.members[y].id_cliente;
+                    clientActions.push({
+                        client_id: loanappGrpDoc.members[y].client_id,
+                        id_cliente: loanappGrpDoc.members[y].id_cliente,
+                        fulname: loanappGrpDoc.members[y].fullname,
+                        _id,
+                        _rev
+                    });
+                    const dataSql = yield (0, HfServer_1.findClientByExternalId)(idCliente);
+                    const newDoc = (0, HfServer_1.datsRStoJson)(dataSql);
+                    /** updates according to model defined at App Reducer ClientDataDefault values object */
+                    yield db.insert(Object.assign(Object.assign(Object.assign({}, clientDataDef), newDoc), { business_data: Object.assign(Object.assign({}, clientDataDef.business_data), newDoc.business_data), couchdb_type: 'CLIENT', status: [2, 'Aprovado'], _id,
+                        _rev }));
+                }
             }
         }
-        res.send(docs);
+        res.send({ updated: clientActions.length, docs: clientActions });
     }
     catch (e) {
         res.status(400).send(e.message);
