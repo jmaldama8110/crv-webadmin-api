@@ -46,7 +46,6 @@ const createPerson_1 = require("../utils/createPerson");
 const createClient_1 = require("../utils/createClient");
 const createLoan_1 = require("../utils/createLoan");
 const Nano = __importStar(require("nano"));
-const HfServer_1 = require("./HfServer");
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 let loanAppGroup = new LoanAppGroup_1.LoanAppGroup();
 let ClientDoc = new Client_1.Client();
@@ -421,40 +420,31 @@ const clientDataDef = {
     _id: "",
     _rev: ""
 };
-router.get('/actions/fix', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/actions/fix/030424', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         const queryActions = yield db.find({
             selector: {
-                couchdb_type: "LOANAPP_GROUP",
+                couchdb_type: "CLIENT",
             },
             limit: 100000
         });
-        let clientActions = [];
-        for (let w = 0; w < queryActions.docs.length; w++) {
-            const loanappGrpDoc = queryActions.docs[w];
-            for (let y = 0; y < loanappGrpDoc.members.length; y++) {
-                const _id = loanappGrpDoc.members[y].client_id;
-                const doc = yield db.get(_id);
-                const _rev = doc._rev;
-                if (!doc.branch[0] && doc.id_cliente == 0) {
-                    const idCliente = loanappGrpDoc.members[y].id_cliente;
-                    clientActions.push({
-                        client_id: loanappGrpDoc.members[y].client_id,
-                        id_cliente: loanappGrpDoc.members[y].id_cliente,
-                        fulname: loanappGrpDoc.members[y].fullname,
-                        _id,
-                        _rev
-                    });
-                    const dataSql = yield (0, HfServer_1.findClientByExternalId)(idCliente);
-                    const newDoc = (0, HfServer_1.datsRStoJson)(dataSql);
-                    /** updates according to model defined at App Reducer ClientDataDefault values object */
-                    yield db.insert(Object.assign(Object.assign(Object.assign({}, clientDataDef), newDoc), { business_data: Object.assign(Object.assign({}, clientDataDef.business_data), newDoc.business_data), couchdb_type: 'CLIENT', status: [2, 'Aprovado'], _id,
-                        _rev }));
-                }
-            }
+        //// gets docs only where SPLD property does not exists
+        const clientList = queryActions.docs.filter((i) => !i.spld);
+        for (let x = 0; x < clientList.length; x++) {
+            yield db.insert(Object.assign(Object.assign({}, clientList[x]), { spld: {
+                    desempenia_funcion_publica_cargo: "",
+                    desempenia_funcion_publica_dependencia: "",
+                    familiar_desempenia_funcion_publica_cargo: "",
+                    familiar_desempenia_funcion_publica_dependencia: "",
+                    familiar_desempenia_funcion_publica_nombre: "",
+                    familiar_desempenia_funcion_publica_paterno: "",
+                    familiar_desempenia_funcion_publica_materno: "",
+                    familiar_desempenia_funcion_publica_parentesco: "",
+                    instrumento_monetario: [0, ""],
+                } }));
         }
-        res.send({ updated: clientActions.length, docs: clientActions });
+        res.send({ updated: clientList.length, data: clientList.map((x) => ({ _id: x._id, _rev: x._rev })) });
     }
     catch (e) {
         res.status(400).send(e.message);

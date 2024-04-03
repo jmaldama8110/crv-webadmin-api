@@ -405,63 +405,45 @@ const clientDataDef: any = {
     _rev: ""
   }
 
-router.get('/actions/fix', authorize, async (req,res)=> {
+
+
+
+router.get('/actions/fix/030424', authorize, async (req,res)=> {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         const queryActions = await db.find( {
             selector: {
-                couchdb_type: "LOANAPP_GROUP",
+                couchdb_type: "CLIENT",
             },
             limit: 100000
         });
-
-        let clientActions:any = [];
-        for( let w = 0; w < queryActions.docs.length; w ++){
-            const loanappGrpDoc:any = queryActions.docs[w];
-            for( let y = 0; y < loanappGrpDoc.members.length; y++){
-
-                const _id = loanappGrpDoc.members[y].client_id;
-                const doc:any = await db.get(_id);
-                const _rev = doc._rev;
-
-                if( !doc.branch[0] && doc.id_cliente == 0){
-                    const idCliente = loanappGrpDoc.members[y].id_cliente;
-
-                    clientActions.push( { 
-                        client_id: loanappGrpDoc.members[y].client_id,
-                        id_cliente: loanappGrpDoc.members[y].id_cliente,
-                        fulname: loanappGrpDoc.members[y].fullname,
-                        _id,
-                        _rev
-                     });
+        
+        //// gets docs only where SPLD property does not exists
+        const clientList:any = queryActions.docs.filter( (i:any) => !i.spld );
+        
+        for( let x=0; x < clientList.length; x++){
+            await db.insert({
+                ...clientList[x],
+                spld: {
+                    desempenia_funcion_publica_cargo: "",
+                    desempenia_funcion_publica_dependencia: "",
+                    familiar_desempenia_funcion_publica_cargo: "",
+                    familiar_desempenia_funcion_publica_dependencia: "",
+                    familiar_desempenia_funcion_publica_nombre: "",
+                    familiar_desempenia_funcion_publica_paterno: "",
+                    familiar_desempenia_funcion_publica_materno: "",
+                    familiar_desempenia_funcion_publica_parentesco: "",
+                    instrumento_monetario: [0, ""],
                     
-                    const dataSql = await findClientByExternalId( idCliente );
-                    const newDoc:any = datsRStoJson(dataSql);
-     
-                    /** updates according to model defined at App Reducer ClientDataDefault values object */
-                    await db.insert({  
-                           ...clientDataDef,
-                           ...newDoc, 
-                           business_data: {
-                           ...clientDataDef.business_data,
-                           ...newDoc.business_data
-                           },
-                           couchdb_type: 'CLIENT',
-                           status: [2,'Aprovado'],
-                           _id,
-                           _rev,
-                      });                 
-                    }
-            }
-
+                  }
+            })
         }
-
-        res.send({ updated: clientActions.length, docs: clientActions})
+ 
+        res.send({ updated: clientList.length, data: clientList.map( (x:any) =>( {_id: x._id, _rev: x._rev })) })
     }
     catch(e:any){
         res.status(400).send(e.message);
     }
 })
-
-
+ 
 export { router as ActionsRouter }
