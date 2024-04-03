@@ -438,10 +438,12 @@ router.get('/actions/fix/030424', authorize, async (req,res)=> {
                   }
             })
         }
+
  
         res.send({ updated: clientList.length, data: clientList.map( (x:any) =>( {_id: x._id, _rev: x._rev })) })
     }
     catch(e:any){
+        
         res.status(400).send(e.message);
     }
 })
