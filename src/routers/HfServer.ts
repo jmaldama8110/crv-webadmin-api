@@ -24,8 +24,7 @@ router.get('/clients/exists', authorize, async (req:any, res:any) => {
                 /// recordsets[0][0] contains personal Info from HF
                 const personalData = {
                     ...data.recordset[0],
-                };
-            
+                };                
                 res.send({ id_cliente: personalData.id });
             } else {
                 res.send({id_cliente: ''});
