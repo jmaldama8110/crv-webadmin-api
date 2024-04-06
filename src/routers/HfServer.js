@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hfRouter = exports.datsRStoJson = exports.findClientByExternalId = void 0;
+exports.hfRouter = exports.datsRStoJson = exports.getClientByCurp = exports.findClientByExternalId = void 0;
 const express_1 = __importDefault(require("express"));
 const authorize_1 = require("../middleware/authorize");
 const mssql_1 = __importDefault(require("mssql"));
@@ -267,7 +267,12 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
             data = yield findClientByExternalId(parseInt(req.query.externalId));
         }
         else {
-            throw new Error('Some query parameters area mising...');
+            if (req.query.identityNumber) {
+                data = yield getClientByCurp(req.query.identityNumber);
+            }
+            else {
+                throw new Error('Some query parameters area mising...');
+            }
         }
         if (data.recordset.length == 1) {
             /// extract CURP and Ine Folio
@@ -465,6 +470,24 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
     catch (err) {
         console.log(err);
         res.status(404).send('Client data not found');
+    }
+}));
+router.get("/clients/hf/person-search", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.query.keyword) {
+            throw new Error('Keyword parameter is required..');
+        }
+        if (!req.query.branchId) {
+            throw new Error('BranchId parameter is required..');
+        }
+        let data = yield findClientByKeyword(req.query.keyword);
+        const branchId = parseInt(req.query.branchId);
+        const newData = data.recordset.filter((i) => i.id_oficina == branchId);
+        res.send(newData);
+    }
+    catch (e) {
+        console.log(e);
+        res.status(400).send(e.message);
     }
 }));
 router.get('/clients/hf/search', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1025,6 +1048,21 @@ function findClientByCurp(curp) {
         return result;
     });
 }
+function findClientByKeyword(keyword) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        let result = yield pool
+            .request()
+            .input("id", mssql_1.default.Int, 0)
+            .input("palabra", mssql_1.default.VarChar, keyword)
+            .input("pagina_inicio", mssql_1.default.Int, 0)
+            .input("numero_registros", mssql_1.default.Int, 0)
+            .input("contador", mssql_1.default.Int, 0)
+            // .execute("CONT_BuscarPersona");
+            .execute("MOV_BuscarPersona");
+        return result;
+    });
+}
 function findClientByExternalId(externalId) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -1043,6 +1081,17 @@ function findClientByExternalId(externalId) {
 }
 exports.findClientByExternalId = findClientByExternalId;
 ;
+function getClientByCurp(curp) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        let result = yield pool
+            .request()
+            .input("CURPCliente", mssql_1.default.VarChar, curp)
+            .execute("MOV_ObtenerDatosPersona");
+        return result;
+    });
+}
+exports.getClientByCurp = getClientByCurp;
 function findClientByClaveIne(claveIne) {
     return __awaiter(this, void 0, void 0, function* () {
         try {

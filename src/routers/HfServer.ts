@@ -257,7 +257,11 @@ router.get("/clients/hf", authorize, async(req, res) => {
         if ( (req.query.externalId) ) {
             data = await findClientByExternalId(parseInt(req.query.externalId as string));
         } else {
-            throw new Error('Some query parameters area mising...')
+            if( req.query.identityNumber ){
+                data = await getClientByCurp(req.query.identityNumber as string);
+            } else { 
+                throw new Error('Some query parameters area mising...')
+            }
         }
         
         if (data.recordset.length == 1) {
@@ -533,6 +537,27 @@ router.get("/clients/hf", authorize, async(req, res) => {
     }
 });
 
+router.get("/clients/hf/person-search", authorize, async( req, res) => {
+    try {        
+        if( !req.query.keyword  ){
+            throw new Error('Keyword parameter is required..');
+        }
+        if( !req.query.branchId  ){
+            throw new Error('BranchId parameter is required..');
+        }
+
+        let data:any = await findClientByKeyword(req.query.keyword as string);
+        const branchId = parseInt(req.query.branchId as string)
+        const newData = data.recordset.filter( (i:any) => i.id_oficina == branchId);
+        
+        res.send(newData);
+
+    }
+    catch(e:any){
+        console.log(e);
+        res.status(400).send(e.message)
+    }
+})
 
 router.get('/clients/hf/search', authorize, async(req, res) => {
     
@@ -1166,6 +1191,20 @@ async function findClientByCurp (curp:string){
     return result;
 }
 
+async function findClientByKeyword( keyword: string) {
+    let pool = await sql.connect(sqlConfig);
+    let result = await pool
+        .request()
+        .input("id", sql.Int, 0)
+        .input("palabra", sql.VarChar, keyword)
+        .input("pagina_inicio", sql.Int, 0)
+        .input("numero_registros", sql.Int, 0)
+        .input("contador", sql.Int, 0)
+        // .execute("CONT_BuscarPersona");
+        .execute("MOV_BuscarPersona");
+    return result;
+}
+
 export async function findClientByExternalId (externalId:number) {
     try {
 
@@ -1180,6 +1219,15 @@ export async function findClientByExternalId (externalId:number) {
         return err;
     }
 };
+
+export async function getClientByCurp( curp:string) {
+    let pool = await sql.connect(sqlConfig);
+    let result = await pool
+        .request()
+        .input("CURPCliente", sql.VarChar, curp)
+        .execute("MOV_ObtenerDatosPersona");
+    return result;
+}
 
 async function findClientByClaveIne (claveIne:string) {
     try {
