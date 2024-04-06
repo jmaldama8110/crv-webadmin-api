@@ -112,6 +112,7 @@ router.get('/groups/hf/loanapps', authorize_1.authorize, (req, res) => __awaiter
             loan_officer: loan_application.id_oficial,
             loan_cycle: loan_cycle.ciclo,
             address: {
+                id: group_address.id,
                 post_code: '',
                 address_line1: group_address.direccion,
                 road_type: [group_address.vialidad, ''],
@@ -119,9 +120,9 @@ router.get('/groups/hf/loanapps', authorize_1.authorize, (req, res) => __awaiter
                 municipality: [`MUNICIPALITY|${group_address.municipio}`, ''],
                 city: [`CITY|${group_address.localidad}`, ''],
                 colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
-                address_line2: group_address.referencia,
-                numero_exterior: group_address.numero_exterior,
-                numero_interior: group_address.numero_interior
+                street_reference: group_address.referencia,
+                ext_number: group_address.numero_exterior,
+                int_number: group_address.numero_interior
             }
         };
         const members = data[4].map((i, nCounter) => {
@@ -217,9 +218,11 @@ router.get('/products/hf', authorize_1.authorize, (req, res) => __awaiter(void 0
         }
         const data = yield getProductsByBranch(parseFloat(req.query.branchId.toString()), parseFloat(req.query.clientType.toString()));
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const productsQuery = yield db.find({ selector: {
+        const productsQuery = yield db.find({
+            selector: {
                 couchdb_type: "PRODUCT"
-            } });
+            }
+        });
         const newData = data[0].map((x) => {
             const i = productsQuery.docs.find((y) => y.external_id == x.id);
             return Object.assign({}, i);
@@ -1158,22 +1161,34 @@ router.get("/reset/group", authorize_1.authorize, (req, res) => __awaiter(void 0
             const idCliente = loanApp.id_cliente;
             const idSolicitud = loanApp.id_solicitud;
             /// crear lo indices de busqueda
-            yield db.createIndex({ index: { fields: [
+            yield db.createIndex({
+                index: {
+                    fields: [
                         "couchdb_type", "idCliente"
-                    ] } });
-            yield db.createIndex({ index: { fields: [
+                    ]
+                }
+            });
+            yield db.createIndex({
+                index: {
+                    fields: [
                         "couchdb_type", "apply_by"
-                    ] } });
+                    ]
+                }
+            });
             /// obtiene todos los Loans de ese grupo
-            const queryLoans = yield db.find({ selector: {
+            const queryLoans = yield db.find({
+                selector: {
                     couchdb_type: "LOANAPP_GROUP",
                     apply_by: loanApp.apply_by
-                } });
+                }
+            });
             //// obtiene todos los contratos de este grupo
-            const queryContracts = yield db.find({ selector: {
+            const queryContracts = yield db.find({
+                selector: {
                     couchdb_type: "CONTRACT",
                     idCliente
-                } });
+                }
+            });
             ///
             const queryGroup = yield db.get(loanApp.apply_by);
             const actionDelete = { _id: docAction._id, _rev: docAction._rev, deleted: true };
