@@ -608,6 +608,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   
     }
     catch(error:any){
+      console.log(error);
       res.status(400).send(error.message);
     }
   

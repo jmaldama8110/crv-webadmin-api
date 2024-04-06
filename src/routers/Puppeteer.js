@@ -583,6 +583,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
         res.send(Object.assign({}, result));
     }
     catch (error) {
+        console.log(error);
         res.status(400).send(error.message);
     }
 }));
