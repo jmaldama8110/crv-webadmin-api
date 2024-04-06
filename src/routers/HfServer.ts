@@ -98,7 +98,6 @@ router.get('/groups/hf/loanapps', authorize, async (req, res) => {
                 ext_number: group_address.numero_exterior,
                 int_number: group_address.numero_interior
             }
-
         }
 
         const members = data[4].map((i: any, nCounter: number) => {
