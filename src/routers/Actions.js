@@ -420,33 +420,40 @@ const clientDataDef = {
     _id: "",
     _rev: ""
 };
-router.get('/actions/fix/030424', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         const queryActions = yield db.find({
             selector: {
-                couchdb_type: "CLIENT",
+                couchdb_type: "LOANAPP_GROUP"
             },
-            limit: 100000
+            limit: 10000
         });
-        //// gets docs only where SPLD property does not exists
-        const clientList = queryActions.docs.filter((i) => !i.spld);
-        for (let x = 0; x < clientList.length; x++) {
-            yield db.insert(Object.assign(Object.assign({}, clientList[x]), { spld: {
-                    desempenia_funcion_publica_cargo: "",
-                    desempenia_funcion_publica_dependencia: "",
-                    familiar_desempenia_funcion_publica_cargo: "",
-                    familiar_desempenia_funcion_publica_dependencia: "",
-                    familiar_desempenia_funcion_publica_nombre: "",
-                    familiar_desempenia_funcion_publica_paterno: "",
-                    familiar_desempenia_funcion_publica_materno: "",
-                    familiar_desempenia_funcion_publica_parentesco: "",
-                    instrumento_monetario: [0, ""],
-                } }));
+        //// Extraemos todos los LoanApp y evaluamos si el client_id esta vacio
+        const loanappGrpList = queryActions.docs.map((i) => {
+            return Object.assign(Object.assign({}, i), { mustBeUpdated: !!(i.members.find((w) => !w.client_id)) });
+        });
+        /// Iteramos y ejecutamos un update en cada LoanApp que requiere
+        for (let d = 0; d < loanappGrpList.length; d++) {
+            if (loanappGrpList[d].mustBeUpdated) {
+                for (let s = 0; s < loanappGrpList[d].members.length; s++) {
+                    const clientsQuery = yield db.find({ selector: {
+                            couchdb_type: "CLIENT",
+                            id_cliente: loanappGrpList[d].members[s].id_cliente
+                        } });
+                    const clientDoc = clientsQuery.docs.find((k) => k.id_cliente == loanappGrpList[d].members[s].id_cliente);
+                    loanappGrpList[d].members[s].client_id = clientDoc._id;
+                }
+                /// once the client_id field is populated, update LOANAPP_GROUP document
+                const loanAppGrpObject = loanappGrpList[d];
+                delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
+                yield db.insert(Object.assign({}, loanAppGrpObject));
+            }
         }
-        res.send({ updated: clientList.length, data: clientList.map((x) => ({ _id: x._id, _rev: x._rev })) });
+        res.send(loanappGrpList.filter((l) => l.mustBeUpdated));
     }
     catch (e) {
+        console.log(e);
         res.status(400).send(e.message);
     }
 }));

@@ -405,47 +405,96 @@ const clientDataDef: any = {
     _rev: ""
   }
 
-
-
-
-router.get('/actions/fix/030424', authorize, async (req,res)=> {
+  router.get('/actions/fix/09042024', authorize, async (req,res)=> {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         const queryActions = await db.find( {
             selector: {
-                couchdb_type: "CLIENT",
+                couchdb_type: "LOANAPP_GROUP"
             },
-            limit: 100000
+            limit: 10000
         });
         
-        //// gets docs only where SPLD property does not exists
-        const clientList:any = queryActions.docs.filter( (i:any) => !i.spld );
+        //// Extraemos todos los LoanApp y evaluamos si el client_id esta vacio
+        const loanappGrpList:any = queryActions.docs.map( (i:any) =>{
+            
+            return {
+                ...i,
+                mustBeUpdated: !!(i.members.find( (w:any) => !w.client_id ))
+            }
+        });
         
-        for( let x=0; x < clientList.length; x++){
-            await db.insert({
-                ...clientList[x],
-                spld: {
-                    desempenia_funcion_publica_cargo: "",
-                    desempenia_funcion_publica_dependencia: "",
-                    familiar_desempenia_funcion_publica_cargo: "",
-                    familiar_desempenia_funcion_publica_dependencia: "",
-                    familiar_desempenia_funcion_publica_nombre: "",
-                    familiar_desempenia_funcion_publica_paterno: "",
-                    familiar_desempenia_funcion_publica_materno: "",
-                    familiar_desempenia_funcion_publica_parentesco: "",
-                    instrumento_monetario: [0, ""],
-                    
-                  }
-            })
+        /// Iteramos y ejecutamos un update en cada LoanApp que requiere
+        
+        for( let d=0; d < loanappGrpList.length; d++){       
+                
+                if( loanappGrpList[d].mustBeUpdated){
+                    for(let s=0; s< loanappGrpList[d].members.length; s++){
+                        const clientsQuery :any = await db.find({ selector: {
+                            couchdb_type: "CLIENT",
+                            id_cliente: loanappGrpList[d].members[s].id_cliente
+                        }})
+                        const clientDoc = clientsQuery.docs.find( (k:any) => k.id_cliente == loanappGrpList[d].members[s].id_cliente);
+                        loanappGrpList[d].members[s].client_id = clientDoc._id
+
+                      
+                    }
+
+                    /// once the client_id field is populated, update LOANAPP_GROUP document
+                    const loanAppGrpObject = loanappGrpList[d];
+                    delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
+                    await db.insert({ ...loanAppGrpObject });
+                }
         }
 
- 
-        res.send({ updated: clientList.length, data: clientList.map( (x:any) =>( {_id: x._id, _rev: x._rev })) })
+         
+        res.send( loanappGrpList.filter( (l:any) => l.mustBeUpdated )  );
     }
     catch(e:any){
-        
+        console.log(e);
         res.status(400).send(e.message);
     }
 })
+
+
+// router.get('/actions/fix/030424', authorize, async (req,res)=> {
+//     try {
+//         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+//         const queryActions = await db.find( {
+//             selector: {
+//                 couchdb_type: "CLIENT",
+//             },
+//             limit: 100000
+//         });
+        
+//         //// gets docs only where SPLD property does not exists
+//         const clientList:any = queryActions.docs.filter( (i:any) => !i.spld );
+        
+//         for( let x=0; x < clientList.length; x++){
+//             await db.insert({
+//                 ...clientList[x],
+//                 spld: {
+//                     desempenia_funcion_publica_cargo: "",
+//                     desempenia_funcion_publica_dependencia: "",
+//                     familiar_desempenia_funcion_publica_cargo: "",
+//                     familiar_desempenia_funcion_publica_dependencia: "",
+//                     familiar_desempenia_funcion_publica_nombre: "",
+//                     familiar_desempenia_funcion_publica_paterno: "",
+//                     familiar_desempenia_funcion_publica_materno: "",
+//                     familiar_desempenia_funcion_publica_parentesco: "",
+//                     instrumento_monetario: [0, ""],
+                    
+//                   }
+//             })
+//         }
+
+ 
+//         res.send({ updated: clientList.length, data: clientList.map( (x:any) =>( {_id: x._id, _rev: x._rev })) })
+//     }
+//     catch(e:any){
+        
+//         res.status(400).send(e.message);
+//     }
+// })
  
 export { router as ActionsRouter }
