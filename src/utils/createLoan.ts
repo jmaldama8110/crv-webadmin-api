@@ -191,7 +191,7 @@ export async function createLoanHF(data:any) {
                 console.log(asignClientLoan);
             }
         };
-
+        console.log(dataMount);
         const MountAssigned:any = await assignMontoloanHF(dataMount);
         if (!MountAssigned) return new Error('Failed to assign mount');
 
