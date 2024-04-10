@@ -46,6 +46,7 @@ const createPerson_1 = require("../utils/createPerson");
 const createClient_1 = require("../utils/createClient");
 const createLoan_1 = require("../utils/createLoan");
 const Nano = __importStar(require("nano"));
+const HfServer_1 = require("./HfServer");
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 let loanAppGroup = new LoanAppGroup_1.LoanAppGroup();
 let ClientDoc = new Client_1.Client();
@@ -420,37 +421,50 @@ const clientDataDef = {
     _id: "",
     _rev: ""
 };
-router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/actions/fix/10ABR2024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const queryActions = yield db.find({
-            selector: {
-                couchdb_type: "LOANAPP_GROUP"
-            },
-            limit: 10000
-        });
-        //// Extraemos todos los LoanApp y evaluamos si el client_id esta vacio
-        const loanappGrpList = queryActions.docs.map((i) => {
-            return Object.assign(Object.assign({}, i), { mustBeUpdated: !!(i.members.find((w) => !w.client_id)) });
-        });
-        /// Iteramos y ejecutamos un update en cada LoanApp que requiere
-        for (let d = 0; d < loanappGrpList.length; d++) {
-            if (loanappGrpList[d].mustBeUpdated) {
-                for (let s = 0; s < loanappGrpList[d].members.length; s++) {
-                    const clientsQuery = yield db.find({ selector: {
-                            couchdb_type: "CLIENT",
-                            id_cliente: loanappGrpList[d].members[s].id_cliente
-                        } });
-                    const clientDoc = clientsQuery.docs.find((k) => k.id_cliente == loanappGrpList[d].members[s].id_cliente);
-                    loanappGrpList[d].members[s].client_id = clientDoc._id;
+        const queryActions = yield db.find({ selector: {
+                couchdb_type: "GROUP"
+            } });
+        let groupWithLoans = [];
+        for (let i = 0; i < queryActions.docs.length; i++) {
+            const groupDoc = queryActions.docs[i];
+            const loansQuery = yield db.find({
+                selector: {
+                    couchdb_type: "LOANAPP_GROUP",
+                    id_cliente: groupDoc.id_cliente
                 }
-                /// once the client_id field is populated, update LOANAPP_GROUP document
-                const loanAppGrpObject = loanappGrpList[d];
-                delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
-                yield db.insert(Object.assign({}, loanAppGrpObject));
+            });
+            if (loansQuery.docs.length) {
+                const loanDoc = loansQuery.docs[loansQuery.docs.length - 1]; // obtains de lastone
+                groupWithLoans.push({ groupDoc, id_solicitud: loanDoc.id_solicitud, branch: loanDoc.branch });
             }
         }
-        res.send(loanappGrpList.filter((l) => l.mustBeUpdated));
+        // recupera por medio del api el datos del grupo
+        let updateList = [];
+        for (let k = 0; k < groupWithLoans.length; k++) {
+            const idSolicitud = groupWithLoans[k].id_solicitud;
+            const branchId = groupWithLoans[k].branch[0];
+            const sqlData = yield (0, HfServer_1.getLoanApplicationById)(idSolicitud, branchId);
+            const group_address = sqlData[3][0];
+            const address = {
+                id: group_address.id,
+                post_code: '',
+                address_line1: group_address.direccion,
+                road_type: [group_address.vialidad, ''],
+                province: [`PROVINCE|${group_address.estado}`, ''],
+                municipality: [`MUNICIPALITY|${group_address.municipio}`, ''],
+                city: [`CITY|${group_address.localidad}`, ''],
+                colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
+                street_reference: group_address.referencia,
+                numero_exterior: parseInt(group_address.numero_exterior),
+                numero_interior: parseInt(group_address.numero_interior)
+            };
+            yield db.insert(Object.assign(Object.assign({}, groupWithLoans[k].groupDoc), { address }));
+            updateList.push({ groupDoc: groupWithLoans[k].groupDoc, idSolicitud, branchId, address });
+        }
+        res.send(updateList);
     }
     catch (e) {
         console.log(e);

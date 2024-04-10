@@ -8,7 +8,7 @@ import { createPersonHF } from '../utils/createPerson';
 import { createClientHF } from '../utils/createClient';
 import { createLoanHF } from '../utils/createLoan';
 import * as Nano from 'nano';
-import { datsRStoJson, findClientByExternalId } from './HfServer';
+import { getLoanApplicationById } from './HfServer';
 
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 
@@ -405,56 +405,114 @@ const clientDataDef: any = {
     _rev: ""
   }
 
-  router.get('/actions/fix/09042024', authorize, async (req,res)=> {
-    try {
+
+  router.get('/actions/fix/10ABR2024', authorize, async (req,res)=> {
+    try{
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const queryActions = await db.find( {
-            selector: {
-                couchdb_type: "LOANAPP_GROUP"
-            },
-            limit: 10000
-        });
-        
-        //// Extraemos todos los LoanApp y evaluamos si el client_id esta vacio
-        const loanappGrpList:any = queryActions.docs.map( (i:any) =>{
-            
-            return {
-                ...i,
-                mustBeUpdated: !!(i.members.find( (w:any) => !w.client_id ))
-            }
-        });
-        
-        /// Iteramos y ejecutamos un update en cada LoanApp que requiere
-        
-        for( let d=0; d < loanappGrpList.length; d++){       
-                
-                if( loanappGrpList[d].mustBeUpdated){
-                    for(let s=0; s< loanappGrpList[d].members.length; s++){
-                        const clientsQuery :any = await db.find({ selector: {
-                            couchdb_type: "CLIENT",
-                            id_cliente: loanappGrpList[d].members[s].id_cliente
-                        }})
-                        const clientDoc = clientsQuery.docs.find( (k:any) => k.id_cliente == loanappGrpList[d].members[s].id_cliente);
-                        loanappGrpList[d].members[s].client_id = clientDoc._id
+        const queryActions = await db.find({ selector: {
+            couchdb_type: "GROUP"
+        }});
 
-                      
-                    }
-
-                    /// once the client_id field is populated, update LOANAPP_GROUP document
-                    const loanAppGrpObject = loanappGrpList[d];
-                    delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
-                    await db.insert({ ...loanAppGrpObject });
+        let groupWithLoans:any[] = []
+        for(let i=0; i< queryActions.docs.length; i++){
+            const groupDoc:any = queryActions.docs[i];
+            const loansQuery = await db.find({
+                selector: {
+                    couchdb_type: "LOANAPP_GROUP",
+                    id_cliente: groupDoc.id_cliente
                 }
+            });
+            if( loansQuery.docs.length ){
+                const loanDoc:any = loansQuery.docs[loansQuery.docs.length-1] // obtains de lastone
+                groupWithLoans.push({ groupDoc,id_solicitud: loanDoc.id_solicitud ,branch: loanDoc.branch })
+            }
         }
 
-         
-        res.send( loanappGrpList.filter( (l:any) => l.mustBeUpdated )  );
+        // recupera por medio del api el datos del grupo
+        let updateList = [];
+        for( let k=0; k<groupWithLoans.length; k++){
+            const idSolicitud = groupWithLoans[k].id_solicitud
+            const branchId = groupWithLoans[k].branch[0]
+            const sqlData: any = await getLoanApplicationById(idSolicitud, branchId );
+            const group_address = sqlData[3][0];
+            const address = {
+                id: group_address.id,
+                post_code: '',
+                address_line1: group_address.direccion,
+                road_type: [group_address.vialidad, ''],
+                province: [`PROVINCE|${group_address.estado}`, ''],
+                municipality: [`MUNICIPALITY|${group_address.municipio}`, ''],
+                city: [`CITY|${group_address.localidad}`, ''],
+                colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
+                street_reference: group_address.referencia, 
+                numero_exterior: parseInt(group_address.numero_exterior),
+                numero_interior: parseInt(group_address.numero_interior)
+            }
+            await db.insert( {
+                ...groupWithLoans[k].groupDoc,
+                address
+            })
+            updateList.push( { groupDoc: groupWithLoans[k].groupDoc,idSolicitud, branchId, address});
+
+        }
+
+        res.send(updateList)
     }
     catch(e:any){
         console.log(e);
-        res.status(400).send(e.message);
+        res.status(400).send(e.message)
     }
-})
+  })
+//   router.get('/actions/fix/09042024', authorize, async (req,res)=> {
+//     try {
+//         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+//         const queryActions = await db.find( {
+//             selector: {
+//                 couchdb_type: "LOANAPP_GROUP"
+//             },
+//             limit: 10000
+//         });
+        
+//         //// Extraemos todos los LoanApp y evaluamos si el client_id esta vacio
+//         const loanappGrpList:any = queryActions.docs.map( (i:any) =>{
+            
+//             return {
+//                 ...i,
+//                 mustBeUpdated: !!(i.members.find( (w:any) => !w.client_id ))
+//             }
+//         });
+        
+//         /// Iteramos y ejecutamos un update en cada LoanApp que requiere
+        
+//         for( let d=0; d < loanappGrpList.length; d++){       
+                
+//                 if( loanappGrpList[d].mustBeUpdated){
+//                     for(let s=0; s< loanappGrpList[d].members.length; s++){
+//                         const clientsQuery :any = await db.find({ selector: {
+//                             couchdb_type: "CLIENT",
+//                             id_cliente: loanappGrpList[d].members[s].id_cliente
+//                         }})
+//                         const clientDoc = clientsQuery.docs.find( (k:any) => k.id_cliente == loanappGrpList[d].members[s].id_cliente);
+//                         loanappGrpList[d].members[s].client_id = clientDoc._id
+
+                      
+//                     }
+
+//                     /// once the client_id field is populated, update LOANAPP_GROUP document
+//                     const loanAppGrpObject = loanappGrpList[d];
+//                     delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
+//                     await db.insert({ ...loanAppGrpObject });
+//                 }
+//         }
+
+         
+//         res.send( loanappGrpList.filter( (l:any) => l.mustBeUpdated )  );
+//     }
+//     catch(e:any){
+//         console.log(e);
+//         res.status(400).send(e.message);
+//     }
+// })
 
 
 // router.get('/actions/fix/030424', authorize, async (req,res)=> {

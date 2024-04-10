@@ -95,8 +95,8 @@ router.get('/groups/hf/loanapps', authorize, async (req, res) => {
                 city: [`CITY|${group_address.localidad}`, ''],
                 colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
                 street_reference: group_address.referencia, 
-                ext_number: group_address.numero_exterior,
-                int_number: group_address.numero_interior
+                numero_exterior: parseInt(group_address.numero_exterior),
+                numero_interior: parseInt(group_address.numero_interior)
             }
         }
 
@@ -183,7 +183,7 @@ router.get('/groups/hf/loanapps', authorize, async (req, res) => {
     }
 })
 
-async function getLoanApplicationById(loanAppId: number, branchId: number) {
+export async function getLoanApplicationById(loanAppId: number, branchId: number) {
 
     const pool = await sql.connect(sqlConfig);
     const result = await pool.request()

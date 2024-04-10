@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.hfRouter = exports.datsRStoJson = exports.getClientByCurp = exports.findClientByExternalId = void 0;
+exports.hfRouter = exports.datsRStoJson = exports.getClientByCurp = exports.findClientByExternalId = exports.getLoanApplicationById = void 0;
 const express_1 = __importDefault(require("express"));
 const authorize_1 = require("../middleware/authorize");
 const mssql_1 = __importDefault(require("mssql"));
@@ -121,8 +121,8 @@ router.get('/groups/hf/loanapps', authorize_1.authorize, (req, res) => __awaiter
                 city: [`CITY|${group_address.localidad}`, ''],
                 colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
                 street_reference: group_address.referencia,
-                ext_number: group_address.numero_exterior,
-                int_number: group_address.numero_interior
+                numero_exterior: parseInt(group_address.numero_exterior),
+                numero_interior: parseInt(group_address.numero_interior)
             }
         };
         const members = data[4].map((i, nCounter) => {
@@ -211,6 +211,7 @@ function getLoanApplicationById(loanAppId, branchId) {
         return result.recordsets;
     });
 }
+exports.getLoanApplicationById = getLoanApplicationById;
 router.get('/products/hf', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!(req.query.branchId && req.query.clientType)) {
