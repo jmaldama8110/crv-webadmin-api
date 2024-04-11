@@ -483,14 +483,14 @@ const clientDataDef: any = {
                     }
 
                     /// once the client_id field is populated, update LOANAPP_GROUP document
-                    const loanAppGrpObject = loanappGrpList[d];
+                    const loanAppGrpObject = newListLoans[d];
                     delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
                     await db.insert({ ...loanAppGrpObject });
                 }
         }
 
          
-        res.send( loanappGrpList.filter( (l:any) => l.mustBeUpdated )  );
+        res.send( newListLoans.filter( (l:any) => l.mustBeUpdated )  );
     }
     catch(e:any){
         console.log(e);

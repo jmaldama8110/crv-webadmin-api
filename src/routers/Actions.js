@@ -471,12 +471,12 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
                     newListLoans[d].members[s].client_id = clientDoc._id;
                 }
                 /// once the client_id field is populated, update LOANAPP_GROUP document
-                const loanAppGrpObject = loanappGrpList[d];
+                const loanAppGrpObject = newListLoans[d];
                 delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
                 yield db.insert(Object.assign({}, loanAppGrpObject));
             }
         }
-        res.send(loanappGrpList.filter((l) => l.mustBeUpdated));
+        res.send(newListLoans.filter((l) => l.mustBeUpdated));
     }
     catch (e) {
         console.log(e);
