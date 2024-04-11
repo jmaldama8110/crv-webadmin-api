@@ -121,8 +121,8 @@ router.get('/groups/hf/loanapps', authorize_1.authorize, (req, res) => __awaiter
                 city: [`CITY|${group_address.localidad}`, ''],
                 colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
                 street_reference: group_address.referencia,
-                numero_exterior: parseInt(group_address.numero_exterior),
-                numero_interior: parseInt(group_address.numero_interior)
+                numero_exterior: `${group_address.numero_exterior}`,
+                numero_interior: `${group_address.numero_interior}`
             }
         };
         const members = data[4].map((i, nCounter) => {

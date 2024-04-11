@@ -46,7 +46,6 @@ const createPerson_1 = require("../utils/createPerson");
 const createClient_1 = require("../utils/createClient");
 const createLoan_1 = require("../utils/createLoan");
 const Nano = __importStar(require("nano"));
-const HfServer_1 = require("./HfServer");
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 let loanAppGroup = new LoanAppGroup_1.LoanAppGroup();
 let ClientDoc = new Client_1.Client();
@@ -427,44 +426,15 @@ router.get('/actions/fix/10ABR2024', authorize_1.authorize, (req, res) => __awai
         const queryActions = yield db.find({ selector: {
                 couchdb_type: "GROUP"
             } });
-        let groupWithLoans = [];
         for (let i = 0; i < queryActions.docs.length; i++) {
             const groupDoc = queryActions.docs[i];
-            const loansQuery = yield db.find({
-                selector: {
-                    couchdb_type: "LOANAPP_GROUP",
-                    id_cliente: groupDoc.id_cliente
-                }
-            });
-            if (loansQuery.docs.length) {
-                const loanDoc = loansQuery.docs[loansQuery.docs.length - 1]; // obtains de lastone
-                groupWithLoans.push({ groupDoc, id_solicitud: loanDoc.id_solicitud, branch: loanDoc.branch });
-            }
+            const numero_exterior = `${groupDoc.address.numero_exterior}`;
+            const numero_interior = `${groupDoc.address.numero_interior}`;
+            const address = Object.assign(Object.assign({}, groupDoc.address), { numero_exterior,
+                numero_interior });
+            yield db.insert(Object.assign(Object.assign({}, groupDoc), { address }));
         }
-        // recupera por medio del api el datos del grupo
-        let updateList = [];
-        for (let k = 0; k < groupWithLoans.length; k++) {
-            const idSolicitud = groupWithLoans[k].id_solicitud;
-            const branchId = groupWithLoans[k].branch[0];
-            const sqlData = yield (0, HfServer_1.getLoanApplicationById)(idSolicitud, branchId);
-            const group_address = sqlData[3][0];
-            const address = {
-                id: group_address.id,
-                post_code: '',
-                address_line1: group_address.direccion,
-                road_type: [group_address.vialidad, ''],
-                province: [`PROVINCE|${group_address.estado}`, ''],
-                municipality: [`MUNICIPALITY|${group_address.municipio}`, ''],
-                city: [`CITY|${group_address.localidad}`, ''],
-                colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
-                street_reference: group_address.referencia,
-                numero_exterior: parseInt(group_address.numero_exterior),
-                numero_interior: parseInt(group_address.numero_interior)
-            };
-            yield db.insert(Object.assign(Object.assign({}, groupWithLoans[k].groupDoc), { address }));
-            updateList.push({ groupDoc: groupWithLoans[k].groupDoc, idSolicitud, branchId, address });
-        }
-        res.send(updateList);
+        res.send('Ok');
     }
     catch (e) {
         console.log(e);

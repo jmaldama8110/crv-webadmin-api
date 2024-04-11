@@ -413,50 +413,24 @@ const clientDataDef: any = {
             couchdb_type: "GROUP"
         }});
 
-        let groupWithLoans:any[] = []
         for(let i=0; i< queryActions.docs.length; i++){
             const groupDoc:any = queryActions.docs[i];
-            const loansQuery = await db.find({
-                selector: {
-                    couchdb_type: "LOANAPP_GROUP",
-                    id_cliente: groupDoc.id_cliente
-                }
-            });
-            if( loansQuery.docs.length ){
-                const loanDoc:any = loansQuery.docs[loansQuery.docs.length-1] // obtains de lastone
-                groupWithLoans.push({ groupDoc,id_solicitud: loanDoc.id_solicitud ,branch: loanDoc.branch })
-            }
-        }
+            
+            const numero_exterior:string = `${groupDoc.address.numero_exterior}`; 
+            const numero_interior:string = `${groupDoc.address.numero_interior}`;
 
-        // recupera por medio del api el datos del grupo
-        let updateList = [];
-        for( let k=0; k<groupWithLoans.length; k++){
-            const idSolicitud = groupWithLoans[k].id_solicitud
-            const branchId = groupWithLoans[k].branch[0]
-            const sqlData: any = await getLoanApplicationById(idSolicitud, branchId );
-            const group_address = sqlData[3][0];
-            const address = {
-                id: group_address.id,
-                post_code: '',
-                address_line1: group_address.direccion,
-                road_type: [group_address.vialidad, ''],
-                province: [`PROVINCE|${group_address.estado}`, ''],
-                municipality: [`MUNICIPALITY|${group_address.municipio}`, ''],
-                city: [`CITY|${group_address.localidad}`, ''],
-                colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
-                street_reference: group_address.referencia, 
-                numero_exterior: `${group_address.numero_exterior}`,
-                numero_interior: `${group_address.numero_interior}`
-            }
-            await db.insert( {
-                ...groupWithLoans[k].groupDoc,
-                address
-            })
-            updateList.push( { groupDoc: groupWithLoans[k].groupDoc,idSolicitud, branchId, address});
+             const address = {
+                ...groupDoc.address,
+                numero_exterior,
+                numero_interior
+             }
+            await db.insert({ ...groupDoc,address });
 
         }
 
-        res.send(updateList)
+
+
+        res.send('Ok')
     }
     catch(e:any){
         console.log(e);

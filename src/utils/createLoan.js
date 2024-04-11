@@ -195,6 +195,7 @@ function createLoanHF(data) {
                 }
             }
             ;
+            console.log(dataMount);
             const MountAssigned = yield assignMontoloanHF(dataMount);
             if (!MountAssigned)
                 return new Error('Failed to assign mount');
