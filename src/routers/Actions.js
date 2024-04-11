@@ -476,7 +476,7 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
                 yield db.insert(Object.assign({}, loanAppGrpObject));
             }
         }
-        res.send(newListLoans.filter((l) => l.mustBeUpdated));
+        res.send(newListLoans);
     }
     catch (e) {
         console.log(e);

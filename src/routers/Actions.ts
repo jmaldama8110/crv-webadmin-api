@@ -490,7 +490,7 @@ const clientDataDef: any = {
         }
 
          
-        res.send( newListLoans.filter( (l:any) => l.mustBeUpdated )  );
+        res.send( newListLoans  );
     }
     catch(e:any){
         console.log(e);
