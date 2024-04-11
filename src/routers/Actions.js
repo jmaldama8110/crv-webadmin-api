@@ -441,3 +441,45 @@ router.get('/actions/fix/10ABR2024', authorize_1.authorize, (req, res) => __awai
         res.status(400).send(e.message);
     }
 }));
+router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.query.loanAppId) {
+            throw new Error('No id');
+        }
+        let loanAppId = req.query.loanAppId;
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const queryActions = yield db.find({
+            selector: {
+                couchdb_type: "LOANAPP_GROUP"
+            },
+            limit: 10000
+        });
+        //// Extraemos todos los LoanApp y evaluamos si el client_id esta vacio
+        const loanappGrpList = queryActions.docs.map((i) => {
+            return Object.assign(Object.assign({}, i), { mustBeUpdated: !!(i.members.find((w) => !w.client_id)) });
+        });
+        const newListLoans = loanappGrpList.filter((i) => i._id === loanAppId);
+        /// Iteramos y ejecutamos un update en cada LoanApp que requiere
+        for (let d = 0; d < newListLoans.length; d++) {
+            if (loanappGrpList[d].mustBeUpdated) {
+                for (let s = 0; s < loanappGrpList[d].members.length; s++) {
+                    const clientsQuery = yield db.find({ selector: {
+                            couchdb_type: "CLIENT",
+                            id_cliente: loanappGrpList[d].members[s].id_cliente
+                        } });
+                    const clientDoc = clientsQuery.docs.find((k) => k.id_cliente == loanappGrpList[d].members[s].id_cliente);
+                    loanappGrpList[d].members[s].client_id = clientDoc._id;
+                }
+                /// once the client_id field is populated, update LOANAPP_GROUP document
+                const loanAppGrpObject = loanappGrpList[d];
+                delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
+                yield db.insert(Object.assign({}, loanAppGrpObject));
+            }
+        }
+        res.send(loanappGrpList.filter((l) => l.mustBeUpdated));
+    }
+    catch (e) {
+        console.log(e);
+        res.status(400).send(e.message);
+    }
+}));
