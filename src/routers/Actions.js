@@ -461,14 +461,14 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
         const newListLoans = loanappGrpList.filter((i) => i._id === loanAppId);
         /// Iteramos y ejecutamos un update en cada LoanApp que requiere
         for (let d = 0; d < newListLoans.length; d++) {
-            if (loanappGrpList[d].mustBeUpdated) {
-                for (let s = 0; s < loanappGrpList[d].members.length; s++) {
+            if (newListLoans[d].mustBeUpdated) {
+                for (let s = 0; s < newListLoans[d].members.length; s++) {
                     const clientsQuery = yield db.find({ selector: {
                             couchdb_type: "CLIENT",
-                            id_cliente: loanappGrpList[d].members[s].id_cliente
+                            id_cliente: newListLoans[d].members[s].id_cliente
                         } });
-                    const clientDoc = clientsQuery.docs.find((k) => k.id_cliente == loanappGrpList[d].members[s].id_cliente);
-                    loanappGrpList[d].members[s].client_id = clientDoc._id;
+                    const clientDoc = clientsQuery.docs.find((k) => k.id_cliente == newListLoans[d].members[s].id_cliente);
+                    newListLoans[d].members[s].client_id = clientDoc._id;
                 }
                 /// once the client_id field is populated, update LOANAPP_GROUP document
                 const loanAppGrpObject = loanappGrpList[d];
