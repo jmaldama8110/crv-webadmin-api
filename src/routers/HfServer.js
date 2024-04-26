@@ -456,6 +456,13 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
             }
             const cicloData = data.recordsets[6];
             const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0;
+            let data_efirma = data.recordsets[9][0] ?
+                data.recordsets[9][0] :
+                {
+                    id: 0,
+                    id_persona: 0,
+                    fiel: ''
+                };
             const result = Object.assign(Object.assign({ id_persona: perSet.id_persona, id_cliente: perSet.id, name: perSet.name, lastname: perSet.lastname, second_lastname: perSet.second_lastname, email, curp: curp ? curp.id_numero : "", clave_ine: ife ? ife.id_numero : "", numero_emisiones: ine_detalle ? ine_detalle.numero_emision : '', numero_vertical: ine_detalle ? ine_detalle.numero_vertical_ocr : '', rfc: rfc ? rfc.id_numero : "", dob: perSet.dob, loan_cycle, branch: [perSet.id_oficina, perSet.nombre_oficina], sex: [perSet.id_gender, perSet.gender], education_level: [perSet.id_scholarship, perSet.scholarship], identities,
                 address,
                 phones, tributary_regime: [], not_bis: false, client_type: [2, 'INDIVIDUAL'], nationality: [perSet.id_nationality, perSet.nationality], province_of_birth: [
@@ -464,7 +471,7 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
                 ], country_of_birth: [
                     `COUNTRY|${perSet.id_country_of_birth}`,
                     perSet.country_of_birth,
-                ], marital_status: [perSet.id_marital_status, perSet.marital_status], identification_type: [], guarantor: [], business_data }, household_data), { spld, beneficiaries: [], personal_references: [], guarantee: [], ife_details: ineDetail, data_company: [data.recordsets[8][0]], data_efirma: [data.recordsets[9][0]] });
+                ], marital_status: [perSet.id_marital_status, perSet.marital_status], identification_type: [], guarantor: [], business_data }, household_data), { spld, beneficiaries: [], personal_references: [], guarantee: [], ife_details: ineDetail, data_company: [data.recordsets[8][0]], data_efirma: [data_efirma] });
             res.send(result);
         }
         else {

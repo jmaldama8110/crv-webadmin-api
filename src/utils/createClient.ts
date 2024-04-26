@@ -516,7 +516,7 @@ function sortDataClient(client:any) {
 
     clientHF.EFIRMA = [
         {
-            id_firma_electronica: IS_CREATE ? 0 : Funct.validateInt(client.data_efirma[0].id),
+            id_firma_electronica: IS_CREATE ? 0 : Funct.validateInt(client.data_efirma[0]?.id),
             fiel: ""
         }
     ]

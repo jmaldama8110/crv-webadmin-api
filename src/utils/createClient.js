@@ -220,7 +220,7 @@ function createClientHF(data) {
 }
 exports.createClientHF = createClientHF;
 function sortDataClient(client) {
-    var _a;
+    var _a, _b;
     const IS_CREATE = client.id_cliente == 0;
     let clientHF = {};
     const phones = client.phones;
@@ -368,7 +368,7 @@ function sortDataClient(client) {
     clientHF.BANCARIO = [];
     clientHF.EFIRMA = [
         {
-            id_firma_electronica: IS_CREATE ? 0 : Funct.validateInt(client.data_efirma[0].id),
+            id_firma_electronica: IS_CREATE ? 0 : Funct.validateInt((_b = client.data_efirma[0]) === null || _b === void 0 ? void 0 : _b.id),
             fiel: ""
         }
     ];

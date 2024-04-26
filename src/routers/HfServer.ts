@@ -481,7 +481,15 @@ router.get("/clients/hf", authorize, async (req, res) => {
 
             const cicloData = data.recordsets[6]
             const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0
-
+            
+            let data_efirma = 
+            data.recordsets[9][0] ?
+            data.recordsets[9][0] : 
+            {
+                id: 0,
+                id_persona: 0,
+                fiel: ''                
+            }
             const result = {
                 id_persona: perSet.id_persona,
                 id_cliente: perSet.id,
@@ -526,7 +534,7 @@ router.get("/clients/hf", authorize, async (req, res) => {
                 guarantee: [],
                 ife_details: ineDetail,
                 data_company: [data.recordsets[8][0]],
-                data_efirma: [data.recordsets[9][0]],
+                data_efirma: [data_efirma],
             };
             res.send(result);
         } else {
