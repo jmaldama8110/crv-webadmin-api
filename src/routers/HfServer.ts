@@ -1253,7 +1253,7 @@ async function searchGroupLoanByName(groupName: string, branchId: number) {
             .input('nombre_cliente', sql.VarChar, groupName)
             .input('id_oficina', sql.Int, branchId)
             .input('pagina', sql.Int, 1)
-            .input('registros_pagina', sql.Int, 50)
+            .input('registros_pagina', sql.Int, 5000)
             .execute('CLIE_ObtenerClientesYSolicitudesPorOficina');
         const newRes = result.recordset.map(i => ({
             idCliente: i.idCliente,

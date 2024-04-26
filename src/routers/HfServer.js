@@ -1121,7 +1121,7 @@ function searchGroupLoanByName(groupName, branchId) {
                 .input('nombre_cliente', mssql_1.default.VarChar, groupName)
                 .input('id_oficina', mssql_1.default.Int, branchId)
                 .input('pagina', mssql_1.default.Int, 1)
-                .input('registros_pagina', mssql_1.default.Int, 50)
+                .input('registros_pagina', mssql_1.default.Int, 5000)
                 .execute('CLIE_ObtenerClientesYSolicitudesPorOficina');
             const newRes = result.recordset.map(i => ({
                 idCliente: i.idCliente,
