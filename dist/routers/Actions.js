@@ -420,21 +420,13 @@ const clientDataDef = {
     _id: "",
     _rev: ""
 };
-router.get('/actions/fix/10ABR2024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/actions/test', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         const queryActions = yield db.find({ selector: {
                 couchdb_type: "GROUP"
             } });
-        for (let i = 0; i < queryActions.docs.length; i++) {
-            const groupDoc = queryActions.docs[i];
-            const numero_exterior = `${groupDoc.address.numero_exterior}`;
-            const numero_interior = `${groupDoc.address.numero_interior}`;
-            const address = Object.assign(Object.assign({}, groupDoc.address), { numero_exterior,
-                numero_interior });
-            yield db.insert(Object.assign(Object.assign({}, groupDoc), { address }));
-        }
-        res.send('Ok');
+        res.send({ groupsCounts: queryActions.docs.length });
     }
     catch (e) {
         console.log(e);

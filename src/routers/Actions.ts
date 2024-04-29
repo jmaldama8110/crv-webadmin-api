@@ -406,31 +406,15 @@ const clientDataDef: any = {
   }
 
 
-  router.get('/actions/fix/10ABR2024', authorize, async (req,res)=> {
+  router.get('/actions/test', authorize, async (req,res)=> {
     try{
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         const queryActions = await db.find({ selector: {
             couchdb_type: "GROUP"
         }});
 
-        for(let i=0; i< queryActions.docs.length; i++){
-            const groupDoc:any = queryActions.docs[i];
-            
-            const numero_exterior:string = `${groupDoc.address.numero_exterior}`; 
-            const numero_interior:string = `${groupDoc.address.numero_interior}`;
-
-             const address = {
-                ...groupDoc.address,
-                numero_exterior,
-                numero_interior
-             }
-            await db.insert({ ...groupDoc,address });
-
-        }
-
-
-
-        res.send('Ok')
+       
+        res.send({ groupsCounts: queryActions.docs.length })
     }
     catch(e:any){
         console.log(e);
