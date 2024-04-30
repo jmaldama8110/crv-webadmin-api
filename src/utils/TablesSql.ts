@@ -242,6 +242,8 @@ UDT_Solicitud.columns.add('garantia_liquida_financiable', SQL.Bit, { nullable: t
 UDT_Solicitud.columns.add('id_producto_maestro', SQL.Int, { nullable: true });
 UDT_Solicitud.columns.add('tasa_anual', SQL.Decimal(18, 2), { nullable: true });
 UDT_Solicitud.columns.add('seguro_financiado', SQL.Bit, { nullable: true });
+UDT_Solicitud.columns.add('fecha_desembolso', SQL.Date, { nullable: true });
+UDT_Solicitud.columns.add('modificar_fecha_entrega', SQL.Bit, { nullable: true });
 //#endregion
 
 //#region Cliente
