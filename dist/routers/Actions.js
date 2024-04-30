@@ -255,6 +255,7 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                             action.status = 'Error';
                             action.errors = [personCreatedHF.message];
                             RSP_Result.status = 'ERROR';
+                            yield new Action_1.default(action).save();
                         }
                         //Si no hay error crear cliente
                         else {
@@ -264,6 +265,7 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                                 action.status = 'Error';
                                 action.errors = [clientSaved.message];
                                 RSP_Result.status = 'ERROR';
+                                yield new Action_1.default(action).save();
                                 console.log('Error :', { personCreatedHF, clientSaved });
                             }
                             else {
@@ -423,7 +425,7 @@ const clientDataDef = {
 router.get('/actions/test', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const numberLoans = yield updateLoanAppStatus();
-        res.send({ loans2: numberLoans });
+        res.send({ loans: numberLoans });
     }
     catch (e) {
         console.log(e);
@@ -452,10 +454,12 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
         for (let d = 0; d < newListLoans.length; d++) {
             if (newListLoans[d].mustBeUpdated) {
                 for (let s = 0; s < newListLoans[d].members.length; s++) {
-                    const clientsQuery = yield db.find({ selector: {
+                    const clientsQuery = yield db.find({
+                        selector: {
                             couchdb_type: "CLIENT",
                             id_cliente: newListLoans[d].members[s].id_cliente
-                        } });
+                        }
+                    });
                     const clientDoc = clientsQuery.docs.find((k) => k.id_cliente == newListLoans[d].members[s].id_cliente);
                     newListLoans[d].members[s].client_id = clientDoc._id;
                 }
@@ -475,9 +479,15 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
 function updateLoanAppStatus() {
     return __awaiter(this, void 0, void 0, function* () {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const queryActions = yield db.find({ selector: {
-                couchdb_type: "ACTION"
-            } });
+        const queryActions = yield db.find({
+            selector: {
+                couchdb_type: "LOANAPP_GROUP"
+            }, limit: 100000
+        });
+        let affected = 0;
+        for (let i = 0; i < queryActions.docs.length; i++) {
+            const loanAppDoc = queryActions.docs[i];
+        }
         return queryActions.docs.length;
     });
 }

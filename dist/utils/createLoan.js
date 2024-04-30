@@ -366,7 +366,9 @@ function assignMontoloanHF(data) {
             data['SOLICITUD'][0].garantia_liquida_financiable, // 0/1 False/True
             data['SOLICITUD'][0].id_producto_maestro, // Ej. 4
             data['SOLICITUD'][0].tasa_anual, // Se calcula dependiendo del plazo
-            0);
+            0, data['SOLICITUD'][0].fecha_entrega, // fecha_desembolso nuevo campo
+            0 // modificar_fecha_entrega nuevo campo
+            );
             // console.log(tbl.UDT_Solicitud);
             TablesSql_1.Cliente.rows.add(data['SOLICITUD'][0].id_cliente, data['SOLICITUD'][0].ciclo, // se obtiene del cliente
             '', // estatus (MANDAR VACIO)

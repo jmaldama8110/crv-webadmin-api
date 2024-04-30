@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getId = exports.getDates = exports.createPersonHF = void 0;
+exports.validateCURPDuplicada = exports.getId = exports.getDates = exports.createPersonHF = void 0;
 const mssql_1 = __importDefault(require("mssql"));
 const connSQL_1 = require("../db/connSQL");
 const Client_1 = require("../model/Client");
@@ -25,6 +25,7 @@ const Document = new DocumentCollection_1.DocumentCollection();
 const formato = 'YYYY-MM-DD';
 const Funct = new Functions_1.Functions();
 function createPersonHF(data) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const { _id } = data;
@@ -34,6 +35,10 @@ function createPersonHF(data) {
             const dataSort = yield sortDataPerson(clientCouch);
             if (!dataSort)
                 return new Error('data sort Error');
+            let curp = (_a = dataSort['IDENTIFICACIONES'].filter((item) => item.tipo_identificacion == 'CURP')[0]) === null || _a === void 0 ? void 0 : _a.id_numero;
+            let validation_curp = yield validateCURPDuplicada(curp, dataSort['DATOS_PERSONALES'][0].id);
+            if (validation_curp !== "OK")
+                return new Error(validation_curp);
             const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
             TablesSql_1.UDT_CONT_DireccionContacto.rows.length = 0;
             TablesSql_1.UDT_CONT_Persona.rows.length = 0;
@@ -268,3 +273,25 @@ function getId(el) {
     return parseInt(el.split('|')[1]);
 }
 exports.getId = getId;
+function validateCURPDuplicada(curp, id_persona) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if ((curp !== null && curp !== void 0 ? curp : "").length == 0)
+            curp = "CURPX1";
+        curp = curp.trim();
+        if (id_persona == 0)
+            id_persona = -1;
+        const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        let result = yield pool.request()
+            .input("curp", mssql_1.default.VarChar(100), curp)
+            .input("id_persona", mssql_1.default.Int(), id_persona)
+            .query("SELECT COUNT(id) AS cantidad,COALESCE(MAX(id_persona),0) AS id_persona " +
+            "FROM CONT_IdentificacionOficial " +
+            "WHERE tipo_identificacion='CURP' AND estatus_registro='ACTIVO' AND id_numero=@curp AND id_persona<>@id_persona;");
+        if (result.recordset.length > 0) {
+            if (result.recordset[0].cantidad > 0)
+                return "CURP " + curp + " existente en HF con id_persona " + result.recordset[0].id_persona;
+        }
+        return "OK";
+    });
+}
+exports.validateCURPDuplicada = validateCURPDuplicada;

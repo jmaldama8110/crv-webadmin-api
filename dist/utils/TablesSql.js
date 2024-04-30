@@ -231,6 +231,8 @@ exports.UDT_Solicitud.columns.add('garantia_liquida_financiable', mssql_1.defaul
 exports.UDT_Solicitud.columns.add('id_producto_maestro', mssql_1.default.Int, { nullable: true });
 exports.UDT_Solicitud.columns.add('tasa_anual', mssql_1.default.Decimal(18, 2), { nullable: true });
 exports.UDT_Solicitud.columns.add('seguro_financiado', mssql_1.default.Bit, { nullable: true });
+exports.UDT_Solicitud.columns.add('fecha_desembolso', mssql_1.default.Date, { nullable: true });
+exports.UDT_Solicitud.columns.add('modificar_fecha_entrega', mssql_1.default.Bit, { nullable: true });
 //#endregion
 //#region Cliente
 exports.Cliente.columns.add('id', mssql_1.default.Int, { nullable: true });
