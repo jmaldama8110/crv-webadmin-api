@@ -19,7 +19,10 @@ export async function createPersonHF(data:any) {
 
         const dataSort = await sortDataPerson(clientCouch);
         if (!dataSort) return new Error('data sort Error');
-
+        let curp = dataSort['IDENTIFICACIONES'].filter( (item:any) => item.tipo_identificacion == 'CURP')[0]?.id_numero;
+        let validation_curp = await validateCURPDuplicada(curp,dataSort['DATOS_PERSONALES'][0].id);
+        if(validation_curp !== "OK")
+            return new Error(validation_curp);
         const pool = await sql.connect(sqlConfig);
         UDT_CONT_DireccionContacto.rows.length = 0;
         UDT_CONT_Persona.rows.length = 0;
@@ -326,4 +329,28 @@ export const getDates = (fecha:any) => {
 export function getId(el:any) {
     return parseInt(el.split('|')[1])
 }
+
+export async function validateCURPDuplicada(curp:any,id_persona:any)
+{
+    if((curp ?? "").length == 0)
+        curp = "CURPX1";
+    curp = curp.trim();
+    if(id_persona == 0)
+        id_persona = -1;
+    const pool = await sql.connect(sqlConfig);
+    let result = await pool.request()
+        .input("curp", sql.VarChar(100), curp)
+        .input("id_persona", sql.Int(), id_persona)
+        .query("SELECT COUNT(id) AS cantidad,COALESCE(MAX(id_persona),0) AS id_persona " +
+            "FROM CONT_IdentificacionOficial " +
+            "WHERE tipo_identificacion='CURP' AND estatus_registro='ACTIVO' AND id_numero=@curp AND id_persona<>@id_persona;");
+
+    if (result.recordset.length > 0)
+    {
+        if(result.recordset[0].cantidad > 0)
+            return "CURP "+curp+" existente en HF con id_persona "+result.recordset[0].id_persona;
+    }
+    return "OK";
+}
+
 

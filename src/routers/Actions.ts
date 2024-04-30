@@ -224,6 +224,7 @@ router.get('/actions/exec', authorize, async (req, res) => {
                             action.status = 'Error'
                             action.errors = [personCreatedHF.message];
                             RSP_Result.status = 'ERROR';
+                            await new Action(action).save();
                         }
                         //Si no hay error crear cliente
                         else {
@@ -233,6 +234,7 @@ router.get('/actions/exec', authorize, async (req, res) => {
                                 action.status = 'Error'
                                 action.errors = [clientSaved.message];
                                 RSP_Result.status = 'ERROR';
+                                await new Action(action).save();
                                 console.log('Error :', { personCreatedHF, clientSaved })
                             }
                             else {
