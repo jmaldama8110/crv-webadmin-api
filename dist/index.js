@@ -12,6 +12,7 @@ const Actions_1 = require("./routers/Actions");
 const VerifyDocument_1 = require("./routers/VerifyDocument");
 const Puppeteer_1 = require("./routers/Puppeteer");
 const Email_1 = require("./routers/Email");
+require("./cron/jobs");
 /** Handlebars initialization */
 const express_handlebars_1 = require("express-handlebars");
 const hbs = (0, express_handlebars_1.create)();

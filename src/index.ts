@@ -8,6 +8,9 @@ import { ActionsRouter } from "./routers/Actions";
 import { verifyDocRouter } from './routers/VerifyDocument';
 import { puppeteerRouter } from "./routers/Puppeteer";
 import { sendEmailRouter } from "./routers/Email";
+import './cron/jobs';
+
+
 /** Handlebars initialization */
 import { create } from 'express-handlebars';
 const hbs = create();

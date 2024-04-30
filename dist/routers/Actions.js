@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ActionsRouter = void 0;
+exports.ActionsRouter = exports.updateLoanAppStatus = void 0;
 const express_1 = __importDefault(require("express"));
 const Action_1 = __importDefault(require("../model/Action"));
 const authorize_1 = require("../middleware/authorize");
@@ -422,11 +422,8 @@ const clientDataDef = {
 };
 router.get('/actions/test', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const queryActions = yield db.find({ selector: {
-                couchdb_type: "GROUP"
-            } });
-        res.send({ groupsCounts: queryActions.docs.length });
+        const numberLoans = yield updateLoanAppStatus();
+        res.send({ loans2: numberLoans });
     }
     catch (e) {
         console.log(e);
@@ -475,3 +472,13 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
         res.status(400).send(e.message);
     }
 }));
+function updateLoanAppStatus() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const queryActions = yield db.find({ selector: {
+                couchdb_type: "ACTION"
+            } });
+        return queryActions.docs.length;
+    });
+}
+exports.updateLoanAppStatus = updateLoanAppStatus;
