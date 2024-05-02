@@ -213,8 +213,9 @@ router.get('/products/hf', authorize, async (req, res) => {
             const i: any = productsQuery.docs.find((y: any) => y.external_id == x.id)
             return { ...i }
         })
+        const productsNew = newData.filter( (x:any) => (!!x._id))
 
-        res.send(newData)
+        res.send(productsNew)
     }
     catch (err) {
         console.log(err);
