@@ -408,7 +408,45 @@ router.get('/actions/test', authorize, async (req, res) => {
         console.log(e);
         res.status(400).send(e.message)
     }
-})
+});
+
+
+export async function updateLoanAppStatus() {
+
+    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const queryActions = await db.find({
+        selector: {
+            couchdb_type: "LOANAPP_GROUP"
+        }, limit: 100000
+    });
+
+    let affected = 0;
+    for (let i = 0; i < queryActions.docs.length; i++) {
+        const loanAppDoc:any = queryActions.docs[i];
+        if( !affected ){ /// just for testing
+            affected = 1
+
+
+            /**
+             * estatus      sub estatus
+             * TRAMITE      NUEVO TRAMITE
+             * ACEPTADO     PRESTAMO ACTIVO
+             * ACEPTADO     PRESTAMO FINALIZADO
+             * 
+             */
+            // ME QUEDE EN QUE DEBO VER 
+            // DONDE SACO EL ESTATUS DE LA SOLICITUD
+            
+            // console.log(`id_solicitud: ${loanAppDoc.id_solicitud},cliente: ${loanAppDoc.id_cliente} estatus: ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus}`)
+
+
+        }
+
+    }
+
+    return queryActions.docs.length;
+
+}
 
 router.get('/actions/fix/09042024', authorize, async (req, res) => {
     try {
@@ -473,24 +511,6 @@ router.get('/actions/fix/09042024', authorize, async (req, res) => {
     }
 });
 
-export async function updateLoanAppStatus() {
-
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-    const queryActions = await db.find({
-        selector: {
-            couchdb_type: "LOANAPP_GROUP"
-        }, limit: 100000
-    });
-
-    let affected = 0;
-    for (let i = 0; i < queryActions.docs.length; i++) {
-        const loanAppDoc = queryActions.docs[i];
-
-    }
-
-    return queryActions.docs.length;
-
-}
 
 
 // router.get('/actions/fix/030424', authorize, async (req,res)=> {
