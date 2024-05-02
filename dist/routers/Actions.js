@@ -432,6 +432,35 @@ router.get('/actions/test', authorize_1.authorize, (req, res) => __awaiter(void 
         res.status(400).send(e.message);
     }
 }));
+function updateLoanAppStatus() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const queryActions = yield db.find({
+            selector: {
+                couchdb_type: "LOANAPP_GROUP"
+            }, limit: 100000
+        });
+        let affected = 0;
+        for (let i = 0; i < queryActions.docs.length; i++) {
+            const loanAppDoc = queryActions.docs[i];
+            if (!affected) { /// just for testing
+                affected = 1;
+                /**
+                 * estatus      sub estatus
+                 * TRAMITE      NUEVO TRAMITE
+                 * ACEPTADO     PRESTAMO ACTIVO
+                 * ACEPTADO     PRESTAMO FINALIZADO
+                 *
+                 */
+                // ME QUEDE EN QUE DEBO VER 
+                // DONDE SACO EL ESTATUS DE LA SOLICITUD
+                // console.log(`id_solicitud: ${loanAppDoc.id_solicitud},cliente: ${loanAppDoc.id_cliente} estatus: ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus}`)
+            }
+        }
+        return queryActions.docs.length;
+    });
+}
+exports.updateLoanAppStatus = updateLoanAppStatus;
 router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!req.query.loanAppId) {
@@ -476,19 +505,3 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
         res.status(400).send(e.message);
     }
 }));
-function updateLoanAppStatus() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const queryActions = yield db.find({
-            selector: {
-                couchdb_type: "LOANAPP_GROUP"
-            }, limit: 100000
-        });
-        let affected = 0;
-        for (let i = 0; i < queryActions.docs.length; i++) {
-            const loanAppDoc = queryActions.docs[i];
-        }
-        return queryActions.docs.length;
-    });
-}
-exports.updateLoanAppStatus = updateLoanAppStatus;

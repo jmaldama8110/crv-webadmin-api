@@ -228,7 +228,8 @@ router.get('/products/hf', authorize_1.authorize, (req, res) => __awaiter(void 0
             const i = productsQuery.docs.find((y) => y.external_id == x.id);
             return Object.assign({}, i);
         });
-        res.send(newData);
+        const productsNew = newData.filter((x) => (!!x._id));
+        res.send(productsNew);
     }
     catch (err) {
         console.log(err);
