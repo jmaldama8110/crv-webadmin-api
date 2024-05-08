@@ -425,7 +425,7 @@ const clientDataDef = {
     _id: "",
     _rev: ""
 };
-router.get('/actions/test', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/db_update_loans_contracts', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const loans = yield updateLoanAppStatus();
         res.send({ loans });
@@ -441,7 +441,7 @@ function updateLoanAppStatus() {
         const queryActions = yield db.find({
             selector: {
                 couchdb_type: "LOANAPP_GROUP"
-            }, limit: 50
+            }, limit: 100000
         });
         const toBeUpdated = [];
         //// cuando el estatus de LOANAPP esta en Nuevo tramite y cambia a ACEPTADO/PRESTAMO ACTIVO
@@ -455,7 +455,8 @@ function updateLoanAppStatus() {
             if (newStatus) {
                 const statusChanged = !(loanAppDoc.estatus === newStatus.estatus && loanAppDoc.sub_estatus === newStatus.sub_estatus);
                 console.log(`${idSolicitud} (${statusChanged}), ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus} => ${newStatus === null || newStatus === void 0 ? void 0 : newStatus.estatus}/${newStatus === null || newStatus === void 0 ? void 0 : newStatus.sub_estatus}`);
-                if (statusChanged) {
+                if (statusChanged && !loanAppDoc.renovation) {
+                    // renovation flag must be FALSE
                     /// only when changed excepting ACEPTADO/PRESTAMO FINALIZADO
                     toBeUpdated.push(Object.assign(Object.assign({}, loanAppDoc), { estatus: newStatus.estatus, sub_estatus: newStatus.sub_estatus }));
                     // check if there is any PRESTAMO ACTIVO STATUS
@@ -467,8 +468,11 @@ function updateLoanAppStatus() {
                     }
                 }
             }
+            if (!newStatus) {
+                console.log(`${idSolicitud}, unable to retrieve status from SQL`);
+            }
         }
-        /// run the bulkd update
+        /// run the bulk update
         /**1. UPDATE all LOANAPP_DOC docs status/substatus */
         yield db.bulk({ docs: toBeUpdated });
         console.log(`Updated: ${toBeUpdated.length}, Nothing to do: ${queryActions.docs.length - toBeUpdated.length}`);
@@ -476,14 +480,18 @@ function updateLoanAppStatus() {
         const queryContracts = yield db.find({
             selector: {
                 couchdb_type: "CONTRACT"
-            }, limit: 10000
+            }, limit: 100000
         });
         const dataToBeUpdated = [];
         for (let w = 0; w < queryContracts.docs.length; w++) {
             const contractDoc = queryContracts.docs[w];
             const dataFromHF = yield (0, HfServer_1.getContractInfo)(contractDoc.idContrato);
             if (dataFromHF[0][0]) {
-                dataToBeUpdated.push(Object.assign(Object.assign({}, contractDoc), dataFromHF[0][0]));
+                console.log(`${contractDoc.idContrato} updated.`);
+                dataToBeUpdated.push(Object.assign(Object.assign(Object.assign({}, contractDoc), dataFromHF[0][0]), { updated_by: `${process.env.COUCHDB_USER}`, updated_at: new Date().toISOString() }));
+            }
+            else {
+                console.log(`${contractDoc.idContrato} not found info from SQL`);
             }
         }
         yield db.bulk({ docs: dataToBeUpdated });
@@ -494,8 +502,12 @@ function updateLoanAppStatus() {
         for (let i = 0; i < clientIdsToUpdate.length; i++) {
             const contractData = yield (0, HfServer_1.getBalanceById)(clientIdsToUpdate[i].id_cliente);
             for (let x = 0; x < contractData.length; x++) {
-                const newContract = Object.assign(Object.assign({}, contractData[0][x]), { _id: Date.now().toString(), client_id: clientIdsToUpdate[i]._id, created_by: `${process.env.COUCHDB_USER}`, created_at: new Date().toISOString(), branch: clientIdsToUpdate[i].branch, couchdb_type: "CONTRACT" });
-                newContractsToCreate.push(newContract);
+                const contractExists = queryContracts.docs.find((f) => f.idContrato == contractData[0][x].idContrato);
+                if (!contractExists) {
+                    const newContract = Object.assign(Object.assign({}, contractData[0][x]), { _id: Date.now().toString(), client_id: clientIdsToUpdate[i]._id, created_by: `${process.env.COUCHDB_USER}`, created_at: new Date().toISOString(), branch: clientIdsToUpdate[i].branch, couchdb_type: "CONTRACT" });
+                    newContractsToCreate.push(newContract);
+                    console.log(`${newContract.idContract}, created.`);
+                }
             }
         }
         yield db.bulk({ docs: newContractsToCreate });
@@ -516,10 +528,11 @@ function getCurrentLoanStatus(idSolicitud) {
             .input("id", mssql_1.default.Int, idSolicitud)
             .query("select * from OTOR_SolicitudPrestamos WHERE OTOR_SolicitudPrestamos.id = @id");
         if (result.recordsets.length) {
-            return {
-                estatus: result.recordset[0].estatus.trim(),
-                sub_estatus: result.recordset[0].sub_estatus.trim(),
-            };
+            if (!!result.recordset[0])
+                return {
+                    estatus: result.recordset[0].estatus.trim(),
+                    sub_estatus: result.recordset[0].sub_estatus.trim(),
+                };
         }
         return undefined;
     });
@@ -568,3 +581,51 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
         res.status(400).send(e.message);
     }
 }));
+router.get('/fix_address_ext_int_numbers_types', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        yield db.createIndex({ index: { fields: ["couchdb_type"] } });
+        const queryActions = yield db.find({
+            selector: {
+                couchdb_type: "CLIENT"
+            },
+            limit: 100000
+        });
+        const recordsToUpdate = [];
+        for (let i = 0; i < queryActions.docs.length; i++) {
+            let clientDoc = queryActions.docs[i];
+            let addressError = false;
+            let newAddressArray = [];
+            for (let j = 0; j < clientDoc.address.length; j++) {
+                let addressDoc = clientDoc.address[j];
+                if (!checkProperty('ext_number', addressDoc, 0) ||
+                    !checkProperty('int_number', addressDoc, 0) ||
+                    !checkProperty('exterior_number', addressDoc, "SN") ||
+                    !checkProperty('interior_number', addressDoc, "SN")) {
+                    addressError = true;
+                    addressDoc = Object.assign(Object.assign({}, addressDoc), { ext_number: 0, int_number: 0, exterior_number: 'SN', interior_number: 'SN' });
+                }
+                newAddressArray.push(addressDoc);
+            }
+            if (addressError) {
+                clientDoc.address = newAddressArray;
+                recordsToUpdate.push(clientDoc);
+            }
+        }
+        yield db.bulk({ docs: recordsToUpdate });
+        res.send({ recordsUpdated: recordsToUpdate.map((i) => ({ id_cliente: i.id_cliente })) });
+    }
+    catch (e) {
+        res.status(400).send(e.message);
+    }
+}));
+function checkProperty(property, obj, defaultVal) {
+    if (property in obj) { // existe la propiedad?
+        // Si existe, es el tipo correcto?
+        if ((typeof obj[property] == (typeof defaultVal))) {
+            return true; // property is Ok
+        }
+    }
+    // obj[property] = defaultVal;
+    return false; // property is NOT ok
+}

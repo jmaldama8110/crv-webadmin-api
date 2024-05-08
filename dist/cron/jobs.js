@@ -1,17 +1,26 @@
 "use strict";
-// import cron from 'node-cron';
-// import * as Nano from 'nano';
-// let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
-// cron.schedule('* 23 * * *', async () => {
-//     // se ejecutara a las 23 horas de cada dia
-//     try{
-//         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-//         const queryActions = await db.find({ selector: {
-//             couchdb_type: "LOANAPP_GROUP"
-//         }});
-//         console.log(queryActions.docs.length)
-//     }
-//     catch(e:any){
-//         console.log(`NODE-CRON: ${e.message}`);
-//     }
-// });
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const node_cron_1 = __importDefault(require("node-cron"));
+const Actions_1 = require("../routers/Actions");
+node_cron_1.default.schedule('* 23 * * *', () => __awaiter(void 0, void 0, void 0, function* () {
+    // se ejecutara a las 23 horas de cada dia
+    try {
+        console.log('NODE-CRON started... ');
+        yield (0, Actions_1.updateLoanAppStatus)();
+    }
+    catch (e) {
+        console.log(`NODE-CRON FAILED error: ${e.message}`);
+    }
+}));

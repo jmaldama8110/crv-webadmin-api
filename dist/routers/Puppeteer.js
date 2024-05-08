@@ -524,9 +524,9 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                 loan_cycle: loanCycle,
                 economicDependants: x.doc.economic_dependants,
                 internetAccess: x.doc.internet_access ? 'Si' : 'No',
-                isSocialMediaFacebook: x.doc.prefered_social === 'FACEBOOK' ? 'X' : '',
-                isSocialWhatsapp: x.doc.prefered_social === 'WHATSAPP' ? 'X' : '',
-                isSocialMediaInstagram: x.doc.prefered_social === 'INSTAGRAM' ? 'X' : '',
+                isSocialMediaFacebook: x.doc.prefered_social[0] == 3 ? 'X' : '',
+                isSocialMediaWhatsapp: x.doc.prefered_social[0] == 2 ? 'X' : '',
+                isSocialMediaInstagram: x.doc.prefered_social[0] == 4 ? 'X' : '',
                 userSocialMedia: x.doc.user_social,
                 memberLoanAmount: (0, misc_1.formatLocalCurrency)(memberLoanAmount),
                 isNewLoan: loanCycle > 1 ? "" : "X",
@@ -554,6 +554,8 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                 hasHouseholdLatrine: x.doc.household_latrine ? 'X' : '',
                 hasHouseholdBrick: x.doc.household_brick ? 'X' : '',
                 economicActivity: x.doc.business_data.economic_activity[1],
+                profession: x.doc.business_data.profession[1],
+                occupation: x.doc.business_data.ocupation[1],
                 numberEmployees: x.doc.business_data.number_employees,
                 loanDestination: x.doc.business_data.loan_destination[1],
                 bisYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!x.doc.business_data.business_start_date ? x.doc.business_data.business_start_date : new Date()), new Date()),
@@ -581,6 +583,152 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
         });
         const result = yield renderPDf(htmlData, `solicitud_grupo_solidario`);
         res.send(Object.assign({}, result));
+    }
+    catch (error) {
+        console.log(error);
+        res.status(400).send(error.message);
+    }
+}));
+router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.query.loanId) {
+            throw new Error('parameter loanId is missing in URL');
+        }
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        yield db.createIndex({ index: { fields: ["couchdb_type"] } });
+        const query = yield db.find({ selector: { couchdb_type: "LOANAPP_GROUP" }, limit: 50000 });
+        const loanApp = query.docs.find((i) => i._id === req.query.loanId);
+        if (!loanApp) {
+            throw new Error('Loan App does not exist with the id:' + req.query.loanId);
+        }
+        if (!loanApp.members) {
+            throw new Error('No members found at the loan application!');
+        }
+        const keys = loanApp.members.map((x) => (x.client_id));
+        const clientsQuery = yield db.fetch({ keys: keys });
+        const loginUser = {
+            fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : '__________________________________________________________________'
+        };
+        const clientsData = clientsQuery.rows.map((x) => {
+            const memberData = loanApp.members.find((y) => y.client_id === x.doc._id);
+            const loanCycle = parseInt(memberData.loan_cycle) + 1;
+            const memberLoanAmount = memberData.apply_amount;
+            const beneficiaryInfo = {
+                name: memberData.insurance.beneficiary,
+                relationship: memberData.insurance.relationship,
+                percentage: memberData.insurance.percentage
+            };
+            const dob = x.doc.dob.slice(0, 10).split('-').reverse();
+            dob.length = 3;
+            const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
+            const otherPhone = x.doc.phones.find((y) => y.type === 'Caseta');
+            const homeAddress = x.doc.address.find((y) => y.type === 'DOMICILIO');
+            const bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
+            let bisAddressSame = 'No';
+            if (bisAddress) { // evaluates first bisAddress exists, since object may not exits
+                if (!!bisAddress.bis_address_same) {
+                    bisAddressSame = bisAddress.bis_address_same ? 'Si' : 'No';
+                }
+            }
+            const incomeInfo = {
+                sales: x.doc.business_data.income_sales_total,
+                family: x.doc.business_data.income_partner,
+                job: x.doc.business_data.income_job,
+                abroad: x.doc.business_data.income_remittances,
+                other: x.doc.business_data.income_other,
+                total: x.doc.business_data.income_total,
+            };
+            const expensesInfo = {
+                family: x.doc.business_data.expense_family,
+                rent: x.doc.business_data.expense_rent,
+                bis: x.doc.business_data.expense_business,
+                payables: x.doc.business_data.expense_debt,
+                debt: x.doc.business_data.expense_credit_cards,
+                total: x.doc.business_data.expense_total,
+            };
+            const bisQualitySalesMonthly = {
+                monthSaleJan: x.doc.business_data.bis_quality_sales_monthly.month_sale_jan,
+                monthSaleFeb: x.doc.business_data.bis_quality_sales_monthly.month_sale_feb,
+                monthSaleMar: x.doc.business_data.bis_quality_sales_monthly.month_sale_mar,
+                monthSaleApr: x.doc.business_data.bis_quality_sales_monthly.month_sale_apr,
+                monthSaleMay: x.doc.business_data.bis_quality_sales_monthly.month_sale_may,
+                monthSaleJun: x.doc.business_data.bis_quality_sales_monthly.month_sale_jun,
+                monthSaleJul: x.doc.business_data.bis_quality_sales_monthly.month_sale_jul,
+                monthSaleAug: x.doc.business_data.bis_quality_sales_monthly.month_sale_aug,
+                monthSaleSep: x.doc.business_data.bis_quality_sales_monthly.month_sale_sep,
+                monthSaleOct: x.doc.business_data.bis_quality_sales_monthly.month_sale_oct,
+                monthSaleNov: x.doc.business_data.bis_quality_sales_monthly.month_sale_nov,
+                monthSaleDic: x.doc.business_data.bis_quality_sales_monthly.month_sale_dic
+            };
+            return {
+                name: x.doc.name,
+                lastname: x.doc.lastname,
+                second_lastname: x.doc.second_lastname,
+                branch: loanApp.branch[1],
+                apply_at: (0, misc_1.formatLocalDate2)(loanApp.apply_at ? loanApp.apply_at : (new Date()).toISOString()).split("/"),
+                loan_cycle: loanCycle,
+                economicDependants: x.doc.economic_dependants,
+                internetAccess: x.doc.internet_access ? 'Si' : 'No',
+                isSocialMediaFacebook: x.doc.prefered_social[0] == 3 ? 'X' : '',
+                isSocialMediaWhatsapp: x.doc.prefered_social[0] == 2 ? 'X' : '',
+                isSocialMediaInstagram: x.doc.prefered_social[0] == 4 ? 'X' : '',
+                userSocialMedia: x.doc.user_social,
+                memberLoanAmount: (0, misc_1.formatLocalCurrency)(memberLoanAmount),
+                isNewLoan: loanCycle > 1 ? "" : "X",
+                isFemale: x.doc.sex[0] == 3 ? 'X' : ' ',
+                isMale: x.doc.sex[0] != 3 ? 'X' : ' ',
+                isSingle: x.doc.marital_status[0] == 1 ? "X" : "",
+                isMarried: x.doc.marital_status[0] == 2 ? "X" : "",
+                isCommonLaw: x.doc.marital_status[0] == 3 ? "X" : "",
+                nationality: x.doc.nationality[0] == 1 ? "MEXICANA" : "OTRA",
+                countrtAndProvince: `${x.doc.province_of_birth[1]}, ${x.doc.country_of_birth[1]}`.toUpperCase(),
+                dob,
+                curp: (0, misc_1.arrayFromStringSize)(x.doc.curp, 18, '*'),
+                rfc: (0, misc_1.arrayFromStringSize)(x.doc.rfc, 13, '*'),
+                email: x.doc.email,
+                mobilePhone: !!mobilePhone ? (0, misc_1.arrayFromStringSize)(mobilePhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
+                otherPhone: !!otherPhone ? (0, misc_1.arrayFromStringSize)(otherPhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
+                geoLat: !!x.doc.coordinates ? x.doc.coordinates[0] : 0,
+                geoLng: !!x.doc.coordinates ? x.doc.coordinates[1] : 0,
+                homeAddress,
+                bisAddress,
+                bisAddressSame,
+                hasHouseholdFloor: x.doc.household_floor ? 'X' : '',
+                hasHouseholdRoof: x.doc.household_roof ? 'X' : '',
+                hasHouseholdToilet: x.doc.household_toilet ? 'X' : '',
+                hasHouseholdLatrine: x.doc.household_latrine ? 'X' : '',
+                hasHouseholdBrick: x.doc.household_brick ? 'X' : '',
+                economicActivity: x.doc.business_data.economic_activity[1],
+                profession: x.doc.business_data.profession[1],
+                occupation: x.doc.business_data.ocupation[1],
+                numberEmployees: x.doc.business_data.number_employees,
+                loanDestination: x.doc.business_data.loan_destination[1],
+                bisYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!x.doc.business_data.business_start_date ? x.doc.business_data.business_start_date : new Date()), new Date()),
+                homeYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!homeAddress.residence_since ? homeAddress.residence_since : new Date()), new Date()),
+                homeOwnershipRented: homeAddress.ownership_type === 'Renta',
+                homeOwnershipOwned: homeAddress.ownership_type,
+                homeOwnershipRelative: homeAddress.ownership_type,
+                keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
+                hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
+                previousExperience: x.doc.business_data.previous_loan_experience,
+                incomeInfo,
+                expensesInfo,
+                bisQualitySalesMonthly,
+                isBisTypeDaily: x.doc.business_data.bis_season_type === 'D' ? 'X' : '',
+                isBisTypeWeekly: x.doc.business_data.bis_season_type === 'S' ? 'X' : '',
+                isBisTypeFortnightly: x.doc.business_data.bis_season_type === 'C' ? 'X' : '',
+                beneficiaryInfo,
+                loginUser
+            };
+        });
+        const hbs = (0, express_handlebars_1.create)();
+        const htmlData = yield hbs.render('views/solicitud-grupo-solidario.handlebars', {
+            serverHost,
+            clientsData: clientsData,
+        });
+        //  const result = await renderPDf(htmlData,`solicitud_grupo_solidario`);
+        //  res.send({...result } );
+        res.send(htmlData);
     }
     catch (error) {
         console.log(error);

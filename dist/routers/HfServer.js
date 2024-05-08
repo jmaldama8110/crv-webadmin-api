@@ -697,15 +697,14 @@ function updateCatalogFromHF(name, chunk, filterActive) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-            const docsDestroy = yield db.find({ selector: { name }, limit: 100000 });
+            yield db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
+            const docsDestroy = yield db.find({ selector: { couchdb_type: "CATALOG", name }, limit: 100000 });
             if (docsDestroy.docs.length > 0) {
                 const docsEliminate = docsDestroy.docs.map(doc => {
                     const { _id, _rev } = doc;
                     return { _deleted: true, _id, _rev };
                 });
-                db.bulk({ docs: docsEliminate })
-                    .then((body) => { console.log('DELETE', name); })
-                    .catch((error) => console.log(error));
+                yield db.bulk({ docs: docsEliminate });
             }
             mssql_1.default.connect(connSQL_1.sqlConfig, (err) => {
                 const request = new mssql_1.default.Request();
@@ -751,6 +750,7 @@ function updateCatalogFromHFByRelationship(name, chunk, shortname, relationship_
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+            yield db.createIndex({ index: { fields: ["couchdb_type"] } });
             const docsDestroy = yield db.find({ selector: { couchdb_type: shortname }, limit: 100000 });
             if (docsDestroy.docs.length > 0) {
                 const docsEliminate = docsDestroy.docs.map(doc => {
@@ -1019,7 +1019,7 @@ function getContractInfo(idContract) {
         ON OTOR_SolicitudPrestamos.id_oficina = CORP_OficinasFinancieras.id
         INNER JOIN CORP_Zonas
         ON CORP_OficinasFinancieras.id_zona = CORP_Zonas.id
-        WHERE OTOR_Contratos.id = @idContrato AND (OTOR_Contratos.estatus = 'DESEMBOLSADO' OR OTOR_Contratos.estatus = 'TRANSITO')
+        WHERE OTOR_Contratos.id = @idContrato
     `);
         return result.recordsets;
     });
