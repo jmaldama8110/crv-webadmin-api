@@ -46,6 +46,9 @@ const createPerson_1 = require("../utils/createPerson");
 const createClient_1 = require("../utils/createClient");
 const createLoan_1 = require("../utils/createLoan");
 const Nano = __importStar(require("nano"));
+const mssql_1 = __importDefault(require("mssql"));
+const connSQL_1 = require("../db/connSQL");
+const HfServer_1 = require("./HfServer");
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 let loanAppGroup = new LoanAppGroup_1.LoanAppGroup();
 let ClientDoc = new Client_1.Client();
@@ -424,8 +427,8 @@ const clientDataDef = {
 };
 router.get('/actions/test', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const numberLoans = yield updateLoanAppStatus();
-        res.send({ loans: numberLoans });
+        const loans = yield updateLoanAppStatus();
+        res.send({ loans });
     }
     catch (e) {
         console.log(e);
@@ -438,29 +441,89 @@ function updateLoanAppStatus() {
         const queryActions = yield db.find({
             selector: {
                 couchdb_type: "LOANAPP_GROUP"
-            }, limit: 100000
+            }, limit: 50
         });
-        let affected = 0;
+        const toBeUpdated = [];
+        //// cuando el estatus de LOANAPP esta en Nuevo tramite y cambia a ACEPTADO/PRESTAMO ACTIVO
+        /// Se debe importar el contrato de este LOAN.
+        const clientIdsToUpdate = []; // here we add all clients/group uniquely, so perform sigle get balance from HF
         for (let i = 0; i < queryActions.docs.length; i++) {
             const loanAppDoc = queryActions.docs[i];
-            if (!affected) { /// just for testing
-                affected = 1;
-                /**
-                 * estatus      sub estatus
-                 * TRAMITE      NUEVO TRAMITE
-                 * ACEPTADO     PRESTAMO ACTIVO
-                 * ACEPTADO     PRESTAMO FINALIZADO
-                 *
-                 */
-                // ME QUEDE EN QUE DEBO VER 
-                // DONDE SACO EL ESTATUS DE LA SOLICITUD
-                // console.log(`id_solicitud: ${loanAppDoc.id_solicitud},cliente: ${loanAppDoc.id_cliente} estatus: ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus}`)
+            const idSolicitud = parseInt(loanAppDoc.id_solicitud);
+            const newStatus = yield getCurrentLoanStatus(idSolicitud);
+            /// only updates when newStatus is not equal current Status
+            if (newStatus) {
+                const statusChanged = !(loanAppDoc.estatus === newStatus.estatus && loanAppDoc.sub_estatus === newStatus.sub_estatus);
+                console.log(`${idSolicitud} (${statusChanged}), ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus} => ${newStatus === null || newStatus === void 0 ? void 0 : newStatus.estatus}/${newStatus === null || newStatus === void 0 ? void 0 : newStatus.sub_estatus}`);
+                if (statusChanged) {
+                    /// only when changed excepting ACEPTADO/PRESTAMO FINALIZADO
+                    toBeUpdated.push(Object.assign(Object.assign({}, loanAppDoc), { estatus: newStatus.estatus, sub_estatus: newStatus.sub_estatus }));
+                    // check if there is any PRESTAMO ACTIVO STATUS
+                    if (newStatus.estatus === 'ACEPTADO' &&
+                        newStatus.sub_estatus === 'PRESTAMO ACTIVO') {
+                        /// here we found that an status changed to ACTIVE LOAN, therefore, need to get 
+                        /// current contract balance
+                        clientIdsToUpdate.push({ id_cliente: loanAppDoc.id_cliente, _id: loanAppDoc.apply_by, branch: loanAppDoc.branch });
+                    }
+                }
             }
         }
+        /// run the bulkd update
+        /**1. UPDATE all LOANAPP_DOC docs status/substatus */
+        yield db.bulk({ docs: toBeUpdated });
+        console.log(`Updated: ${toBeUpdated.length}, Nothing to do: ${queryActions.docs.length - toBeUpdated.length}`);
+        /**2. UPDATE all CONTRACT from HF data*/
+        const queryContracts = yield db.find({
+            selector: {
+                couchdb_type: "CONTRACT"
+            }, limit: 10000
+        });
+        const dataToBeUpdated = [];
+        for (let w = 0; w < queryContracts.docs.length; w++) {
+            const contractDoc = queryContracts.docs[w];
+            const dataFromHF = yield (0, HfServer_1.getContractInfo)(contractDoc.idContrato);
+            if (dataFromHF[0][0]) {
+                dataToBeUpdated.push(Object.assign(Object.assign({}, contractDoc), dataFromHF[0][0]));
+            }
+        }
+        yield db.bulk({ docs: dataToBeUpdated });
+        console.log(`Updated contracts: ${dataToBeUpdated.length}`);
+        /** UPDATE all contracts in db */
+        /*** finally, create contracts for ACEPTADO/PRESTAMO ACTIVO */
+        const newContractsToCreate = [];
+        for (let i = 0; i < clientIdsToUpdate.length; i++) {
+            const contractData = yield (0, HfServer_1.getBalanceById)(clientIdsToUpdate[i].id_cliente);
+            for (let x = 0; x < contractData.length; x++) {
+                const newContract = Object.assign(Object.assign({}, contractData[0][x]), { _id: Date.now().toString(), client_id: clientIdsToUpdate[i]._id, created_by: `${process.env.COUCHDB_USER}`, created_at: new Date().toISOString(), branch: clientIdsToUpdate[i].branch, couchdb_type: "CONTRACT" });
+                newContractsToCreate.push(newContract);
+            }
+        }
+        yield db.bulk({ docs: newContractsToCreate });
+        console.log(`Created contracts: ${newContractsToCreate.length}`);
+        /*** create contracts for */
         return queryActions.docs.length;
     });
 }
 exports.updateLoanAppStatus = updateLoanAppStatus;
+const uniqueArray = (array) => {
+    return Array.from(array.reduce((set, e) => set.add(e), new Set()));
+};
+function getCurrentLoanStatus(idSolicitud) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        const result = yield pool
+            .request()
+            .input("id", mssql_1.default.Int, idSolicitud)
+            .query("select * from OTOR_SolicitudPrestamos WHERE OTOR_SolicitudPrestamos.id = @id");
+        if (result.recordsets.length) {
+            return {
+                estatus: result.recordset[0].estatus.trim(),
+                sub_estatus: result.recordset[0].sub_estatus.trim(),
+            };
+        }
+        return undefined;
+    });
+}
 router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!req.query.loanAppId) {

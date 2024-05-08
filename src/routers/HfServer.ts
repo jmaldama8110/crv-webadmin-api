@@ -622,8 +622,6 @@ router.get('/catalogs/sync', authorize, async (req, res) => {
         await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', 'COUNTRY', 'pais');
         await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
 
-
-
         res.status(201).send('Done!');
     }
     catch (error) {
@@ -631,6 +629,7 @@ router.get('/catalogs/sync', authorize, async (req, res) => {
         res.status(400).send(error + '')
     }
 });
+
 
 router.get('/products/sync', authorize, async (req, res) => {
 
@@ -794,19 +793,20 @@ function mapYearPeriodForTerm(frequencyType: string) {
 }
 
 
-
 async function updateCatalogFromHF(name: string, chunk: number, filterActive?: boolean) {
     try {
+        
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const docsDestroy = await db.find({ selector: { name }, limit: 100000 });
+        await db.createIndex({ index: { fields: ["couchdb_type","name"]}});        
+        const docsDestroy = await db.find({ selector: { couchdb_type: "CATALOG",name }, limit: 100000 });
         if (docsDestroy.docs.length > 0) {
             const docsEliminate = docsDestroy.docs.map(doc => {
                 const { _id, _rev } = doc;
                 return { _deleted: true, _id, _rev }
             })
-            db.bulk({ docs: docsEliminate })
-                .then((body) => { console.log('DELETE', name) })
-                .catch((error) => console.log(error));
+            
+            await db.bulk({ docs: docsEliminate });
+                
         }
 
         sql.connect(sqlConfig, (err) => {
@@ -859,6 +859,7 @@ async function updateCatalogFromHF(name: string, chunk: number, filterActive?: b
 async function updateCatalogFromHFByRelationship(name: string, chunk: number, shortname: string, relationship_name?: string, relationship?: string) {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        await db.createIndex( { index: { fields:["couchdb_type"]}});
         const docsDestroy = await db.find({ selector: { couchdb_type: shortname }, limit: 100000 });
 
         if (docsDestroy.docs.length > 0) {
@@ -964,16 +965,185 @@ router.get('/clients/hf/getBalance', authorize, async (req, res) => {
     }
 });
 
-async function getBalanceById(idClient: number) {
-    try {
+export async function getBalanceById(idClient: number) {
+   
         const pool = await sql.connect(sqlConfig);
         const result = await pool.request()
             .input('idCliente', sql.Int, idClient)
             .execute('MOV_ObtenerSaldoClienteById');
         return result.recordsets
-    } catch (err: any) {
-        throw new Error(err);
-    }
+}
+
+export async function getContractInfo( idContract: number){
+    const pool = await sql.connect(sqlConfig);
+
+    const dateTime = new Date();
+
+    const result = await pool
+        .request()
+        .input("dateCurrrent", sql.Date, dateTime)
+        .input("dateTimeCurrent", sql.DateTime, dateTime)
+        .input("idContrato", sql.Int, idContract)        
+        .query(
+    `
+    SELECT OTOR_Contratos.id_cliente AS idCliente,
+    OTOR_Contratos.id AS idContrato,
+    OTOR_SolicitudPrestamos.id_producto_maestro,
+    (CASE (OTOR_Contratos.id_tipo_cliente)
+         WHEN  1
+         THEN 
+         (
+             SELECT ISNULL(CLIE_Grupos.nombre,'')
+             FROM CLIE_Grupos 
+             WHERE id_cliente = OTOR_contratos.id_cliente
+         )
+         WHEN  2
+         THEN 
+         (
+             SELECT ISNULL(CONT_Personas.nombre, '') + ' ' + ISNULL(CONT_Personas.apellido_paterno, '') + ' ' + ISNULL(CONT_Personas.apellido_materno, '')
+             FROM CONT_Personas 
+             INNER JOIN CLIE_Individual
+             ON CONT_Personas.id = CLIE_Individual.id_persona
+             WHERE CLIE_Individual.id_cliente = OTOR_contratos.id_cliente
+         )
+         ELSE
+         ''
+     END) AS nombreCliente,
+     (
+         SELECT ISNULL(COUNT(*),0)
+         FROM OTOR_SolicitudPrestamoMonto
+         WHERE OTOR_SolicitudPrestamoMonto.id_solicitud_prestamo = OTOR_SolicitudPrestamos.id
+         AND OTOR_SolicitudPrestamoMonto.autorizado = 1
+     ) AS numeroMiembros,
+     OTOR_SolicitudPrestamos.ciclo AS Ciclo,
+     OTOR_SolicitudPrestamos.monto_total_autorizado AS montoTotalAutorizado,
+     CATA_Productos.periodos AS plazo,
+     CATA_Productos.periodicidad AS periodicidad,
+     dbo.ufnObtenerFechaHabil(OTOR_Contratos.fecha_primer_pago) AS fechaPrimerPago,
+     dbo.ufnObtenerFechaHabil(OTOR_Contratos.fecha_ultimo_pago) AS fechaUltimoPago,
+     (CASE (OTOR_Contratos.id_tipo_cliente)
+         WHEN  1
+         THEN 
+         (
+             SELECT ISNULL(OTOR_ContratoGrupal.monto_reembolso,0)
+             FROM OTOR_ContratoGrupal 
+             WHERE OTOR_ContratoGrupal.no_folio = OTOR_contratos.id
+         )
+         WHEN  2
+         THEN 
+         (
+             SELECT ISNULL(OTOR_ContratoIndividual.monto_reembolso,0)
+             FROM OTOR_ContratoIndividual 
+             WHERE OTOR_ContratoIndividual.id_contrato = OTOR_contratos.id
+         )
+         ELSE
+         ''
+     END) AS montoReembolso,
+     (CASE (OTOR_Contratos.estatus)
+         WHEN  'DESEMBOLSADO'
+         THEN 
+         (
+             CAST(dbo.ufnGetSaldoPendiente(OTOR_Contratos.id, @dateTimeCurrent)AS MONEY)
+         )
+         WHEN  'TRANSITO'
+         THEN 
+         (
+             0
+         )
+         ELSE
+         0
+     END) AS saldoActual,
+     dbo.ufnCalcularPrincipalVencido(OTOR_Contratos.id,dbo.ufnGetNumeroPago(@dateTimeCurrent, OTOR_Contratos.id, -1), @dateTimeCurrent) AS SaldoEnMora,
+     dbo.ufnCalcularInteresVencido(OTOR_Contratos.id,dbo.ufnGetNumeroPago(@dateTimeCurrent, OTOR_Contratos.id, -1), @dateTimeCurrent) AS SaldoInteres,
+     dbo.ufnCalcularImpuestoVencido(OTOR_Contratos.id,dbo.ufnGetNumeroPago(@dateTimeCurrent, OTOR_Contratos.id, -1), @dateTimeCurrent) AS SaldoImpuesto,
+     dbo.ufnGetCantidadPagosVencidos(OTOR_Contratos.id,dbo.ufnGetNumeroPago(@dateTimeCurrent, OTOR_Contratos.id, -1), @dateTimeCurrent) AS NoPagosVencidos,
+     (
+         SELECT dbo.ufnObtenerFechaHabil(OTOR_DetallePlanPagos.fecha_vencimiento)
+         FROM OTOR_DetallePlanPagos
+         WHERE OTOR_DetallePlanPagos.id =
+         (
+             SELECT ISNULL(MAX(OTOR_DetallePlanPagos.id), (SELECT OTOR_DetallePlanPagos.id FROM dbo.OTOR_DetallePlanPagos 
+                                                           INNER JOIN OTOR_PlanPagos 
+                                                           ON OTOR_DetallePlanPagos.id_plan_pago = OTOR_PlanPagos.id
+                                                           WHERE  OTOR_PlanPagos.id_contrato = OTOR_Contratos.id
+                                                           AND OTOR_DetallePlanPagos.numero_pago = 1))
+             FROM OTOR_DetallePlanPagos 
+             INNER JOIN OTOR_PlanPagos 
+             ON OTOR_DetallePlanPagos.id_plan_pago = OTOR_PlanPagos.id
+             WHERE  OTOR_PlanPagos.id_contrato = OTOR_Contratos.id
+             AND OTOR_DetallePlanPagos.numero_pago >= dbo.ufnGetNumeroPago(@dateTimeCurrent, OTOR_Contratos.id, -1)
+             AND OTOR_DetallePlanPagos.fecha_vencimiento <= @dateTimeCurrent
+         )
+     ) AS fechaProximoPago,
+     dbo.ufnGetDiasAtraso(@dateTimeCurrent, OTOR_Contratos.id, -1) AS diasDeMora,
+     OTOR_SolicitudPrestamos.id_oficial AS idOficialCredito,
+     (
+         SELECT ISNULL(CONT_Personas.nombre, '') + ' ' + ISNULL(CONT_Personas.apellido_paterno, '') + ' ' + ISNULL(CONT_Personas.apellido_materno, '')
+         FROM CONT_Personas 
+         WHERE id = OTOR_SolicitudPrestamos.id_oficial
+     ) AS nombreOficialCredito,
+     --dbo.ufnGetProvisionBySaldoDias(dbo.ufnGetSaldoPendiente(OTOR_Contratos.id, @fechaFinal), dbo.ufnGetDiasAtraso(@fechaFinal, OTOR_Contratos.id, -1))
+     0 AS provision,
+     OTOR_Contratos.estatus AS estatus,
+     (
+         SELECT RECU_Reembolsos.fecha_efectiva
+         FROM RECU_ContratoEventos
+         INNER JOIN RECU_Reembolsos 
+         ON RECU_ContratoEventos.id = RECU_Reembolsos.id_contrato_evento
+         WHERE id = (SELECT ISNULL(MAX(id),0)
+                     FROM RECU_ContratoEventos 
+                     WHERE id_contrato = OTOR_Contratos.id
+                     AND tipo_evento='REEMBOLSO')
+         AND RECU_ContratoEventos.revertido = 0 
+     ) AS fechaUltimoReembolso,
+     CORP_OficinasFinancieras.id AS idOficina,
+     ISNULL(CORP_OficinasFinancieras.nombre,'') AS nombreOficina,
+     CORP_Zonas.id AS idEstado,
+     ISNULL(CORP_Zonas.nombre,'') AS nombreEstado,
+     ROW_NUMBER() OVER(ORDER BY OTOR_Contratos.id ASC) AS RowNum,
+     dbo.ufnObtenerDiasAtraso(@dateTimeCurrent, OTOR_Contratos.id) AS diasAtrasoAcumulados,
+     
+     (
+     CASE (OTOR_Contratos.estatus)
+         WHEN  'DESEMBOLSADO'
+             THEN 
+                 
+                 CASE WHEN dbo.ufnGetDiasAtraso(@dateTimeCurrent, OTOR_Contratos.id, -1) > 0
+                 
+              THEN 
+                 (
+                     CAST(dbo.ufnGetSaldoPendiente(OTOR_Contratos.id, @dateTimeCurrent)AS MONEY)
+                 )
+             ELSE
+             (
+                0
+             )
+             END
+         WHEN 'TRANSITO'
+         THEN 
+          (
+             0
+          )
+          ELSE
+          (
+            0
+          )
+     END
+     
+     )AS [Par 1],
+     CATA_Productos.tipo_contrato
+        FROM OTOR_Contratos
+        INNER JOIN OTOR_SolicitudPrestamos
+        ON OTOR_Contratos.id_solicitud_prestamo = OTOR_SolicitudPrestamos.id
+        INNER JOIN CATA_Productos
+        ON OTOR_SolicitudPrestamos.id_producto = CATA_Productos.id
+        INNER JOIN CORP_OficinasFinancieras
+        ON OTOR_SolicitudPrestamos.id_oficina = CORP_OficinasFinancieras.id
+        INNER JOIN CORP_Zonas
+        ON CORP_OficinasFinancieras.id_zona = CORP_Zonas.id
+        WHERE OTOR_Contratos.id = @idContrato
+    `);
+    return result.recordsets
 }
 async function createReference(typeReference: string, idClient: number) {
     const pool = await sql.connect(sqlConfig);
@@ -1148,6 +1318,22 @@ router.get('/clients/hf/accountstatement', authorize, async (req, res) => {
     catch (error) {
         console.log(error);
         res.status(400).send(error);
+    }
+})
+
+router.get('/contract',authorize, async(req,res)=>{
+    try{
+        if( !req.query.idContract ){
+            throw new Error('idContract missing query param!');
+        }
+        const data:any = await getContractInfo(parseInt(req.query.idContract as string));
+        if( !data[0][0] ){
+            throw new Error('No contract found')
+        }
+        res.send(data[0][0])
+    }   
+    catch(e:any){
+        res.status(400).send(e.message)
     }
 })
 

@@ -8,6 +8,9 @@ import { createPersonHF } from '../utils/createPerson';
 import { createClientHF } from '../utils/createClient';
 import { createLoanHF } from '../utils/createLoan';
 import * as Nano from 'nano';
+import sql from 'mssql';
+import { sqlConfig } from '../db/connSQL';
+import { getBalanceById, getContractInfo } from './HfServer';
 
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 
@@ -398,11 +401,11 @@ const clientDataDef: any = {
 }
 
 
-router.get('/actions/test', authorize, async (req, res) => {
+router.get('/db_update_loans_contracts', authorize, async (req, res) => {
     try {
 
-        const numberLoans = await updateLoanAppStatus();
-        res.send({ loans: numberLoans })
+        const loans = await updateLoanAppStatus();
+        res.send({ loans })
     }
     catch (e: any) {
         console.log(e);
@@ -419,34 +422,145 @@ export async function updateLoanAppStatus() {
             couchdb_type: "LOANAPP_GROUP"
         }, limit: 100000
     });
+    const toBeUpdated = [];
+    //// cuando el estatus de LOANAPP esta en Nuevo tramite y cambia a ACEPTADO/PRESTAMO ACTIVO
+    /// Se debe importar el contrato de este LOAN.
+    const clientIdsToUpdate: { 
+        id_cliente:number, 
+        _id: string,
+        branch: [number, string ] } [] = []; // here we add all clients/group uniquely, so perform sigle get balance from HF
 
-    let affected = 0;
     for (let i = 0; i < queryActions.docs.length; i++) {
-        const loanAppDoc:any = queryActions.docs[i];
-        if( !affected ){ /// just for testing
-            affected = 1
+        const loanAppDoc: any = queryActions.docs[i];
+        const idSolicitud = parseInt(loanAppDoc.id_solicitud);
+        const newStatus = await getCurrentLoanStatus(idSolicitud);
+
+        /// only updates when newStatus is not equal current Status
+        if (newStatus) {
+            const statusChanged = !(loanAppDoc.estatus === newStatus.estatus && loanAppDoc.sub_estatus === newStatus.sub_estatus)
+            console.log(`${idSolicitud} (${statusChanged}), ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus} => ${newStatus?.estatus}/${newStatus?.sub_estatus}`);
+
+            if (statusChanged && !loanAppDoc.renovation ) {
+                // renovation flag must be FALSE
+                /// only when changed excepting ACEPTADO/PRESTAMO FINALIZADO
+                toBeUpdated.push({
+                    ...loanAppDoc,
+                    estatus: newStatus.estatus,
+                    sub_estatus: newStatus.sub_estatus
+                });
+                // check if there is any PRESTAMO ACTIVO STATUS
+                if( newStatus.estatus === 'ACEPTADO' && 
+                newStatus.sub_estatus === 'PRESTAMO ACTIVO'){
+                    /// here we found that an status changed to ACTIVE LOAN, therefore, need to get 
+                    /// current contract balance
+                    clientIdsToUpdate.push({ id_cliente: loanAppDoc.id_cliente, _id: loanAppDoc.apply_by, branch: loanAppDoc.branch });
+                }
+            }
+
+        }
+        if(!newStatus){
+            console.log(`${idSolicitud}, unable to retrieve status from SQL`)
+        }
 
 
-            /**
-             * estatus      sub estatus
-             * TRAMITE      NUEVO TRAMITE
-             * ACEPTADO     PRESTAMO ACTIVO
-             * ACEPTADO     PRESTAMO FINALIZADO
-             * 
-             */
-            // ME QUEDE EN QUE DEBO VER 
-            // DONDE SACO EL ESTATUS DE LA SOLICITUD
+    }
+    /// run the bulk update
+    /**1. UPDATE all LOANAPP_DOC docs status/substatus */
+    await db.bulk({ docs: toBeUpdated });
+    console.log(`Updated: ${toBeUpdated.length}, Nothing to do: ${queryActions.docs.length - toBeUpdated.length}`)
+
+    /**2. UPDATE all CONTRACT from HF data*/
+    const queryContracts = await db.find({
+        selector: {
+            couchdb_type: "CONTRACT"
+        }, limit: 100000 });
+
+    const dataToBeUpdated:any = [];
+
+    for( let w=0; w< queryContracts.docs.length; w++){
+        const contractDoc:any = queryContracts.docs[w];
+        const dataFromHF:any = await getContractInfo(contractDoc.idContrato);
+        if( dataFromHF[0][0]){
+            console.log(`${contractDoc.idContrato} updated.`)
+            dataToBeUpdated.push( {
+                ...contractDoc,
+                ...dataFromHF[0][0],
+                updated_by: `${process.env.COUCHDB_USER}`,
+                updated_at: new Date().toISOString(),
+            })
+        }
+        else {
+            console.log(`${contractDoc.idContrato} not found info from SQL`)
+        }
             
-            // console.log(`id_solicitud: ${loanAppDoc.id_solicitud},cliente: ${loanAppDoc.id_cliente} estatus: ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus}`)
+    }
+    await db.bulk( {docs: dataToBeUpdated });
+    console.log(`Updated contracts: ${dataToBeUpdated.length}`);
 
+    /** UPDATE all contracts in db */
 
+    /*** finally, create contracts for ACEPTADO/PRESTAMO ACTIVO */
+
+    const newContractsToCreate = [];
+    for( let i=0; i < clientIdsToUpdate.length; i++){
+        const contractData:any = await getBalanceById(clientIdsToUpdate[i].id_cliente);
+
+        for( let x=0; x<contractData.length; x ++){
+            
+            const contractExists = queryContracts.docs.find( (f:any) => f.idContrato == contractData[0][x].idContrato );
+            if( !contractExists ){
+                const newContract = {
+                    ...contractData[0][x],
+                    _id: Date.now().toString(),
+                    client_id: clientIdsToUpdate[i]._id,
+                    created_by: `${process.env.COUCHDB_USER}`,
+                    created_at: new Date().toISOString(),
+                    branch: clientIdsToUpdate[i].branch,
+                    couchdb_type: "CONTRACT",
+                }
+                newContractsToCreate.push(newContract);
+                console.log(`${newContract.idContract}, created.`);
+            }
         }
 
     }
+    await db.bulk( {docs: newContractsToCreate });
+    console.log(`Created contracts: ${newContractsToCreate.length}`);
 
+    /*** create contracts for */
+    
     return queryActions.docs.length;
 
 }
+
+const uniqueArray = (array:[]) => {
+    return Array.from(
+        array.reduce((set, e) => set.add(e), new Set())
+    )
+}
+
+
+async function getCurrentLoanStatus(idSolicitud: number) {
+
+    const pool = await sql.connect(sqlConfig);
+    const result = await pool
+        .request()
+        .input("id", sql.Int, idSolicitud)
+        .query("select * from OTOR_SolicitudPrestamos WHERE OTOR_SolicitudPrestamos.id = @id");
+
+    if (result.recordsets.length) {
+        if( !!result.recordset[0] )
+        return {
+            estatus: result.recordset[0].estatus.trim(),
+            sub_estatus: result.recordset[0].sub_estatus.trim(),
+        };
+
+    }
+    return undefined
+
+}
+
+
 
 router.get('/actions/fix/09042024', authorize, async (req, res) => {
     try {
@@ -513,44 +627,5 @@ router.get('/actions/fix/09042024', authorize, async (req, res) => {
 
 
 
-// router.get('/actions/fix/030424', authorize, async (req,res)=> {
-//     try {
-//         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-//         const queryActions = await db.find( {
-//             selector: {
-//                 couchdb_type: "CLIENT",
-//             },
-//             limit: 100000
-//         });
-
-//         //// gets docs only where SPLD property does not exists
-//         const clientList:any = queryActions.docs.filter( (i:any) => !i.spld );
-
-//         for( let x=0; x < clientList.length; x++){
-//             await db.insert({
-//                 ...clientList[x],
-//                 spld: {
-//                     desempenia_funcion_publica_cargo: "",
-//                     desempenia_funcion_publica_dependencia: "",
-//                     familiar_desempenia_funcion_publica_cargo: "",
-//                     familiar_desempenia_funcion_publica_dependencia: "",
-//                     familiar_desempenia_funcion_publica_nombre: "",
-//                     familiar_desempenia_funcion_publica_paterno: "",
-//                     familiar_desempenia_funcion_publica_materno: "",
-//                     familiar_desempenia_funcion_publica_parentesco: "",
-//                     instrumento_monetario: [0, ""],
-
-//                   }
-//             })
-//         }
-
-
-//         res.send({ updated: clientList.length, data: clientList.map( (x:any) =>( {_id: x._id, _rev: x._rev })) })
-//     }
-//     catch(e:any){
-
-//         res.status(400).send(e.message);
-//     }
-// })
 
 export { router as ActionsRouter }

@@ -2,3 +2,4 @@
 /config
 /public
 .DS_Store
+*.txt
