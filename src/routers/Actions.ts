@@ -425,10 +425,11 @@ export async function updateLoanAppStatus() {
     const toBeUpdated = [];
     //// cuando el estatus de LOANAPP esta en Nuevo tramite y cambia a ACEPTADO/PRESTAMO ACTIVO
     /// Se debe importar el contrato de este LOAN.
-    const clientIdsToUpdate: { 
-        id_cliente:number, 
+    const clientIdsToUpdate: {
+        id_cliente: number,
         _id: string,
-        branch: [number, string ] } [] = []; // here we add all clients/group uniquely, so perform sigle get balance from HF
+        branch: [number, string]
+    }[] = []; // here we add all clients/group uniquely, so perform sigle get balance from HF
 
     for (let i = 0; i < queryActions.docs.length; i++) {
         const loanAppDoc: any = queryActions.docs[i];
@@ -440,7 +441,7 @@ export async function updateLoanAppStatus() {
             const statusChanged = !(loanAppDoc.estatus === newStatus.estatus && loanAppDoc.sub_estatus === newStatus.sub_estatus)
             console.log(`${idSolicitud} (${statusChanged}), ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus} => ${newStatus?.estatus}/${newStatus?.sub_estatus}`);
 
-            if (statusChanged && !loanAppDoc.renovation ) {
+            if (statusChanged && !loanAppDoc.renovation) {
                 // renovation flag must be FALSE
                 /// only when changed excepting ACEPTADO/PRESTAMO FINALIZADO
                 toBeUpdated.push({
@@ -449,8 +450,8 @@ export async function updateLoanAppStatus() {
                     sub_estatus: newStatus.sub_estatus
                 });
                 // check if there is any PRESTAMO ACTIVO STATUS
-                if( newStatus.estatus === 'ACEPTADO' && 
-                newStatus.sub_estatus === 'PRESTAMO ACTIVO'){
+                if (newStatus.estatus === 'ACEPTADO' &&
+                    newStatus.sub_estatus === 'PRESTAMO ACTIVO') {
                     /// here we found that an status changed to ACTIVE LOAN, therefore, need to get 
                     /// current contract balance
                     clientIdsToUpdate.push({ id_cliente: loanAppDoc.id_cliente, _id: loanAppDoc.apply_by, branch: loanAppDoc.branch });
@@ -458,7 +459,7 @@ export async function updateLoanAppStatus() {
             }
 
         }
-        if(!newStatus){
+        if (!newStatus) {
             console.log(`${idSolicitud}, unable to retrieve status from SQL`)
         }
 
@@ -473,16 +474,17 @@ export async function updateLoanAppStatus() {
     const queryContracts = await db.find({
         selector: {
             couchdb_type: "CONTRACT"
-        }, limit: 100000 });
+        }, limit: 100000
+    });
 
-    const dataToBeUpdated:any = [];
+    const dataToBeUpdated: any = [];
 
-    for( let w=0; w< queryContracts.docs.length; w++){
-        const contractDoc:any = queryContracts.docs[w];
-        const dataFromHF:any = await getContractInfo(contractDoc.idContrato);
-        if( dataFromHF[0][0]){
+    for (let w = 0; w < queryContracts.docs.length; w++) {
+        const contractDoc: any = queryContracts.docs[w];
+        const dataFromHF: any = await getContractInfo(contractDoc.idContrato);
+        if (dataFromHF[0][0]) {
             console.log(`${contractDoc.idContrato} updated.`)
-            dataToBeUpdated.push( {
+            dataToBeUpdated.push({
                 ...contractDoc,
                 ...dataFromHF[0][0],
                 updated_by: `${process.env.COUCHDB_USER}`,
@@ -492,9 +494,9 @@ export async function updateLoanAppStatus() {
         else {
             console.log(`${contractDoc.idContrato} not found info from SQL`)
         }
-            
+
     }
-    await db.bulk( {docs: dataToBeUpdated });
+    await db.bulk({ docs: dataToBeUpdated });
     console.log(`Updated contracts: ${dataToBeUpdated.length}`);
 
     /** UPDATE all contracts in db */
@@ -502,13 +504,13 @@ export async function updateLoanAppStatus() {
     /*** finally, create contracts for ACEPTADO/PRESTAMO ACTIVO */
 
     const newContractsToCreate = [];
-    for( let i=0; i < clientIdsToUpdate.length; i++){
-        const contractData:any = await getBalanceById(clientIdsToUpdate[i].id_cliente);
+    for (let i = 0; i < clientIdsToUpdate.length; i++) {
+        const contractData: any = await getBalanceById(clientIdsToUpdate[i].id_cliente);
 
-        for( let x=0; x<contractData.length; x ++){
-            
-            const contractExists = queryContracts.docs.find( (f:any) => f.idContrato == contractData[0][x].idContrato );
-            if( !contractExists ){
+        for (let x = 0; x < contractData.length; x++) {
+
+            const contractExists = queryContracts.docs.find((f: any) => f.idContrato == contractData[0][x].idContrato);
+            if (!contractExists) {
                 const newContract = {
                     ...contractData[0][x],
                     _id: Date.now().toString(),
@@ -524,16 +526,16 @@ export async function updateLoanAppStatus() {
         }
 
     }
-    await db.bulk( {docs: newContractsToCreate });
+    await db.bulk({ docs: newContractsToCreate });
     console.log(`Created contracts: ${newContractsToCreate.length}`);
 
     /*** create contracts for */
-    
+
     return queryActions.docs.length;
 
 }
 
-const uniqueArray = (array:[]) => {
+const uniqueArray = (array: []) => {
     return Array.from(
         array.reduce((set, e) => set.add(e), new Set())
     )
@@ -549,11 +551,11 @@ async function getCurrentLoanStatus(idSolicitud: number) {
         .query("select * from OTOR_SolicitudPrestamos WHERE OTOR_SolicitudPrestamos.id = @id");
 
     if (result.recordsets.length) {
-        if( !!result.recordset[0] )
-        return {
-            estatus: result.recordset[0].estatus.trim(),
-            sub_estatus: result.recordset[0].sub_estatus.trim(),
-        };
+        if (!!result.recordset[0])
+            return {
+                estatus: result.recordset[0].estatus.trim(),
+                sub_estatus: result.recordset[0].sub_estatus.trim(),
+            };
 
     }
     return undefined
@@ -625,6 +627,68 @@ router.get('/actions/fix/09042024', authorize, async (req, res) => {
     }
 });
 
+router.get('/fix_address_ext_int_numbers_types', authorize, async (req, res) => {
+
+    try {
+
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        await db.createIndex( { index: { fields: ["couchdb_type"]}})
+        const queryActions = await db.find({
+            selector: {
+                couchdb_type: "CLIENT"
+            },
+            limit: 100000
+        });
+
+        
+        const recordsToUpdate = []
+        for( let i=0; i< queryActions.docs.length; i++){
+
+            let clientDoc:any = queryActions.docs[i];
+            let addressError = false;
+            let newAddressArray = []
+            for( let j=0; j<clientDoc.address.length; j++){
+                let addressDoc = clientDoc.address[j];
+                if( !checkProperty('ext_number',addressDoc,0) ||
+                    !checkProperty('int_number', addressDoc,0) ||
+                    !checkProperty('exterior_number', addressDoc,"SN") ||
+                    !checkProperty('interior_number', addressDoc,"SN") 
+                
+                ){
+                    addressError = true;
+                    addressDoc = {
+                        ...addressDoc,
+                        ext_number: 0,
+                        int_number: 0,
+                        exterior_number: 'SN',
+                        interior_number: 'SN'
+                    }
+                }
+                newAddressArray.push(addressDoc)
+            }
+            if( addressError) {
+                clientDoc.address = newAddressArray;
+                recordsToUpdate.push(clientDoc)
+            }
+        }
+        await db.bulk({ docs: recordsToUpdate });
+        res.send({ recordsUpdated: recordsToUpdate.map( (i:any) => ({ id_cliente: i.id_cliente }))})
+    }
+    catch (e: any) {
+        res.status(400).send(e.message);
+    }
+});
+
+function checkProperty (property:string, obj: any, defaultVal: any) {
+    if( property in obj ){ // existe la propiedad?
+        // Si existe, es el tipo correcto?
+        if( (typeof obj[property] == (typeof defaultVal)) ){
+            return true; // property is Ok
+        }
+    } 
+    // obj[property] = defaultVal;
+    return false; // property is NOT ok
+}
 
 
 
