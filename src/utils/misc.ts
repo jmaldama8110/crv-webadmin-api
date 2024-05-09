@@ -77,6 +77,17 @@ export const calculateYearsMonthsFromDates = ( dateSince:Date, dateFrom: Date ) 
     return [yearsDiff, monthsDiff];
 }
 
+export function checkProperty (property:string, obj: any, defaultVal: any) {
+    if( property in obj ){ // existe la propiedad?
+        // Si existe, es el tipo correcto?
+        if( (typeof obj[property] == (typeof defaultVal)) ){
+            return true; // property is Ok
+        }
+    } 
+    // obj[property] = defaultVal;
+    return false; // property is NOT ok
+}
+
 
 
 

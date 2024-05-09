@@ -49,6 +49,7 @@ const Nano = __importStar(require("nano"));
 const mssql_1 = __importDefault(require("mssql"));
 const connSQL_1 = require("../db/connSQL");
 const HfServer_1 = require("./HfServer");
+const misc_1 = require("../utils/misc");
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 let loanAppGroup = new LoanAppGroup_1.LoanAppGroup();
 let ClientDoc = new Client_1.Client();
@@ -517,9 +518,6 @@ function updateLoanAppStatus() {
     });
 }
 exports.updateLoanAppStatus = updateLoanAppStatus;
-const uniqueArray = (array) => {
-    return Array.from(array.reduce((set, e) => set.add(e), new Set()));
-};
 function getCurrentLoanStatus(idSolicitud) {
     return __awaiter(this, void 0, void 0, function* () {
         const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
@@ -598,10 +596,10 @@ router.get('/fix_address_ext_int_numbers_types', authorize_1.authorize, (req, re
             let newAddressArray = [];
             for (let j = 0; j < clientDoc.address.length; j++) {
                 let addressDoc = clientDoc.address[j];
-                if (!checkProperty('ext_number', addressDoc, 0) ||
-                    !checkProperty('int_number', addressDoc, 0) ||
-                    !checkProperty('exterior_number', addressDoc, "SN") ||
-                    !checkProperty('interior_number', addressDoc, "SN")) {
+                if (!(0, misc_1.checkProperty)('ext_number', addressDoc, 0) ||
+                    !(0, misc_1.checkProperty)('int_number', addressDoc, 0) ||
+                    !(0, misc_1.checkProperty)('exterior_number', addressDoc, "SN") ||
+                    !(0, misc_1.checkProperty)('interior_number', addressDoc, "SN")) {
                     addressError = true;
                     addressDoc = Object.assign(Object.assign({}, addressDoc), { ext_number: 0, int_number: 0, exterior_number: 'SN', interior_number: 'SN' });
                 }
@@ -619,13 +617,49 @@ router.get('/fix_address_ext_int_numbers_types', authorize_1.authorize, (req, re
         res.status(400).send(e.message);
     }
 }));
-function checkProperty(property, obj, defaultVal) {
-    if (property in obj) { // existe la propiedad?
-        // Si existe, es el tipo correcto?
-        if ((typeof obj[property] == (typeof defaultVal))) {
-            return true; // property is Ok
+router.get('/fix_loans_missing_member_id', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        // await db.createIndex( { index: { fields: ["couchdb_type"]}})
+        const queryActions = yield db.find({
+            selector: {
+                couchdb_type: "LOANAPP_GROUP"
+            },
+            limit: 10000
+        });
+        console.log(`Loans: ${queryActions.docs.length}`);
+        const clientsQuery = yield db.find({
+            selector: {
+                couchdb_type: "CLIENT"
+            },
+            limit: 10000
+        });
+        console.log(`Clients: ${clientsQuery.docs.length}`);
+        const recordsToUpdate = [];
+        for (let i = 0; i < queryActions.docs.length; i++) {
+            let loanDoc = queryActions.docs[i];
+            let loanWithIssues = false;
+            let newMembersArray = [];
+            for (let j = 0; j < loanDoc.members.length; j++) {
+                let memberDoc = loanDoc.members[j];
+                if (!memberDoc.client_id) { // founds an client_id empty
+                    loanWithIssues = true;
+                    const clientDoc = clientsQuery.docs.find((k) => (k.id_cliente == memberDoc.id_cliente));
+                    if (clientDoc) {
+                        memberDoc = Object.assign(Object.assign({}, memberDoc), { client_id: clientDoc._id });
+                    }
+                }
+                newMembersArray.push(memberDoc);
+            }
+            if (loanWithIssues) {
+                loanDoc.members = newMembersArray;
+                recordsToUpdate.push(loanDoc);
+            }
         }
+        yield db.bulk({ docs: recordsToUpdate });
+        res.send({ recordsUpdated: recordsToUpdate.map((i) => (Object.assign({}, i))) });
     }
-    // obj[property] = defaultVal;
-    return false; // property is NOT ok
-}
+    catch (e) {
+        res.status(400).send(e.message);
+    }
+}));

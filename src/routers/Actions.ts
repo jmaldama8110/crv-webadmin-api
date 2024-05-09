@@ -11,6 +11,7 @@ import * as Nano from 'nano';
 import sql from 'mssql';
 import { sqlConfig } from '../db/connSQL';
 import { getBalanceById, getContractInfo } from './HfServer';
+import { checkProperty } from '../utils/misc';
 
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 
@@ -535,12 +536,6 @@ export async function updateLoanAppStatus() {
 
 }
 
-const uniqueArray = (array: []) => {
-    return Array.from(
-        array.reduce((set, e) => set.add(e), new Set())
-    )
-}
-
 
 async function getCurrentLoanStatus(idSolicitud: number) {
 
@@ -678,17 +673,61 @@ router.get('/fix_address_ext_int_numbers_types', authorize, async (req, res) => 
         res.status(400).send(e.message);
     }
 });
+router.get('/fix_loans_missing_member_id', authorize, async (req, res) => {
 
-function checkProperty (property:string, obj: any, defaultVal: any) {
-    if( property in obj ){ // existe la propiedad?
-        // Si existe, es el tipo correcto?
-        if( (typeof obj[property] == (typeof defaultVal)) ){
-            return true; // property is Ok
+    try {
+
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        // await db.createIndex( { index: { fields: ["couchdb_type"]}})
+        const queryActions = await db.find({
+            selector: {
+                couchdb_type: "LOANAPP_GROUP"
+            },
+            limit: 10000
+        });
+        console.log(`Loans: ${queryActions.docs.length}`)
+        
+        const clientsQuery = await db.find({
+            selector: {
+                couchdb_type: "CLIENT"
+            },
+            limit: 10000
+        });
+        console.log(`Clients: ${clientsQuery.docs.length}`);
+
+        const recordsToUpdate:any = []
+        for( let i=0; i< queryActions.docs.length; i++){
+
+            let loanDoc:any = queryActions.docs[i];
+            let loanWithIssues = false;
+            let newMembersArray = []
+
+            for( let j=0; j<loanDoc.members.length; j++){
+                let memberDoc:any = loanDoc.members[j];
+                if( !memberDoc.client_id ){ // founds an client_id empty
+                    loanWithIssues = true;
+                    const clientDoc:any = clientsQuery.docs.find( (k:any) => (k.id_cliente == memberDoc.id_cliente));
+                    if( clientDoc ){
+                        memberDoc = {
+                            ...memberDoc,
+                            client_id: clientDoc._id
+                        }    
+                    }
+                }
+                newMembersArray.push(memberDoc)
+            }
+            if( loanWithIssues) {
+                loanDoc.members = newMembersArray;
+                recordsToUpdate.push(loanDoc)
+            }
         }
-    } 
-    // obj[property] = defaultVal;
-    return false; // property is NOT ok
-}
+        await db.bulk({ docs: recordsToUpdate });
+        res.send({ recordsUpdated: recordsToUpdate.map( (i:any) => ( { ...i}))})
+    }
+    catch (e: any) {
+        res.status(400).send(e.message);
+    }
+});
 
 
 

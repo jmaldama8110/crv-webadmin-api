@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculateYearsMonthsFromDates = exports.arrayFromStringSize = exports.getRounded = exports.formatLocalCurrency = exports.formatLocalDate2 = exports.formatLocalDateShort = exports.formatLocalDate = void 0;
+exports.checkProperty = exports.calculateYearsMonthsFromDates = exports.arrayFromStringSize = exports.getRounded = exports.formatLocalCurrency = exports.formatLocalDate2 = exports.formatLocalDateShort = exports.formatLocalDate = void 0;
 const formatLocalDate = (data) => {
     if (!data)
         return '';
@@ -74,3 +74,14 @@ const calculateYearsMonthsFromDates = (dateSince, dateFrom) => {
     return [yearsDiff, monthsDiff];
 };
 exports.calculateYearsMonthsFromDates = calculateYearsMonthsFromDates;
+function checkProperty(property, obj, defaultVal) {
+    if (property in obj) { // existe la propiedad?
+        // Si existe, es el tipo correcto?
+        if ((typeof obj[property] == (typeof defaultVal))) {
+            return true; // property is Ok
+        }
+    }
+    // obj[property] = defaultVal;
+    return false; // property is NOT ok
+}
+exports.checkProperty = checkProperty;
