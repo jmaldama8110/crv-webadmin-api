@@ -620,7 +620,7 @@ router.get('/fix_address_ext_int_numbers_types', authorize_1.authorize, (req, re
 router.get('/fix_loans_missing_member_id', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        // await db.createIndex( { index: { fields: ["couchdb_type"]}})
+        yield db.createIndex({ index: { fields: ["couchdb_type"] } });
         const queryActions = yield db.find({
             selector: {
                 couchdb_type: "LOANAPP_GROUP"
@@ -657,6 +657,7 @@ router.get('/fix_loans_missing_member_id', authorize_1.authorize, (req, res) => 
             }
         }
         yield db.bulk({ docs: recordsToUpdate });
+        console.log(`Loans to update: ${recordsToUpdate.length}`);
         res.send({ recordsUpdated: recordsToUpdate.map((i) => (Object.assign({}, i))) });
     }
     catch (e) {

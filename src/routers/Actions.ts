@@ -678,7 +678,7 @@ router.get('/fix_loans_missing_member_id', authorize, async (req, res) => {
     try {
 
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        // await db.createIndex( { index: { fields: ["couchdb_type"]}})
+        await db.createIndex( { index: { fields: ["couchdb_type"]}})
         const queryActions = await db.find({
             selector: {
                 couchdb_type: "LOANAPP_GROUP"
@@ -722,6 +722,7 @@ router.get('/fix_loans_missing_member_id', authorize, async (req, res) => {
             }
         }
         await db.bulk({ docs: recordsToUpdate });
+        console.log(`Loans to update: ${recordsToUpdate.length}`)
         res.send({ recordsUpdated: recordsToUpdate.map( (i:any) => ( { ...i}))})
     }
     catch (e: any) {
