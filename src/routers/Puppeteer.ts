@@ -483,7 +483,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
   
       const clientsData = clientsQuery.rows.map( (x:any) => {
   
-        const memberData = loanApp.members.find( (y:any) => y.client_id == x.doc.client_id )
+        const memberData = loanApp.members.find( (y:any) => y.client_id == x.doc._id )
         const loanCycle = parseInt(memberData.loan_cycle) + 1
         const memberLoanAmount = memberData.apply_amount;
         const beneficiaryInfo = {

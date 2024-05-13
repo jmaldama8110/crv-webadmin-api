@@ -465,7 +465,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
             fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : '__________________________________________________________________'
         };
         const clientsData = clientsQuery.rows.map((x) => {
-            const memberData = loanApp.members.find((y) => y.client_id == x.doc.client_id);
+            const memberData = loanApp.members.find((y) => y.client_id == x.doc._id);
             const loanCycle = parseInt(memberData.loan_cycle) + 1;
             const memberLoanAmount = memberData.apply_amount;
             const beneficiaryInfo = {
