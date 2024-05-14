@@ -647,7 +647,8 @@ router.get('/fix_address_ext_int_numbers_types', authorize, async (req, res) => 
                 if( !checkProperty('ext_number',addressDoc,0) ||
                     !checkProperty('int_number', addressDoc,0) ||
                     !checkProperty('exterior_number', addressDoc,"SN") ||
-                    !checkProperty('interior_number', addressDoc,"SN") 
+                    !checkProperty('interior_number', addressDoc,"SN") ||
+                    !checkProperty('ownership_type', addressDoc,[1,"PROPIA"])
                 
                 ){
                     addressError = true;
@@ -656,7 +657,8 @@ router.get('/fix_address_ext_int_numbers_types', authorize, async (req, res) => 
                         ext_number: 0,
                         int_number: 0,
                         exterior_number: 'SN',
-                        interior_number: 'SN'
+                        interior_number: 'SN',
+                        ownership_type: [1,"PROPIA"]
                     }
                 }
                 newAddressArray.push(addressDoc)
@@ -667,6 +669,7 @@ router.get('/fix_address_ext_int_numbers_types', authorize, async (req, res) => 
             }
         }
         await db.bulk({ docs: recordsToUpdate });
+        console.log(`Registros de Clientes con Issues: ${recordsToUpdate.length} de ${queryActions.docs.length}`)
         res.send({ recordsUpdated: recordsToUpdate.map( (i:any) => ({ id_cliente: i.id_cliente }))})
     }
     catch (e: any) {
