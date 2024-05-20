@@ -41,6 +41,7 @@ const authorize_1 = require("../middleware/authorize");
 const mssql_1 = __importDefault(require("mssql"));
 const connSQL_1 = require("../db/connSQL");
 const Nano = __importStar(require("nano"));
+const Actions_1 = require("./Actions");
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 const router = express_1.default.Router();
 exports.hfRouter = router;
@@ -91,14 +92,35 @@ router.get('/groups/hf/loanapps', authorize_1.authorize, (req, res) => __awaiter
             throw new Error('Query parametrs branchId or groupName are missing!');
         }
         const data = yield getLoanApplicationById(parseInt(req.query.applicationId), parseInt(req.query.branchId));
+        const resultObject = yield processLoanApplicationByDataRS(data);
+        res.status(200).send(resultObject);
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).send(err);
+    }
+}));
+function getLoanApplicationById(loanAppId, branchId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        const result = yield pool.request()
+            .input('id_solicitud', mssql_1.default.Int, loanAppId)
+            .input('id_oficina', mssql_1.default.Int, branchId)
+            .execute('CLIE_ObtenerSolicitudClienteServicioFinanciero_V2');
+        return result.recordsets;
+    });
+}
+exports.getLoanApplicationById = getLoanApplicationById;
+function processLoanApplicationByDataRS(data) {
+    return __awaiter(this, void 0, void 0, function* () {
         /**
-         * resultsets[0] => Detalle de la solicitud
-         * resultsets[1] => Ciclo y estatus
-         * resultsets[2] => Nombre del grupo, dia / hora reunion
-         * resultsets[3] => Direccion del grupo
-         * resultsets[4] => Integrantes, cargo, etc (importe solicitado, autorizado, etc)
-         * resultsets[5] => Integrantes / Detalle Seguro (Costo, tipo seguro, Beneficiario, parentezco, etc)
-         */
+                 * resultsets[0] => Detalle de la solicitud
+                 * resultsets[1] => Ciclo y estatus
+                 * resultsets[2] => Nombre del grupo, dia / hora reunion
+                 * resultsets[3] => Direccion del grupo
+                 * resultsets[4] => Integrantes, cargo, etc (importe solicitado, autorizado, etc)
+                 * resultsets[5] => Integrantes / Detalle Seguro (Costo, tipo seguro, Beneficiario, parentezco, etc)
+        */
         const loan_application = data[0][0];
         const loan_cycle = data[1][0];
         const group_info = data[2][0];
@@ -194,24 +216,9 @@ router.get('/groups/hf/loanapps', authorize_1.authorize, (req, res) => __awaiter
                 liquid_guarantee: loan_application.garantia_liquida
             }
         };
-        res.status(200).send({ group_data, loan_app });
-    }
-    catch (err) {
-        console.log(err);
-        res.status(400).send(err);
-    }
-}));
-function getLoanApplicationById(loanAppId, branchId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
-        const result = yield pool.request()
-            .input('id_solicitud', mssql_1.default.Int, loanAppId)
-            .input('id_oficina', mssql_1.default.Int, branchId)
-            .execute('CLIE_ObtenerSolicitudClienteServicioFinanciero_V2');
-        return result.recordsets;
+        return { group_data, loan_app };
     });
 }
-exports.getLoanApplicationById = getLoanApplicationById;
 router.get('/products/hf', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!(req.query.branchId && req.query.clientType)) {
@@ -255,17 +262,6 @@ function getProductsByBranch(branchId, clientType) {
     });
 }
 router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    //  get the Client Data with identityNumber and externalId
-    /*
-      data.recordsets[0][0]  -> Datos personsales
-      data.recordsets[0][1] Dataset -> Identificaciones
-      data.recordsets[0][2] Dataset -> Datos del IFE / INE
-      data.recordsets[0][3] Direcciones -> Direcciones
-      data.recordsets[0][4] Telefonos
-      data.recordsets[0][5] Aval
-      data.recordsets[0][6] Ciclo
-      data.recordsets[0][7] Datos economicos
-      */
     try {
         let data;
         if ((req.query.externalId)) {
@@ -280,199 +276,7 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
             }
         }
         if (data.recordset.length == 1) {
-            /// extract CURP and Ine Folio
-            const curp = data.recordsets[1].find((i) => i.tipo_identificacion === "CURP");
-            const ife = data.recordsets[1].find((i) => i.tipo_identificacion === "IFE");
-            const rfc = data.recordsets[1].find((i) => i.tipo_identificacion === "RFC");
-            /// busca el detalle de la IFE/INE
-            const ineDetail = data.recordsets[2];
-            const ine_detalle = ineDetail.find((i) => i.id_identificacion_oficial === ife.id_numero);
-            const identities = [];
-            for (let i = 0; i < data.recordsets[1].length; i++) {
-                const itemIdentity = data.recordsets[1][i];
-                identities.push({
-                    _id: itemIdentity.id,
-                    id_persona: itemIdentity.id_persona,
-                    tipo_id: itemIdentity.tipo_identificacion,
-                    numero_id: itemIdentity.id_numero,
-                    id_direccion: itemIdentity.id_direccion,
-                    status: itemIdentity.estatus_registro
-                });
-            }
-            const address = [];
-            let email = '';
-            for (let i = 0; i < data.recordsets[3].length; i++) {
-                const add = data.recordsets[3][i];
-                if (add.correo_electronico) {
-                    email = add.correo_electronico;
-                }
-                address.push({
-                    _id: add.id,
-                    type: add.tipo.trim(),
-                    country: [`COUNTRY|${add.id_pais}`, add.nombre_pais],
-                    province: [`PROVINCE|${add.id_estado}`, add.nombre_estado],
-                    municipality: [`MUNICIPALITY|${add.id_municipio}`, add.nombre_municipio],
-                    city: [`CITY|${add.id_ciudad_localidad}`, add.nombre_ciudad_localidad],
-                    colony: [`NEIGHBORHOOD|${add.id_asentamiento}`, add.nombre_asentamiento],
-                    address_line1: add.direccion,
-                    exterior_number: add.numero_exterior.trim(),
-                    interior_number: add.numero_interior.trim(),
-                    ext_number: add.num_exterior,
-                    int_number: add.num_interior,
-                    street_reference: add.referencia,
-                    ownership_type: [add.casa_situacion, add.casa_situacion_etiqueta],
-                    post_code: add.codigo_postal,
-                    residence_since: add.tiempo_habitado_inicio,
-                    residence_to: add.tiempo_habitado_final,
-                    road: [add.vialidad, add.etiqueta_vialidad],
-                    email
-                });
-            }
-            const phones = [];
-            for (let l = 0; l < data.recordsets[4].length; l++) {
-                const phoneAdd = data.recordsets[4][l];
-                if (phoneAdd.idcel_telefono.trim()) {
-                    phones.push({
-                        _id: phoneAdd.id,
-                        phone: phoneAdd.idcel_telefono.trim(),
-                        type: phoneAdd.tipo_telefono.trim(),
-                        company: phoneAdd.compania.trim(),
-                        validated: false
-                    });
-                }
-            }
-            const perSet = Object.assign({}, data.recordsets[0][0]);
-            let household_data = {
-                household_floor: false,
-                household_roof: false,
-                household_toilet: false,
-                household_latrine: false,
-                household_brick: false,
-                economic_dependants: '',
-                internet_access: false,
-                prefered_social: [0, ""],
-                rol_hogar: [0, ""],
-                user_social: '',
-                has_disable: false,
-                speaks_dialect: false,
-                has_improved_income: false,
-            };
-            let business_data = {
-                bis_location: [0, ""],
-                economic_activity: ['', ''],
-                profession: ['', ''],
-                ocupation: ["", ""],
-                business_start_date: '',
-                business_name: '',
-                business_owned: false,
-                business_phone: '',
-                number_employees: '',
-                loan_destination: [0, ''],
-                income_sales_total: 0,
-                income_partner: 0,
-                income_job: 0,
-                income_remittances: 0,
-                income_other: 0,
-                income_total: 0,
-                expense_family: 0,
-                expense_rent: 0,
-                expense_business: 0,
-                expense_debt: 0,
-                expense_credit_cards: 0,
-                expense_total: 0,
-                keeps_accounting_records: false,
-                has_previous_experience: false,
-                previous_loan_experience: '',
-                bis_season_type: ''
-            };
-            let spld = {
-                desempenia_funcion_publica_cargo: "",
-                desempenia_funcion_publica_dependencia: "",
-                familiar_desempenia_funcion_publica_cargo: "",
-                familiar_desempenia_funcion_publica_dependencia: "",
-                familiar_desempenia_funcion_publica_nombre: "",
-                familiar_desempenia_funcion_publica_paterno: "",
-                familiar_desempenia_funcion_publica_materno: "",
-                familiar_desempenia_funcion_publica_parentesco: "",
-                instrumento_monetario: [0, ""]
-            };
-            let econActId = 0, econActCap = '', profId = 0, profCap = '', occupId = 0, occupCap = '', bisLoc = 0;
-            if (data.recordsets[7].length > 0) {
-                if (data.recordsets[7][0].id_actividad_economica) {
-                    econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
-                        econActCap = data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString() : '';
-                }
-                profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
-                    profCap = data.recordsets[7][0].nombre_profesion ? data.recordsets[7][0].nombre_profesion.toString() : '';
-                occupId = perSet.id_occupation ? perSet.id_occupation : 0,
-                    occupCap = perSet.occupation ? perSet.occupation.toString() : '';
-                bisLoc = !!data.recordsets[7][0].econ_id_ubicacion_negocio ? data.recordsets[7][0].econ_id_ubicacion_negocio : 0;
-            }
-            if (data.recordsets[7].length) {
-                business_data.bis_location = [bisLoc, ''];
-                business_data.economic_activity = [econActId, econActCap];
-                business_data.profession = [profId, profCap];
-                business_data.ocupation = [occupId, occupCap];
-                business_data.business_name = data.recordsets[7][0].nombre_negocio;
-                business_data.business_start_date = data.recordsets[7][0].econ_fecha_inicio_act_productiva,
-                    business_data.business_owned = false,
-                    business_data.business_phone = "",
-                    business_data.number_employees = data.recordsets[7][0].econ_numero_empleados;
-                business_data.loan_destination = [data.recordsets[7][0].econ_id_destino_credito, ''];
-                business_data.income_sales_total = data.recordsets[7][0].econ_ventas_totales_cantidad ? data.recordsets[7][0].econ_ventas_totales_cantidad : 0;
-                business_data.income_partner = data.recordsets[7][0].econ_sueldo_conyugue ? data.recordsets[7][0].econ_sueldo_conyugue : 0;
-                business_data.income_other = data.recordsets[7][0].econ_otros_ingresos ? data.recordsets[7][0].econ_otros_ingresos : 0;
-                business_data.income_job = data.recordsets[7][0].econ_pago_casa ? data.recordsets[7][0].econ_pago_casa : 0;
-                business_data.income_remittances = data.recordsets[7][0].econ_cantidad_mensual ? data.recordsets[7][0].econ_cantidad_mensual : 0;
-                business_data.income_total = 0;
-                business_data.expense_family = data.recordsets[7][0].econ_gastos_familiares ? data.recordsets[7][0].econ_gastos_familiares : 0;
-                business_data.expense_rent = data.recordsets[7][0].econ_renta ? data.recordsets[7][0].econ_renta : 0;
-                business_data.expense_business = data.recordsets[7][0].econ_otros_gastos ? data.recordsets[7][0].econ_otros_gastos : 0;
-                business_data.expense_debt = data.recordsets[7][0].econ_gastos_vivienda ? data.recordsets[7][0].econ_gastos_vivienda : 0;
-                business_data.expense_credit_cards = data.recordsets[7][0].econ_gastos_transporte ? data.recordsets[7][0].econ_gastos_transporte : 0;
-                ;
-                business_data.expense_total = 0;
-                household_data.economic_dependants = data.recordsets[7][0].econ_dependientes_economicos.toString();
-                household_data.household_brick = !!data.recordsets[7][0].vivienda_block;
-                household_data.household_floor = !!data.recordsets[7][0].vivienda_piso;
-                household_data.household_latrine = !!data.recordsets[7][0].vivienda_letrina;
-                household_data.household_roof = !!data.recordsets[7][0].vivienda_techo_losa;
-                household_data.household_toilet = !!data.recordsets[7][0].vivienda_bano;
-                household_data.internet_access = !!data.recordsets[7][0].utiliza_internet;
-                household_data.prefered_social = [data.recordsets[7][0].id_tipo_red_social, ""];
-                household_data.user_social = data.recordsets[7][0].usuario_red_social;
-                household_data.rol_hogar = [data.recordsets[7][0].econ_id_rol_hogar, ""];
-                household_data.has_disable = data.recordsets[7][0].habilidad_diferente;
-                household_data.speaks_dialect = data.recordsets[7][0].lengua_indigena;
-                household_data.has_improved_income = data.recordsets[7][0].mejorado_ingreso;
-                spld.desempenia_funcion_publica_cargo = data.recordsets[7][0].desempenia_funcion_publica_cargo,
-                    spld.desempenia_funcion_publica_dependencia = data.recordsets[7][0].desempenia_funcion_publica_dependencia,
-                    spld.familiar_desempenia_funcion_publica_cargo = data.recordsets[7][0].familiar_desempenia_funcion_publica_cargo,
-                    spld.familiar_desempenia_funcion_publica_dependencia = data.recordsets[7][0].familiar_desempenia_funcion_publica_dependencia,
-                    spld.familiar_desempenia_funcion_publica_nombre = data.recordsets[7][0].familiar_desempenia_funcion_publica_nombre,
-                    spld.familiar_desempenia_funcion_publica_paterno = data.recordsets[7][0].familiar_desempenia_funcion_publica_paterno,
-                    spld.familiar_desempenia_funcion_publica_materno = data.recordsets[7][0].familiar_desempenia_funcion_publica_materno,
-                    spld.familiar_desempenia_funcion_publica_parentesco = data.recordsets[7][0].familiar_desempenia_funcion_publica_parentesco,
-                    spld.instrumento_monetario = [data.recordsets[7][0].id_instrumento_monetario, ""];
-            }
-            const cicloData = data.recordsets[6];
-            const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0;
-            let data_efirma = data.recordsets[9][0] ?
-                data.recordsets[9][0] :
-                {
-                    id: 0,
-                    id_persona: 0,
-                    fiel: ''
-                };
-            const result = Object.assign(Object.assign({ id_persona: perSet.id_persona, id_cliente: perSet.id, name: perSet.name, lastname: perSet.lastname, second_lastname: perSet.second_lastname, email, curp: curp ? curp.id_numero : "", clave_ine: ife ? ife.id_numero : "", numero_emisiones: ine_detalle ? ine_detalle.numero_emision : '', numero_vertical: ine_detalle ? ine_detalle.numero_vertical_ocr : '', rfc: rfc ? rfc.id_numero : "", dob: perSet.dob, loan_cycle, branch: [perSet.id_oficina, perSet.nombre_oficina], sex: [perSet.id_gender, perSet.gender], education_level: [perSet.id_scholarship, perSet.scholarship], identities,
-                address,
-                phones, tributary_regime: [], not_bis: false, client_type: [2, 'INDIVIDUAL'], nationality: [perSet.id_nationality, perSet.nationality], province_of_birth: [
-                    `PROVINCE|${perSet.id_province_of_birth}`,
-                    perSet.province_of_birth,
-                ], country_of_birth: [
-                    `COUNTRY|${perSet.id_country_of_birth}`,
-                    perSet.country_of_birth,
-                ], marital_status: [perSet.id_marital_status, perSet.marital_status], identification_type: [], guarantor: [], business_data }, household_data), { spld, beneficiaries: [], personal_references: [], guarantee: [], ife_details: ineDetail, data_company: [data.recordsets[8][0]], data_efirma: [data_efirma] });
+            const result = processClientDataRS(data);
             res.send(result);
         }
         else {
@@ -484,6 +288,213 @@ router.get("/clients/hf", authorize_1.authorize, (req, res) => __awaiter(void 0,
         res.status(404).send('Client data not found');
     }
 }));
+function processClientDataRS(data) {
+    //  get the Client Data with identityNumber and externalId
+    /*
+      data.recordsets[0][0]  -> Datos personsales
+      data.recordsets[0][1] Dataset -> Identificaciones
+      data.recordsets[0][2] Dataset -> Datos del IFE / INE
+      data.recordsets[0][3] Direcciones -> Direcciones
+      data.recordsets[0][4] Telefonos
+      data.recordsets[0][5] Aval
+      data.recordsets[0][6] Ciclo
+      data.recordsets[0][7] Datos economicos
+      */
+    /// extract CURP and Ine Folio
+    const curp = data.recordsets[1].find((i) => i.tipo_identificacion === "CURP");
+    const ife = data.recordsets[1].find((i) => i.tipo_identificacion === "IFE");
+    const rfc = data.recordsets[1].find((i) => i.tipo_identificacion === "RFC");
+    /// busca el detalle de la IFE/INE
+    const ineDetail = data.recordsets[2];
+    const ine_detalle = ineDetail.find((i) => i.id_identificacion_oficial === ife.id_numero);
+    const identities = [];
+    for (let i = 0; i < data.recordsets[1].length; i++) {
+        const itemIdentity = data.recordsets[1][i];
+        identities.push({
+            _id: itemIdentity.id,
+            id_persona: itemIdentity.id_persona,
+            tipo_id: itemIdentity.tipo_identificacion,
+            numero_id: itemIdentity.id_numero,
+            id_direccion: itemIdentity.id_direccion,
+            status: itemIdentity.estatus_registro
+        });
+    }
+    const address = [];
+    let email = '';
+    for (let i = 0; i < data.recordsets[3].length; i++) {
+        const add = data.recordsets[3][i];
+        if (add.correo_electronico) {
+            email = add.correo_electronico;
+        }
+        address.push({
+            _id: add.id,
+            type: add.tipo.trim(),
+            country: [`COUNTRY|${add.id_pais}`, add.nombre_pais],
+            province: [`PROVINCE|${add.id_estado}`, add.nombre_estado],
+            municipality: [`MUNICIPALITY|${add.id_municipio}`, add.nombre_municipio],
+            city: [`CITY|${add.id_ciudad_localidad}`, add.nombre_ciudad_localidad],
+            colony: [`NEIGHBORHOOD|${add.id_asentamiento}`, add.nombre_asentamiento],
+            address_line1: add.direccion,
+            exterior_number: add.numero_exterior.trim(),
+            interior_number: add.numero_interior.trim(),
+            ext_number: add.num_exterior,
+            int_number: add.num_interior,
+            street_reference: add.referencia,
+            ownership_type: [add.casa_situacion, add.casa_situacion_etiqueta],
+            post_code: add.codigo_postal,
+            residence_since: add.tiempo_habitado_inicio,
+            residence_to: add.tiempo_habitado_final,
+            road: [add.vialidad, add.etiqueta_vialidad],
+            email
+        });
+    }
+    const phones = [];
+    for (let l = 0; l < data.recordsets[4].length; l++) {
+        const phoneAdd = data.recordsets[4][l];
+        if (phoneAdd.idcel_telefono.trim()) {
+            phones.push({
+                _id: phoneAdd.id,
+                phone: phoneAdd.idcel_telefono.trim(),
+                type: phoneAdd.tipo_telefono.trim(),
+                company: phoneAdd.compania.trim(),
+                validated: false
+            });
+        }
+    }
+    const perSet = Object.assign({}, data.recordsets[0][0]);
+    let household_data = {
+        household_floor: false,
+        household_roof: false,
+        household_toilet: false,
+        household_latrine: false,
+        household_brick: false,
+        economic_dependants: '',
+        internet_access: false,
+        prefered_social: [0, ""],
+        rol_hogar: [0, ""],
+        user_social: '',
+        has_disable: false,
+        speaks_dialect: false,
+        has_improved_income: false,
+    };
+    let business_data = {
+        bis_location: [0, ""],
+        economic_activity: ['', ''],
+        profession: ['', ''],
+        ocupation: ["", ""],
+        business_start_date: '',
+        business_name: '',
+        business_owned: false,
+        business_phone: '',
+        number_employees: '',
+        loan_destination: [0, ''],
+        income_sales_total: 0,
+        income_partner: 0,
+        income_job: 0,
+        income_remittances: 0,
+        income_other: 0,
+        income_total: 0,
+        expense_family: 0,
+        expense_rent: 0,
+        expense_business: 0,
+        expense_debt: 0,
+        expense_credit_cards: 0,
+        expense_total: 0,
+        keeps_accounting_records: false,
+        has_previous_experience: false,
+        previous_loan_experience: '',
+        bis_season_type: ''
+    };
+    let spld = {
+        desempenia_funcion_publica_cargo: "",
+        desempenia_funcion_publica_dependencia: "",
+        familiar_desempenia_funcion_publica_cargo: "",
+        familiar_desempenia_funcion_publica_dependencia: "",
+        familiar_desempenia_funcion_publica_nombre: "",
+        familiar_desempenia_funcion_publica_paterno: "",
+        familiar_desempenia_funcion_publica_materno: "",
+        familiar_desempenia_funcion_publica_parentesco: "",
+        instrumento_monetario: [0, ""]
+    };
+    let econActId = 0, econActCap = '', profId = 0, profCap = '', occupId = 0, occupCap = '', bisLoc = 0;
+    if (data.recordsets[7].length > 0) {
+        if (data.recordsets[7][0].id_actividad_economica) {
+            econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
+                econActCap = data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString() : '';
+        }
+        profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
+            profCap = data.recordsets[7][0].nombre_profesion ? data.recordsets[7][0].nombre_profesion.toString() : '';
+        occupId = perSet.id_occupation ? perSet.id_occupation : 0,
+            occupCap = perSet.occupation ? perSet.occupation.toString() : '';
+        bisLoc = !!data.recordsets[7][0].econ_id_ubicacion_negocio ? data.recordsets[7][0].econ_id_ubicacion_negocio : 0;
+    }
+    if (data.recordsets[7].length) {
+        business_data.bis_location = [bisLoc, ''];
+        business_data.economic_activity = [econActId, econActCap];
+        business_data.profession = [profId, profCap];
+        business_data.ocupation = [occupId, occupCap];
+        business_data.business_name = data.recordsets[7][0].nombre_negocio;
+        business_data.business_start_date = data.recordsets[7][0].econ_fecha_inicio_act_productiva,
+            business_data.business_owned = false,
+            business_data.business_phone = "",
+            business_data.number_employees = data.recordsets[7][0].econ_numero_empleados;
+        business_data.loan_destination = [data.recordsets[7][0].econ_id_destino_credito, ''];
+        business_data.income_sales_total = data.recordsets[7][0].econ_ventas_totales_cantidad ? data.recordsets[7][0].econ_ventas_totales_cantidad : 0;
+        business_data.income_partner = data.recordsets[7][0].econ_sueldo_conyugue ? data.recordsets[7][0].econ_sueldo_conyugue : 0;
+        business_data.income_other = data.recordsets[7][0].econ_otros_ingresos ? data.recordsets[7][0].econ_otros_ingresos : 0;
+        business_data.income_job = data.recordsets[7][0].econ_pago_casa ? data.recordsets[7][0].econ_pago_casa : 0;
+        business_data.income_remittances = data.recordsets[7][0].econ_cantidad_mensual ? data.recordsets[7][0].econ_cantidad_mensual : 0;
+        business_data.income_total = 0;
+        business_data.expense_family = data.recordsets[7][0].econ_gastos_familiares ? data.recordsets[7][0].econ_gastos_familiares : 0;
+        business_data.expense_rent = data.recordsets[7][0].econ_renta ? data.recordsets[7][0].econ_renta : 0;
+        business_data.expense_business = data.recordsets[7][0].econ_otros_gastos ? data.recordsets[7][0].econ_otros_gastos : 0;
+        business_data.expense_debt = data.recordsets[7][0].econ_gastos_vivienda ? data.recordsets[7][0].econ_gastos_vivienda : 0;
+        business_data.expense_credit_cards = data.recordsets[7][0].econ_gastos_transporte ? data.recordsets[7][0].econ_gastos_transporte : 0;
+        ;
+        business_data.expense_total = 0;
+        household_data.economic_dependants = data.recordsets[7][0].econ_dependientes_economicos.toString();
+        household_data.household_brick = !!data.recordsets[7][0].vivienda_block;
+        household_data.household_floor = !!data.recordsets[7][0].vivienda_piso;
+        household_data.household_latrine = !!data.recordsets[7][0].vivienda_letrina;
+        household_data.household_roof = !!data.recordsets[7][0].vivienda_techo_losa;
+        household_data.household_toilet = !!data.recordsets[7][0].vivienda_bano;
+        household_data.internet_access = !!data.recordsets[7][0].utiliza_internet;
+        household_data.prefered_social = [data.recordsets[7][0].id_tipo_red_social, ""];
+        household_data.user_social = data.recordsets[7][0].usuario_red_social;
+        household_data.rol_hogar = [data.recordsets[7][0].econ_id_rol_hogar, ""];
+        household_data.has_disable = data.recordsets[7][0].habilidad_diferente;
+        household_data.speaks_dialect = data.recordsets[7][0].lengua_indigena;
+        household_data.has_improved_income = data.recordsets[7][0].mejorado_ingreso;
+        spld.desempenia_funcion_publica_cargo = data.recordsets[7][0].desempenia_funcion_publica_cargo,
+            spld.desempenia_funcion_publica_dependencia = data.recordsets[7][0].desempenia_funcion_publica_dependencia,
+            spld.familiar_desempenia_funcion_publica_cargo = data.recordsets[7][0].familiar_desempenia_funcion_publica_cargo,
+            spld.familiar_desempenia_funcion_publica_dependencia = data.recordsets[7][0].familiar_desempenia_funcion_publica_dependencia,
+            spld.familiar_desempenia_funcion_publica_nombre = data.recordsets[7][0].familiar_desempenia_funcion_publica_nombre,
+            spld.familiar_desempenia_funcion_publica_paterno = data.recordsets[7][0].familiar_desempenia_funcion_publica_paterno,
+            spld.familiar_desempenia_funcion_publica_materno = data.recordsets[7][0].familiar_desempenia_funcion_publica_materno,
+            spld.familiar_desempenia_funcion_publica_parentesco = data.recordsets[7][0].familiar_desempenia_funcion_publica_parentesco,
+            spld.instrumento_monetario = [data.recordsets[7][0].id_instrumento_monetario, ""];
+    }
+    const cicloData = data.recordsets[6];
+    const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0;
+    let data_efirma = data.recordsets[9][0] ?
+        data.recordsets[9][0] :
+        {
+            id: 0,
+            id_persona: 0,
+            fiel: ''
+        };
+    const result = Object.assign(Object.assign({ id_persona: perSet.id_persona, id_cliente: perSet.id, name: perSet.name, lastname: perSet.lastname, second_lastname: perSet.second_lastname, email, curp: curp ? curp.id_numero : "", clave_ine: ife ? ife.id_numero : "", numero_emisiones: ine_detalle ? ine_detalle.numero_emision : '', numero_vertical: ine_detalle ? ine_detalle.numero_vertical_ocr : '', rfc: rfc ? rfc.id_numero : "", dob: perSet.dob, loan_cycle, branch: [perSet.id_oficina, perSet.nombre_oficina], sex: [perSet.id_gender, perSet.gender], education_level: [perSet.id_scholarship, perSet.scholarship], identities,
+        address,
+        phones, tributary_regime: [], not_bis: false, client_type: [2, 'INDIVIDUAL'], nationality: [perSet.id_nationality, perSet.nationality], province_of_birth: [
+            `PROVINCE|${perSet.id_province_of_birth}`,
+            perSet.province_of_birth,
+        ], country_of_birth: [
+            `COUNTRY|${perSet.id_country_of_birth}`,
+            perSet.country_of_birth,
+        ], marital_status: [perSet.id_marital_status, perSet.marital_status], identification_type: [], guarantor: [], business_data }, household_data), { spld, beneficiaries: [], personal_references: [], guarantee: [], ife_details: ineDetail, data_company: [data.recordsets[8][0]], data_efirma: [data_efirma] });
+    return result;
+}
 router.get("/clients/hf/person-search", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!req.query.keyword) {
@@ -504,6 +515,7 @@ router.get("/clients/hf/person-search", authorize_1.authorize, (req, res) => __a
 }));
 router.get('/clients/hf/search', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        throw new Error('Feature not available at the moment...');
         if (!(req.query.branchId && req.query.clientName)) {
             throw new Error('Query parametrs branchId or clientName are missing!');
         }
@@ -1259,18 +1271,12 @@ function findClientByKeyword(keyword) {
 }
 function findClientByExternalId(externalId) {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            let pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
-            let result = yield pool
-                .request()
-                .input("idCliente", mssql_1.default.Int, externalId)
-                .execute("MOV_ObtenerDatosPersona");
-            return result;
-        }
-        catch (err) {
-            console.log(err);
-            return err;
-        }
+        let pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        let result = yield pool
+            .request()
+            .input("idCliente", mssql_1.default.Int, externalId)
+            .execute("MOV_ObtenerDatosPersona");
+        return result;
     });
 }
 exports.findClientByExternalId = findClientByExternalId;
@@ -1329,76 +1335,97 @@ function searchGroupLoanByName(groupName, branchId) {
         }
     });
 }
-router.get("/reset/group", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    /** BASADO EN UN ACTION _id elimina informacion de la misma y sus dependencias */
+router.get("/groups/download", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    /** Actualiza toda la información de un grupo */
     try {
-        if (!req.query.actionId) {
-            throw new Error('acionId param is missing');
+        if (!req.query.branchId || !req.query.applicationId || !req.query.idCliente) {
+            throw new Error('branch Id, application id or id Cliente params missing');
         }
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const docAction = yield db.get(req.query.actionId);
-        if (docAction.couchdb_type !== 'ACTION') {
-            throw new Error(`${docAction._id} is not an ACTION type`);
+        const idCliente = parseInt(req.query.idCliente);
+        const idSolicitud = parseInt(req.query.applicationId);
+        const branchId = parseInt(req.query.branchId);
+        const data = yield getLoanApplicationById(idSolicitud, branchId);
+        const resData = yield processLoanApplicationByDataRS(data);
+        yield db.createIndex({ index: { fields: ["couchdb_type"] } });
+        const groupsQuery = yield db.find({ selector: {
+                couchdb_type: "GROUP"
+            }, limit: 100000 });
+        /*****  GROUP creation - update ****/
+        const coloniesQuery = yield db.find({ selector: { couchdb_type: 'NEIGHBORHOOD' } });
+        const colony = coloniesQuery.docs.find((i) => i._id === resData.group_data.address.colony[0]);
+        const groupDoc = groupsQuery.docs.find((item) => item.id_cliente == idCliente);
+        /// if exists, assigns otherwise create a new _ID
+        let newGroupId = !groupDoc ? `${Date.now().toString()}-${resData.group_data.id_cliente}` : groupDoc._id;
+        const updateGroupDoc = Object.assign(Object.assign({ _id: newGroupId }, resData.group_data), { address: Object.assign(Object.assign({}, resData.group_data.address), { post_code: colony ? colony.codigo_postal : "" }), couchdb_type: "GROUP", created_by: req.user.login, branch: req.user.branch, created_at: new Date(), status: [2, "Activo"] });
+        if (groupDoc) {
+            /// group doc exists
+            yield db.insert(Object.assign({ _rev: groupDoc._rev }, updateGroupDoc));
         }
-        if (docAction.name === 'CREATE_UPDATE_CLIENT') {
-            throw new Error(`${docAction._id} is an ACTION but CREATE/UPDATE CLIENT  is not supported`);
+        else {
+            yield db.insert(Object.assign({}, updateGroupDoc));
         }
-        if (docAction.name === 'CREATE_UPDATE_LOAN') {
-            const loanApp = yield db.get(docAction.data.id_loan);
-            const ClientApplyby = yield db.get(loanApp.apply_by);
-            if (ClientApplyby.couchdb_type !== 'GROUP') {
-                throw new Error(`${docAction._id} is an ACTION but APPLY_BY is not GROUP`);
+        /***** END - GROUP creation - update ****/
+        /*** CONTRACT create - update */
+        const contractQuery = yield db.find({ selector: {
+                couchdb_type: "CONTRACT"
+            }, limit: 100000 });
+        const contractData = yield getBalanceById(idCliente);
+        for (let x = 0; x < contractData[0].length; x++) {
+            const contractDoc = contractQuery.docs.find((item) => item.idContrato == contractData[0][x].idContrato);
+            const newIdContract = !contractDoc ? `${Date.now().toString()}-${contractData[0][x].idContrato}` : contractDoc._id;
+            const contractUpdateDoc = Object.assign(Object.assign({ _id: newIdContract }, contractData[0][x]), { client_id: newGroupId, created_by: req.user.login, created_at: new Date().toISOString(), branch: req.user.branch, couchdb_type: "CONTRACT" });
+            if (contractDoc) {
+                yield db.insert(Object.assign({ _rev: contractDoc._rev }, contractUpdateDoc));
             }
-            const idCliente = loanApp.id_cliente;
-            const idSolicitud = loanApp.id_solicitud;
-            /// crear lo indices de busqueda
-            yield db.createIndex({
-                index: {
-                    fields: [
-                        "couchdb_type", "idCliente"
-                    ]
-                }
-            });
-            yield db.createIndex({
-                index: {
-                    fields: [
-                        "couchdb_type", "apply_by"
-                    ]
-                }
-            });
-            /// obtiene todos los Loans de ese grupo
-            const queryLoans = yield db.find({
-                selector: {
-                    couchdb_type: "LOANAPP_GROUP",
-                    apply_by: loanApp.apply_by
-                }
-            });
-            //// obtiene todos los contratos de este grupo
-            const queryContracts = yield db.find({
-                selector: {
-                    couchdb_type: "CONTRACT",
-                    idCliente
-                }
-            });
-            ///
-            const queryGroup = yield db.get(loanApp.apply_by);
-            const actionDelete = { _id: docAction._id, _rev: docAction._rev, deleted: true };
-            const groupDelete = { _id: queryGroup._id, _rev: queryGroup._rev, deleted: true };
-            const loansDelete = queryLoans.docs.map((i) => ({ _id: i._id, _rev: i._rev, deleted: true }));
-            const contractsDelete = queryContracts.docs.map((i) => ({ _id: i._id, _rev: i._rev, deleted: true }));
-            /// Eliminar CONTRATO
-            /// Eliminar TODOS los loans
-            ////Eliminar el GRUPO
-            /// Eliminar la ACTION
-            const documents = [
-                actionDelete, groupDelete, ...loansDelete, ...contractsDelete
-            ];
-            const response = yield db.bulk({ docs: documents });
-            res.send(response);
+            else {
+                yield db.insert(Object.assign({}, contractUpdateDoc));
+            }
         }
-        // res.send('OK')
+        /** CLIENT create - update */
+        const queryTemp = yield db.find({ selector: { couchdb_type: "CLIENT" }, limit: 100000 });
+        const clientsQuery = queryTemp.docs.filter((x) => x.branch[0] == req.user.branch[0]);
+        const listClientsCreate = [];
+        const listClientsUpdate = [];
+        for (let w = 0; w < resData.loan_app.members.length; w++) {
+            const clientDataRS = yield findClientByExternalId(resData.loan_app.members[w].id_cliente);
+            if (clientDataRS.recordset.length == 1) {
+                /// only valid when record set OK
+                const clientDataResult = processClientDataRS(clientDataRS);
+                const clientDoc = clientsQuery.find((y) => y.id_cliente == clientDataResult.id_cliente);
+                const newClientId = !clientDoc ? `${(Date.now()).toString()}-${clientDataResult.id_cliente}` : clientDoc._id;
+                const clientUpdateDoc = Object.assign(Object.assign(Object.assign({ couchdb_type: 'CLIENT' }, Actions_1.clientDataDef), clientDataResult), { business_data: Object.assign(Object.assign({}, Actions_1.clientDataDef.business_data), clientDataResult.business_data), status: [2, 'Aprovado'], _id: newClientId });
+                if (clientDoc) {
+                    listClientsUpdate.push(Object.assign({ _rev: clientDoc._rev }, clientUpdateDoc));
+                }
+                else {
+                    listClientsCreate.push(clientUpdateDoc);
+                }
+            }
+        }
+        /******* LOANAPP_GROUP creation - update */
+        const applicationQuery = yield db.find({ selector: {
+                couchdb_type: "LOANAPP_GROUP"
+            }, limit: 100000 });
+        const loanAppDoc = applicationQuery.docs.find((item) => item.id_solicitud == idSolicitud);
+        /// if exists, assigns otherwise create a new _ID
+        let newLoanAppId = !loanAppDoc ? `${Date.now().toString()}-${resData.loan_app.id_solicitud}` : loanAppDoc._id;
+        const newMembersData = resData.loan_app.members.map((m) => {
+            let docClientFound = listClientsCreate.concat(listClientsUpdate).find((j) => j.id_cliente == m.id_cliente);
+            return Object.assign(Object.assign({}, m), { client_id: docClientFound._id });
+        });
+        const updateLoanAppDoc = Object.assign(Object.assign({ couchdb_type: "LOANAPP_GROUP" }, resData.loan_app), { _id: newLoanAppId, members: newMembersData, dropout: [], apply_by: newGroupId, GL_financeable: false, liquid_guarantee: 10, renovation: false, apply_at: new Date().toISOString(), created_by: req.user.login, created_at: new Date().toISOString(), branch: req.user.branch });
+        if (loanAppDoc) {
+            yield db.insert(Object.assign({ _rev: loanAppDoc._rev }, updateLoanAppDoc));
+        }
+        else {
+            yield db.insert(Object.assign({}, updateLoanAppDoc));
+        }
+        yield db.bulk({ docs: listClientsCreate.concat(listClientsUpdate) });
+        res.send(resData);
     }
     catch (e) {
+        console.log(e);
         res.status(400).send(e.message);
     }
 }));

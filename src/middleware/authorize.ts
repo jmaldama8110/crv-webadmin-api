@@ -24,6 +24,7 @@ export const authorize  = async (req:any, res:any, next:any) => {
         }               
         req.currentToken = token
         req.user = decoded.user;
+
         next()
 
     }

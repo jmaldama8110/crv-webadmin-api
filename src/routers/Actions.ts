@@ -268,7 +268,7 @@ router.get('/actions/exec', authorize, async (req, res) => {
     }
 });
 
-const clientDataDef: any = {
+export const clientDataDef: any = {
     address: [],
     branch: [0, ''],
     business_data: {
@@ -397,8 +397,6 @@ const clientDataDef: any = {
         }
     },
     comprobante_domicilio_pics: [],
-    _id: "",
-    _rev: ""
 }
 
 

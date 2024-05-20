@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ActionsRouter = exports.updateLoanAppStatus = void 0;
+exports.ActionsRouter = exports.updateLoanAppStatus = exports.clientDataDef = void 0;
 const express_1 = __importDefault(require("express"));
 const Action_1 = __importDefault(require("../model/Action"));
 const authorize_1 = require("../middleware/authorize");
@@ -298,7 +298,7 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
         res.status(400).send(RSP_Result);
     }
 }));
-const clientDataDef = {
+exports.clientDataDef = {
     address: [],
     branch: [0, ''],
     business_data: {
@@ -423,8 +423,6 @@ const clientDataDef = {
         }
     },
     comprobante_domicilio_pics: [],
-    _id: "",
-    _rev: ""
 };
 router.get('/db_update_loans_contracts', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {

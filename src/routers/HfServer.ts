@@ -3,6 +3,7 @@ import { authorize } from '../middleware/authorize';
 import sql from 'mssql';
 import { sqlConfig } from '../db/connSQL';
 import * as Nano from 'nano';
+import { clientDataDef } from './Actions';
 
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 const router = express.Router();
@@ -63,118 +64,8 @@ router.get('/groups/hf/loanapps', authorize, async (req, res) => {
             throw new Error('Query parametrs branchId or groupName are missing!')
         }
         const data: any = await getLoanApplicationById(parseInt(req.query.applicationId as string), parseInt(req.query.branchId as string));
-        /**
-         * resultsets[0] => Detalle de la solicitud
-         * resultsets[1] => Ciclo y estatus 
-         * resultsets[2] => Nombre del grupo, dia / hora reunion
-         * resultsets[3] => Direccion del grupo
-         * resultsets[4] => Integrantes, cargo, etc (importe solicitado, autorizado, etc)
-         * resultsets[5] => Integrantes / Detalle Seguro (Costo, tipo seguro, Beneficiario, parentezco, etc)
-         */
-        const loan_application = data[0][0];
-        const loan_cycle = data[1][0];
-        const group_info = data[2][0];
-        const group_address = data[3][0];
-
-        const group_data = {
-
-            id_cliente: group_info.id_cliente,
-            group_name: group_info.nombre,
-            weekday_meet: group_info.reunion_dia.trim(),
-            hour_meet: group_info.reunion_hora.trim(),
-            branch: group_info.id_oficina,
-            loan_officer: loan_application.id_oficial,
-            loan_cycle: loan_cycle.ciclo,
-            address: {
-                id: group_address.id,
-                post_code: '',
-                address_line1: group_address.direccion,
-                road_type: [group_address.vialidad, ''],
-                province: [`PROVINCE|${group_address.estado}`, ''],
-                municipality: [`MUNICIPALITY|${group_address.municipio}`, ''],
-                city: [`CITY|${group_address.localidad}`, ''],
-                colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
-                street_reference: group_address.referencia, 
-                numero_exterior: `${group_address.numero_exterior}`,
-                numero_interior: `${group_address.numero_interior}`
-            }
-        }
-
-        const members = data[4].map((i: any, nCounter: number) => {
-            const insuranceMemberInfo = data[5].find((x: any) => x.id_individual === i.id_individual);
-            ///// buscar en la DB local si existe el integrante, como cliente por medio de id_cliente
-            return {
-                _id: `${Date.now() + nCounter}`,
-                id_member: i.id,
-                id_cliente: i.id_individual,
-                fullname: `${i.nombre} ${i.apellido_paterno} ${i.apellido_materno}`,
-                estatus: i.estatus.trim(),
-                sub_estatus: i.sub_estatus.trim(),
-                position: i.cargo.trim(),
-                apply_amount: i.monto_solicitado,
-                approved_amount: i.monto_autorizado,
-                previous_amount: i.monto_anterior,
-                loan_cycle: i.ciclo,
-                disbursment_mean: i.id_cata_medio_desembolso,
-                insurance: {
-                    id: nCounter,
-                    beneficiary: (insuranceMemberInfo ? insuranceMemberInfo.nombre_beneficiario : ''),
-                    relationship: (insuranceMemberInfo ? insuranceMemberInfo.parentesco : ''),
-                    percentage: (insuranceMemberInfo ? insuranceMemberInfo.porcentaje : 0)
-                }
-
-            }
-        })
-
-        /// retrieves Product information, that is not provided by HF
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-
-        await db.createIndex({ index: { fields: ["couchdb_type"] } });
-        const productList = await db.find({ selector: { couchdb_type: "PRODUCT" } });
-        const productMaster: any = productList.docs.find((prod: any) => prod.external_id == loan_application.id_producto_maestro)
-        if (!productMaster) {
-            throw new Error('Se producto maestro no se encontro para id_producto_maestro: ' + loan_application.id_producto_maestro);
-        }
-        const identifierFreq = loan_application.periodicidad.slice(0, 1);
-        const frequency = productMaster.allowed_term_type.find((i: any) => i.identifier === identifierFreq)
-        /// Uses the same loan application info, except some field, ei: id_solicitud,
-
-        const loan_app = {
-            id_cliente: loan_application.id_cliente,
-            id_solicitud: loan_application.id, // uses the same Id of the previous one
-            loan_officer: loan_application.id_oficial,
-            branch: loan_application.id_oficina,
-            id_producto: loan_application.id_producto,
-            id_disposicion: loan_application.id_disposicion,
-            apply_amount: loan_application.monto_total_solicitado,
-            approved_total: loan_application.monto_total_autorizado,
-            term: loan_application.plazo,
-            frequency: [frequency.identifier, frequency.value],
-            first_repay_date: loan_application.fecha_primer_pago,
-            disbursment_date: loan_application.fecha_entrega,
-            disbursment_mean: loan_application.medio_desembolso.trim(),
-            liquid_guarantee: loan_application.garantia_liquida,
-            loan_cycle: loan_cycle.ciclo,
-            estatus: loan_application.estatus.trim(), // para renovacion
-            sub_estatus: loan_application.sub_estatus.trim(), /// 
-            members,
-            product: {
-                external_id: productMaster.external_id,
-                min_amount: productMaster.min_amount,
-                max_amount: (productMaster.max_amount) * (members.length),
-                step_amount: productMaster.step_amount,
-                min_term: productMaster.min_term,
-                max_term: productMaster.max_term,
-                product_name: productMaster.product_name,
-                term_types: productMaster.allowed_term_type,
-                rate: productMaster.rate,
-                tax: productMaster.tax,
-                GL_financeable: false,
-                liquid_guarantee: loan_application.garantia_liquida
-            }
-        }
-
-        res.status(200).send({ group_data, loan_app });
+        const resultObject = await processLoanApplicationByDataRS(data);
+        res.status(200).send(resultObject);
 
 
     } catch (err) {
@@ -194,6 +85,121 @@ export async function getLoanApplicationById(loanAppId: number, branchId: number
 
 }
 
+async function processLoanApplicationByDataRS( data:any) {
+
+/**
+         * resultsets[0] => Detalle de la solicitud
+         * resultsets[1] => Ciclo y estatus 
+         * resultsets[2] => Nombre del grupo, dia / hora reunion
+         * resultsets[3] => Direccion del grupo
+         * resultsets[4] => Integrantes, cargo, etc (importe solicitado, autorizado, etc)
+         * resultsets[5] => Integrantes / Detalle Seguro (Costo, tipo seguro, Beneficiario, parentezco, etc)
+*/
+
+    const loan_application = data[0][0];
+    const loan_cycle = data[1][0];
+    const group_info = data[2][0];
+    const group_address = data[3][0];
+
+    const group_data = {
+
+        id_cliente: group_info.id_cliente,
+        group_name: group_info.nombre,
+        weekday_meet: group_info.reunion_dia.trim(),
+        hour_meet: group_info.reunion_hora.trim(),
+        branch: group_info.id_oficina,
+        loan_officer: loan_application.id_oficial,
+        loan_cycle: loan_cycle.ciclo,
+        address: {
+            id: group_address.id,
+            post_code: '',
+            address_line1: group_address.direccion,
+            road_type: [group_address.vialidad, ''],
+            province: [`PROVINCE|${group_address.estado}`, ''],
+            municipality: [`MUNICIPALITY|${group_address.municipio}`, ''],
+            city: [`CITY|${group_address.localidad}`, ''],
+            colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
+            street_reference: group_address.referencia, 
+            numero_exterior: `${group_address.numero_exterior}`,
+            numero_interior: `${group_address.numero_interior}`
+        }
+    }
+
+    const members = data[4].map((i: any, nCounter: number) => {
+        const insuranceMemberInfo = data[5].find((x: any) => x.id_individual === i.id_individual);
+        ///// buscar en la DB local si existe el integrante, como cliente por medio de id_cliente
+        return {
+            _id: `${Date.now() + nCounter}`,
+            id_member: i.id,
+            id_cliente: i.id_individual,
+            fullname: `${i.nombre} ${i.apellido_paterno} ${i.apellido_materno}`,
+            estatus: i.estatus.trim(),
+            sub_estatus: i.sub_estatus.trim(),
+            position: i.cargo.trim(),
+            apply_amount: i.monto_solicitado,
+            approved_amount: i.monto_autorizado,
+            previous_amount: i.monto_anterior,
+            loan_cycle: i.ciclo,
+            disbursment_mean: i.id_cata_medio_desembolso,
+            insurance: {
+                id: nCounter,
+                beneficiary: (insuranceMemberInfo ? insuranceMemberInfo.nombre_beneficiario : ''),
+                relationship: (insuranceMemberInfo ? insuranceMemberInfo.parentesco : ''),
+                percentage: (insuranceMemberInfo ? insuranceMemberInfo.porcentaje : 0)
+            }
+
+        }
+    })
+
+    /// retrieves Product information, that is not provided by HF
+    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+
+    await db.createIndex({ index: { fields: ["couchdb_type"] } });
+    const productList = await db.find({ selector: { couchdb_type: "PRODUCT" } });
+    const productMaster: any = productList.docs.find((prod: any) => prod.external_id == loan_application.id_producto_maestro)
+    if (!productMaster) {
+        throw new Error('Se producto maestro no se encontro para id_producto_maestro: ' + loan_application.id_producto_maestro);
+    }
+    const identifierFreq = loan_application.periodicidad.slice(0, 1);
+    const frequency = productMaster.allowed_term_type.find((i: any) => i.identifier === identifierFreq)
+    /// Uses the same loan application info, except some field, ei: id_solicitud,
+
+    const loan_app = {
+        id_cliente: loan_application.id_cliente,
+        id_solicitud: loan_application.id, // uses the same Id of the previous one
+        loan_officer: loan_application.id_oficial,
+        branch: loan_application.id_oficina,
+        id_producto: loan_application.id_producto,
+        id_disposicion: loan_application.id_disposicion,
+        apply_amount: loan_application.monto_total_solicitado,
+        approved_total: loan_application.monto_total_autorizado,
+        term: loan_application.plazo,
+        frequency: [frequency.identifier, frequency.value],
+        first_repay_date: loan_application.fecha_primer_pago,
+        disbursment_date: loan_application.fecha_entrega,
+        disbursment_mean: loan_application.medio_desembolso.trim(),
+        liquid_guarantee: loan_application.garantia_liquida,
+        loan_cycle: loan_cycle.ciclo,
+        estatus: loan_application.estatus.trim(), // para renovacion
+        sub_estatus: loan_application.sub_estatus.trim(), /// 
+        members,
+        product: {
+            external_id: productMaster.external_id,
+            min_amount: productMaster.min_amount,
+            max_amount: (productMaster.max_amount) * (members.length),
+            step_amount: productMaster.step_amount,
+            min_term: productMaster.min_term,
+            max_term: productMaster.max_term,
+            product_name: productMaster.product_name,
+            term_types: productMaster.allowed_term_type,
+            rate: productMaster.rate,
+            tax: productMaster.tax,
+            GL_financeable: false,
+            liquid_guarantee: loan_application.garantia_liquida
+        }
+    }
+    return  { group_data, loan_app }
+}
 
 router.get('/products/hf', authorize, async (req, res) => {
     try {
@@ -243,17 +249,7 @@ async function getProductsByBranch(branchId: number, clientType: number) {
 
 router.get("/clients/hf", authorize, async (req, res) => {
 
-    //  get the Client Data with identityNumber and externalId
-    /* 
-      data.recordsets[0][0]  -> Datos personsales
-      data.recordsets[0][1] Dataset -> Identificaciones
-      data.recordsets[0][2] Dataset -> Datos del IFE / INE
-      data.recordsets[0][3] Direcciones -> Direcciones  
-      data.recordsets[0][4] Telefonos
-      data.recordsets[0][5] Aval
-      data.recordsets[0][6] Ciclo
-      data.recordsets[0][7] Datos economicos
-      */
+
     try {
 
         let data: any;
@@ -267,8 +263,32 @@ router.get("/clients/hf", authorize, async (req, res) => {
             }
         }
 
-        if (data.recordset.length == 1) {
 
+        if (data.recordset.length == 1) {
+            const result = processClientDataRS(data)
+            res.send(result);
+        } else {
+
+            res.status(404).send("Not found");
+        }
+    } catch (err) {
+        console.log(err);
+        res.status(404).send('Client data not found');
+    }
+});
+
+function processClientDataRS( data:any){
+    //  get the Client Data with identityNumber and externalId
+    /* 
+      data.recordsets[0][0]  -> Datos personsales
+      data.recordsets[0][1] Dataset -> Identificaciones
+      data.recordsets[0][2] Dataset -> Datos del IFE / INE
+      data.recordsets[0][3] Direcciones -> Direcciones  
+      data.recordsets[0][4] Telefonos
+      data.recordsets[0][5] Aval
+      data.recordsets[0][6] Ciclo
+      data.recordsets[0][7] Datos economicos
+      */
             /// extract CURP and Ine Folio
             const curp = data.recordsets[1].find(
                 (i: any) => i.tipo_identificacion === "CURP"
@@ -537,16 +557,9 @@ router.get("/clients/hf", authorize, async (req, res) => {
                 data_company: [data.recordsets[8][0]],
                 data_efirma: [data_efirma],
             };
-            res.send(result);
-        } else {
-
-            res.status(404).send("Not found");
-        }
-    } catch (err) {
-        console.log(err);
-        res.status(404).send('Client data not found');
-    }
-});
+        
+    return result;
+}
 
 router.get("/clients/hf/person-search", authorize, async (req, res) => {
     try {
@@ -573,6 +586,8 @@ router.get("/clients/hf/person-search", authorize, async (req, res) => {
 router.get('/clients/hf/search', authorize, async (req, res) => {
 
     try {
+
+        throw new Error('Feature not available at the moment...')
 
         if (!(req.query.branchId && req.query.clientName)) {
             throw new Error('Query parametrs branchId or clientName are missing!')
@@ -1403,7 +1418,6 @@ async function findClientByKeyword(keyword: string) {
 }
 
 export async function findClientByExternalId(externalId: number) {
-    try {
 
         let pool = await sql.connect(sqlConfig);
         let result = await pool
@@ -1411,10 +1425,6 @@ export async function findClientByExternalId(externalId: number) {
             .input("idCliente", sql.Int, externalId)
             .execute("MOV_ObtenerDatosPersona");
         return result;
-    } catch (err) {
-        console.log(err)
-        return err;
-    }
 };
 
 export async function getClientByCurp(curp: string) {
@@ -1467,88 +1477,179 @@ async function searchGroupLoanByName(groupName: string, branchId: number) {
     }
 }
 
-router.get("/reset/group", authorize, async (req, res) => {
-    /** BASADO EN UN ACTION _id elimina informacion de la misma y sus dependencias */
+router.get("/groups/download", authorize, async (req:any, res) => {
+    /** Actualiza toda la información de un grupo */
     try {
-        if (!req.query.actionId) {
-            throw new Error('acionId param is missing');
+        if (!req.query.branchId || !req.query.applicationId || !req.query.idCliente) {
+            throw new Error('branch Id, application id or id Cliente params missing');
         }
 
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
 
-        const docAction: any = await db.get(req.query.actionId as string);
-        if (docAction.couchdb_type !== 'ACTION') {
-            throw new Error(`${docAction._id} is not an ACTION type`)
-        }
-        if (docAction.name === 'CREATE_UPDATE_CLIENT') {
-            throw new Error(`${docAction._id} is an ACTION but CREATE/UPDATE CLIENT  is not supported`)
-        }
+        const idCliente = parseInt( req.query.idCliente as string);
+        const idSolicitud = parseInt( req.query.applicationId as string);
+        const branchId = parseInt( req.query.branchId as string);
 
-        if (docAction.name === 'CREATE_UPDATE_LOAN') {
-            const loanApp: any = await db.get(docAction.data.id_loan);
-            const ClientApplyby: any = await db.get(loanApp.apply_by);
+        const data = await getLoanApplicationById(idSolicitud, branchId); 
+        const resData = await processLoanApplicationByDataRS(data);
 
-            if (ClientApplyby.couchdb_type !== 'GROUP') {
-                throw new Error(`${docAction._id} is an ACTION but APPLY_BY is not GROUP`)
+        await db.createIndex( { index: { fields: ["couchdb_type"]}});
+        const groupsQuery = await db.find( { selector:{
+            couchdb_type: "GROUP"
+        },limit: 100000 });
+
+
+        /*****  GROUP creation - update ****/
+        const coloniesQuery = await db.find({ selector: { couchdb_type: 'NEIGHBORHOOD'}});
+        const colony:any = coloniesQuery.docs.find((i: any) => i._id === resData.group_data.address.colony[0])
+        
+        const groupDoc:any = groupsQuery.docs.find( (item:any) => item.id_cliente == idCliente );
+        /// if exists, assigns otherwise create a new _ID
+        let newGroupId = !groupDoc ? `${Date.now().toString()}-${resData.group_data.id_cliente}` : groupDoc._id;
+
+        const updateGroupDoc:any ={
+            _id: newGroupId,
+            ...resData.group_data,
+            address: {
+              ...resData.group_data.address,
+              post_code: colony ? colony.codigo_postal : "",
+            },
+            couchdb_type: "GROUP",                
+            created_by: req.user.login,
+            branch: req.user.branch,
+            created_at: new Date(),
+            status: [2, "Activo"],
+          }
+        
+        if( groupDoc ){
+            /// group doc exists
+            await db.insert({
+                _rev: groupDoc._rev,
+                ...updateGroupDoc })
+        } else {
+            await db.insert({
+                ...updateGroupDoc })
+        }
+        /***** END - GROUP creation - update ****/
+
+        /*** CONTRACT create - update */
+        const contractQuery = await db.find( { selector: {
+            couchdb_type: "CONTRACT"
+        }, limit: 100000 });
+
+        const contractData:any = await getBalanceById(idCliente);
+        for( let x=0; x< contractData[0].length; x++){
+            const contractDoc = contractQuery.docs.find( (item:any) => item.idContrato == contractData[0][x].idContrato );
+            const newIdContract = !contractDoc ? `${Date.now().toString()}-${contractData[0][x].idContrato}` : contractDoc._id
+            
+            const contractUpdateDoc = {
+                _id: newIdContract,
+                ...contractData[0][x],
+                client_id: newGroupId,
+                created_by: req.user.login,
+                created_at: new Date().toISOString(),
+                branch: req.user.branch,
+                couchdb_type: "CONTRACT",
             }
-
-            const idCliente = loanApp.id_cliente;
-            const idSolicitud = loanApp.id_solicitud;
-
-            /// crear lo indices de busqueda
-            await db.createIndex({
-                index: {
-                    fields: [
-                        "couchdb_type", "idCliente"
-                    ]
-                }
-            })
-            await db.createIndex({
-                index: {
-                    fields: [
-                        "couchdb_type", "apply_by"
-                    ]
-                }
-            })
-
-            /// obtiene todos los Loans de ese grupo
-            const queryLoans = await db.find({
-                selector: {
-                    couchdb_type: "LOANAPP_GROUP",
-                    apply_by: loanApp.apply_by
-                }
-            })
-            //// obtiene todos los contratos de este grupo
-            const queryContracts = await db.find({
-                selector: {
-                    couchdb_type: "CONTRACT",
-                    idCliente
-                }
-            });
-            ///
-            const queryGroup = await db.get(loanApp.apply_by);
-
-            const actionDelete = { _id: docAction._id, _rev: docAction._rev, deleted: true }
-            const groupDelete = { _id: queryGroup._id, _rev: queryGroup._rev, deleted: true }
-            const loansDelete = queryLoans.docs.map((i: any) => ({ _id: i._id, _rev: i._rev, deleted: true }));
-            const contractsDelete = queryContracts.docs.map((i: any) => ({ _id: i._id, _rev: i._rev, deleted: true }));
-
-            /// Eliminar CONTRATO
-            /// Eliminar TODOS los loans
-            ////Eliminar el GRUPO
-            /// Eliminar la ACTION
-            const documents = [
-                actionDelete, groupDelete, ...loansDelete, ...contractsDelete
-            ];
-            const response = await db.bulk({ docs: documents })
-            res.send(response);
-
+            if(contractDoc){
+                await db.insert({
+                    _rev: contractDoc._rev,
+                    ...contractUpdateDoc
+                })
+            } else {
+                await db.insert({
+                    ...contractUpdateDoc
+                })
+            }
+            
         }
 
-        // res.send('OK')
+        /** CLIENT create - update */
+        const queryTemp = await db.find( { selector: { couchdb_type: "CLIENT" }, limit: 100000 });
+        const clientsQuery = queryTemp.docs.filter( (x:any) => x.branch[0] == req.user.branch[0])
+        const listClientsCreate:any[] = []
+        const listClientsUpdate:any[] = []
+        for(let w=0; w< resData.loan_app.members.length; w++){
+                const clientDataRS = await findClientByExternalId(resData.loan_app.members[w].id_cliente)
+                if (clientDataRS.recordset.length == 1) {
+                    /// only valid when record set OK
+                    const clientDataResult = processClientDataRS(clientDataRS);
+                    const clientDoc = clientsQuery.find( (y:any) => y.id_cliente == clientDataResult.id_cliente);
+                    const newClientId = !clientDoc ? `${(Date.now()).toString()}-${clientDataResult.id_cliente}` : clientDoc._id
+
+                    const clientUpdateDoc:any = {
+                        couchdb_type: 'CLIENT',
+                        ...clientDataDef,
+                        ...clientDataResult,
+                        business_data: {
+                          ...clientDataDef.business_data,
+                          ...clientDataResult.business_data
+                        },
+                        status: [2,'Aprovado'],
+                        _id: newClientId
+                    }
+
+                    if( clientDoc ){
+                        listClientsUpdate.push({ 
+                            _rev: clientDoc._rev,
+                            ...clientUpdateDoc
+                        })
+                    } else {
+                        listClientsCreate.push(clientUpdateDoc)
+                    }
+                }
+        }
+
+        /******* LOANAPP_GROUP creation - update */
+        const applicationQuery = await db.find( { selector: {
+            couchdb_type: "LOANAPP_GROUP"
+        }, limit: 100000 });
+
+        
+        const loanAppDoc = applicationQuery.docs.find( (item:any)  => item.id_solicitud == idSolicitud );
+        /// if exists, assigns otherwise create a new _ID
+        let newLoanAppId = !loanAppDoc ?`${ Date.now().toString()}-${resData.loan_app.id_solicitud}` : loanAppDoc._id;
+
+        const newMembersData = resData.loan_app.members.map( (m:any) =>{
+            let docClientFound = listClientsCreate.concat(listClientsUpdate).find( (j:any) => j.id_cliente == m.id_cliente );
+            return {
+                ...m,
+                client_id: docClientFound._id
+            }
+        })
+
+        const updateLoanAppDoc =  {
+            couchdb_type: "LOANAPP_GROUP",
+            ...resData.loan_app,
+            _id: newLoanAppId,
+            members: newMembersData,
+            dropout: [],
+            apply_by: newGroupId,
+            GL_financeable: false,
+            liquid_guarantee: 10,
+            renovation: false,
+            apply_at: new Date().toISOString(),
+            created_by: req.user.login,
+            created_at: new Date().toISOString(),
+            branch: req.user.branch
+        }
+        if( loanAppDoc ){
+            await db.insert({
+                _rev: loanAppDoc._rev,
+                ...updateLoanAppDoc
+            })
+        } else {
+            await db.insert({                
+                ...updateLoanAppDoc
+            })
+        }
+
+        await db.bulk({ docs:listClientsCreate.concat(listClientsUpdate)});
+
+        res.send(resData);
     }
     catch (e: any) {
-
+        console.log(e);
         res.status(400).send(e.message)
     }
 });
