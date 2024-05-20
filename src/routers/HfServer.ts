@@ -587,8 +587,6 @@ router.get('/clients/hf/search', authorize, async (req, res) => {
 
     try {
 
-        throw new Error('Feature not available at the moment...')
-
         if (!(req.query.branchId && req.query.clientName)) {
             throw new Error('Query parametrs branchId or clientName are missing!')
         }

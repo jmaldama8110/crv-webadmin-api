@@ -515,7 +515,6 @@ router.get("/clients/hf/person-search", authorize_1.authorize, (req, res) => __a
 }));
 router.get('/clients/hf/search', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        throw new Error('Feature not available at the moment...');
         if (!(req.query.branchId && req.query.clientName)) {
             throw new Error('Query parametrs branchId or clientName are missing!');
         }
