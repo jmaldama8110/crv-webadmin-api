@@ -464,8 +464,9 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
         const loginUser = {
             fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : '__________________________________________________________________'
         };
-        const clientsData = clientsQuery.rows.map((x) => {
-            const memberData = loanApp.members.find((y) => y.client_id == x.doc._id);
+        const newClientsList = clientsQuery.rows.filter((r) => !r.error);
+        const clientsData = newClientsList.map((x) => {
+            const memberData = loanApp.members.find((y) => y.client_id === x.doc._id);
             const loanCycle = parseInt(memberData.loan_cycle) + 1;
             const memberLoanAmount = memberData.apply_amount;
             const beneficiaryInfo = {
@@ -519,24 +520,24 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                 name: x.doc.name,
                 lastname: x.doc.lastname,
                 second_lastname: x.doc.second_lastname,
-                branch: loanApp.branch[1],
+                branch: loanApp.branch ? loanApp.branch[1] : '',
                 apply_at: (0, misc_1.formatLocalDate2)(loanApp.apply_at ? loanApp.apply_at : (new Date()).toISOString()).split("/"),
                 loan_cycle: loanCycle,
                 economicDependants: x.doc.economic_dependants,
                 internetAccess: x.doc.internet_access ? 'Si' : 'No',
-                isSocialMediaFacebook: x.doc.prefered_social[0] == 3 ? 'X' : '',
-                isSocialMediaWhatsapp: x.doc.prefered_social[0] == 2 ? 'X' : '',
-                isSocialMediaInstagram: x.doc.prefered_social[0] == 4 ? 'X' : '',
+                isSocialMediaFacebook: x.doc.prefered_social ? x.doc.prefered_social[0] == 3 ? 'X' : '' : '',
+                isSocialMediaWhatsapp: x.doc.prefered_social ? x.doc.prefered_social[0] == 2 ? 'X' : '' : '',
+                isSocialMediaInstagram: x.doc.prefered_social ? x.doc.prefered_social[0] == 4 ? 'X' : '' : '',
                 userSocialMedia: x.doc.user_social,
                 memberLoanAmount: (0, misc_1.formatLocalCurrency)(memberLoanAmount),
                 isNewLoan: loanCycle > 1 ? "" : "X",
-                isFemale: x.doc.sex[0] == 3 ? 'X' : ' ',
-                isMale: x.doc.sex[0] != 3 ? 'X' : ' ',
-                isSingle: x.doc.marital_status[0] == 1 ? "X" : "",
-                isMarried: x.doc.marital_status[0] == 2 ? "X" : "",
-                isCommonLaw: x.doc.marital_status[0] == 3 ? "X" : "",
-                nationality: x.doc.nationality[0] == 1 ? "MEXICANA" : "OTRA",
-                countrtAndProvince: `${x.doc.province_of_birth[1]}, ${x.doc.country_of_birth[1]}`.toUpperCase(),
+                isFemale: x.doc.sex ? x.doc.sex[0] == 3 ? 'X' : ' ' : '',
+                isMale: x.doc.sex ? x.doc.sex[0] != 3 ? 'X' : ' ' : '',
+                isSingle: x.doc.marital_status ? x.doc.marital_status[0] == 1 ? "X" : "" : "",
+                isMarried: x.doc.marital_status ? x.doc.marital_status[0] == 2 ? "X" : "" : "",
+                isCommonLaw: x.doc.marital_status ? x.doc.marital_status[0] == 3 ? "X" : "" : "",
+                nationality: x.doc.nationality ? x.doc.nationality[0] == 1 ? "MEXICANA" : "OTRA" : "",
+                countrtAndProvince: x.doc.province_of_birth ? `${x.doc.province_of_birth[1]}, ${x.doc.country_of_birth[1]}`.toUpperCase() : "",
                 dob,
                 curp: (0, misc_1.arrayFromStringSize)(x.doc.curp, 18, '*'),
                 rfc: (0, misc_1.arrayFromStringSize)(x.doc.rfc, 13, '*'),
@@ -553,11 +554,11 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                 hasHouseholdToilet: x.doc.household_toilet ? 'X' : '',
                 hasHouseholdLatrine: x.doc.household_latrine ? 'X' : '',
                 hasHouseholdBrick: x.doc.household_brick ? 'X' : '',
-                economicActivity: x.doc.business_data.economic_activity[1],
-                profession: x.doc.business_data.profession[1],
-                occupation: x.doc.business_data.ocupation[1],
+                economicActivity: !x.doc.business_data.economic_activity ? 'NO ESPECIFICADO' : x.doc.business_data.economic_activity[1],
+                profession: !x.doc.business_data.profession ? 'NO ESPECIFICADO' : x.doc.business_data.profession[1],
+                occupation: !x.doc.business_data.ocupation ? 'NO ESPECIFICADO' : x.doc.business_data.ocupation[1],
                 numberEmployees: x.doc.business_data.number_employees,
-                loanDestination: x.doc.business_data.loan_destination[1],
+                loanDestination: x.doc.business_data.loan_destination ? x.doc.business_data.loan_destination[1] : 'NO ESPECIFICADO',
                 bisYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!x.doc.business_data.business_start_date ? x.doc.business_data.business_start_date : new Date()), new Date()),
                 homeYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!homeAddress.residence_since ? homeAddress.residence_since : new Date()), new Date()),
                 homeOwnershipRented: homeAddress.ownership_type === 'Renta',
