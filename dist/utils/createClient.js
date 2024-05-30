@@ -174,7 +174,7 @@ function createClientHF(data) {
                 .input('info_firma_electronica', TablesSql_1.UDT_CONT_FirmaElectronica)
                 .input('id_opcion', mssql_1.default.Int, 0)
                 .input('uid', mssql_1.default.Int, 0)
-                .input('_id_client', mssql_1.default.BigInt, _id)
+                .input('_id_client', mssql_1.default.BigInt, _id.replace('-', ''))
                 .execute('MOV_insertarInformacionClienteV2');
             if (!result)
                 return new Error('Error create client');
