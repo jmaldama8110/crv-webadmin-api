@@ -300,7 +300,7 @@ export async function createClientHF(data:any) {
             .input('info_firma_electronica', UDT_CONT_FirmaElectronica)
             .input('id_opcion', sql.Int, 0)
             .input('uid', sql.Int, 0)
-            .input('_id_client', sql.BigInt, _id.replace('-',''))
+            .input('_id_client', sql.BigInt, _id.slice(0,13))
             .execute('MOV_insertarInformacionClienteV2')
 
         if(!result) return new Error('Error create client')
