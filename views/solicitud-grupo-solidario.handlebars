@@ -428,13 +428,12 @@
     </div>
 
     <div class="flex-content">
-        <h3 class="wd200"><b>ACCESO A INTERNET</h3></b>
-        <p class="wd260 txt-center"><b>CUENTA UD. CON ACCESO A INTERNET:<u><b> {{this.internetAccess}}&nbsp;&nbsp;&nbsp;&nbsp;</b></u></p></b>
-                
-    </div>
-    <div class="flex-content">
-        <div class="wd200"></div>
-        <p><b>CORREO ELECTRONICO: </b>________{{this.email}}____</p> 
+            <h3 class="wd200"><b>ACCESO A INTERNET</h3></b>
+            <p class="wd260 txt-center"><b>CUENTA UD. CON ACCESO A INTERNET:<u><b> {{this.internetAccess}}&nbsp;&nbsp;&nbsp;&nbsp;</b></u></p></b>
+            <div>
+                <div class="wd200"></div>
+                <p><b>CORREO ELECTRONICO: </b>________{{this.email}}____</p> 
+            </div>
     </div>
     <div class="flex-content mt-sm mb-sm">
         <p class="wd200"><b>QUE RED SOCIAL PREFIERE?</p></b>
@@ -447,9 +446,9 @@
     <div class="flex-content mt-sm">
         <h3 class="wd220">DATOS DOMICILIO DEL CLIENTE</h3>
         <div class="wd60 txt-center"><p><b>VIVIENDA</p></div></b>
-        <div class="wd60 txt-center"><p>PROPIA</p></div>
-        <div class="wd60 txt-center"><p>RENTADA</p></div>
-        <div class="wd60 txt-center"><p>FAMILIAR</p></div>
+        <div class="wd60 txt-center"><p> <b>{{this.homeOwnershipOwned}}</b> PROPIA</p></div>
+        <div class="wd60 txt-center"><p><b>{{this.homeOwnershipRented}}</b> RENTADA</p></div>
+        <div class="wd60 txt-center"><p><b>{{this.homeOwnershipRelative}}</b> FAMILIAR</p></div>
         <div><p><u><b>&nbsp;&nbsp;{{this.homeYearsMonths.[0]}}&nbsp;&nbsp;</b></u> AÑOS y <u><b>&nbsp;&nbsp;{{this.homeYearsMonths.[1]}}&nbsp;&nbsp;</b></u> MESES</p>
         </div>
     </div>

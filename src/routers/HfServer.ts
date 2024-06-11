@@ -155,10 +155,11 @@ async function processLoanApplicationByDataRS( data:any) {
     const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
 
     await db.createIndex({ index: { fields: ["couchdb_type"] } });
-    const productList = await db.find({ selector: { couchdb_type: "PRODUCT" } });
+    const productList = await db.find({ selector: { couchdb_type: "PRODUCT" },limit: 10000 });
+    
     const productMaster: any = productList.docs.find((prod: any) => prod.external_id == loan_application.id_producto_maestro)
     if (!productMaster) {
-        throw new Error('Se producto maestro no se encontro para id_producto_maestro: ' + loan_application.id_producto_maestro);
+        throw new Error('El producto maestro no se encontro para id_producto_maestro: ' + loan_application.id_producto_maestro);
     }
     const identifierFreq = loan_application.periodicidad.slice(0, 1);
     const frequency = productMaster.allowed_term_type.find((i: any) => i.identifier === identifierFreq)
