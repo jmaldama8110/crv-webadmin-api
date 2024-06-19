@@ -486,6 +486,10 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                     bisAddressSame = bisAddress.bis_address_same ? 'Si' : 'No';
                 }
             }
+            homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number === 'SN' ? '' : homeAddress.exterior_number}`;
+            homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number === 'SN' ? '' : homeAddress.interior_number}`;
+            bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number === 'SN' ? '' : bisAddress.exterior_number}`;
+            bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number === 'SN' ? '' : bisAddress.interior_number}`;
             const incomeInfo = {
                 sales: x.doc.business_data.income_sales_total,
                 family: x.doc.business_data.income_partner,
@@ -632,6 +636,10 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
                     bisAddressSame = bisAddress.bis_address_same ? 'Si' : 'No';
                 }
             }
+            homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number === 'SN' ? '' : homeAddress.exterior_number}`;
+            homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number === 'SN' ? '' : homeAddress.interior_number}`;
+            bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number === 'SN' ? '' : bisAddress.exterior_number}`;
+            bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number === 'SN' ? '' : bisAddress.interior_number}`;
             const incomeInfo = {
                 sales: x.doc.business_data.income_sales_total,
                 family: x.doc.business_data.income_partner,

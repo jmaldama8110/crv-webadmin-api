@@ -508,6 +508,12 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
             }
     
           }
+
+          homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${ homeAddress.exterior_number === 'SN' ? '': homeAddress.exterior_number }`
+          homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${ homeAddress.interior_number === 'SN' ? '': homeAddress.interior_number }`
+          bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${ bisAddress.exterior_number === 'SN' ? '': bisAddress.exterior_number }`
+          bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${ bisAddress.interior_number === 'SN' ? '': bisAddress.interior_number }`
+          
           const incomeInfo = {
             sales: x.doc.business_data.income_sales_total,
             family: x.doc.business_data.income_partner,
@@ -672,6 +678,11 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
             }
     
           }
+          homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${ homeAddress.exterior_number === 'SN' ? '': homeAddress.exterior_number }`
+          homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${ homeAddress.interior_number === 'SN' ? '': homeAddress.interior_number }`
+          bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${ bisAddress.exterior_number === 'SN' ? '': bisAddress.exterior_number }`
+          bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${ bisAddress.interior_number === 'SN' ? '': bisAddress.interior_number }`
+
           const incomeInfo = {
             sales: x.doc.business_data.income_sales_total,
             family: x.doc.business_data.income_partner,
