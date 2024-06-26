@@ -176,8 +176,8 @@ async function sortDataPerson(client:any) {
             {
                 id: IS_CREATE ? 0 : client.id_persona,
                 nombre: client.name,
-                apellido_paterno: client.lastname ? client.lastname : "S/A",
-                apellido_materno: client.second_lastname ? client.second_lastname : "S/A",
+                apellido_paterno: client.lastname,
+                apellido_materno: client.second_lastname,
                 fecha_nacimiento: client.dob ? getDates(client.dob) : "1990-01-01",
                 id_sexo: client.sex[0] ? client.sex[0] : 4,
                 id_escolaridad: client.education_level[0] ? client.education_level[0] : 2,

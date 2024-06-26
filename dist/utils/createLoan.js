@@ -165,7 +165,7 @@ function createLoanHF(data) {
                 }),
                 SEGURO: loan.members.map((member) => {
                     return {
-                        id: isNewLoan ? member.insurance.id : 0,
+                        id: isNewLoan ? 0 : Funct.validateInt(member.insurance.id),
                         id_individual: member.id_cliente,
                         id_seguro_asignacion: seguro[0].id_seguro_asignacion,
                         id_seguro: seguro[0].id_seguro || 0,
