@@ -543,8 +543,8 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                 nationality: x.doc.nationality ? x.doc.nationality[0] == 1 ? "MEXICANA" : "OTRA" : "",
                 countrtAndProvince: x.doc.province_of_birth ? `${x.doc.province_of_birth[1]}, ${x.doc.country_of_birth[1]}`.toUpperCase() : "",
                 dob,
-                curp: (0, misc_1.arrayFromStringSize)(x.doc.curp, 18, '*'),
-                rfc: (0, misc_1.arrayFromStringSize)(x.doc.rfc, 13, '*'),
+                curp: x.doc.curp,
+                rfc: x.doc.rfc,
                 email: x.doc.email,
                 mobilePhone: !!mobilePhone ? (0, misc_1.arrayFromStringSize)(mobilePhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
                 otherPhone: !!otherPhone ? (0, misc_1.arrayFromStringSize)(otherPhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
@@ -739,6 +739,353 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
         //  const result = await renderPDf(htmlData,`solicitud_grupo_solidario`);
         //  res.send({...result } );
         res.send(htmlData);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(400).send(error.message);
+    }
+}));
+router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.query.loanId) {
+            throw new Error('parameter loanId is missing in URL');
+        }
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const loanApp = yield db.get(req.query.loanId);
+        if (!loanApp) {
+            throw new Error('Loan App does not exist with the id:' + req.query.loanId);
+        }
+        if (!loanApp.members) {
+            throw new Error('No members found at the loan application!');
+        }
+        const keys = loanApp.members.map((x) => (x.client_id));
+        const clientsQuery = yield db.fetch({ keys: keys });
+        const loginUser = {
+            fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : ''
+        };
+        const newClientsList = clientsQuery.rows.filter((r) => !r.error);
+        const clientsData = newClientsList.map((x) => {
+            const memberData = loanApp.members.find((y) => y.client_id === x.doc._id);
+            const loanCycle = parseInt(memberData.loan_cycle) + 1;
+            const memberLoanAmount = memberData.apply_amount;
+            const beneficiaryInfo = {
+                name: memberData.insurance.beneficiary,
+                relationship: memberData.insurance.relationship,
+                percentage: memberData.insurance.percentage
+            };
+            const dob = x.doc.dob.slice(0, 10).split('-').reverse();
+            dob.length = 3;
+            const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
+            const otherPhone = x.doc.phones.find((y) => y.type === 'Caseta');
+            const homeAddress = x.doc.address.find((y) => y.type === 'DOMICILIO');
+            const bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
+            let bisAddressSame = '';
+            if (bisAddress) { // evaluates first bisAddress exists, since object may not exits
+                if (!!bisAddress.bis_address_same) {
+                    bisAddressSame = bisAddress.bis_address_same ? '✖️' : '';
+                }
+            }
+            homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number}`;
+            homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number}`;
+            bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number}`;
+            bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number}`;
+            const incomeInfo = {
+                sales: x.doc.business_data.income_sales_total,
+                family: x.doc.business_data.income_partner,
+                job: x.doc.business_data.income_job,
+                abroad: x.doc.business_data.income_remittances,
+                other: x.doc.business_data.income_other,
+                total: x.doc.business_data.income_total,
+            };
+            const expensesInfo = {
+                family: x.doc.business_data.expense_family,
+                rent: x.doc.business_data.expense_rent,
+                bis: x.doc.business_data.expense_business,
+                payables: x.doc.business_data.expense_debt,
+                debt: x.doc.business_data.expense_credit_cards,
+                total: x.doc.business_data.expense_total,
+            };
+            const bisQualitySalesMonthly = {
+                monthSaleJan: x.doc.business_data.bis_quality_sales_monthly.month_sale_jan,
+                monthSaleFeb: x.doc.business_data.bis_quality_sales_monthly.month_sale_feb,
+                monthSaleMar: x.doc.business_data.bis_quality_sales_monthly.month_sale_mar,
+                monthSaleApr: x.doc.business_data.bis_quality_sales_monthly.month_sale_apr,
+                monthSaleMay: x.doc.business_data.bis_quality_sales_monthly.month_sale_may,
+                monthSaleJun: x.doc.business_data.bis_quality_sales_monthly.month_sale_jun,
+                monthSaleJul: x.doc.business_data.bis_quality_sales_monthly.month_sale_jul,
+                monthSaleAug: x.doc.business_data.bis_quality_sales_monthly.month_sale_aug,
+                monthSaleSep: x.doc.business_data.bis_quality_sales_monthly.month_sale_sep,
+                monthSaleOct: x.doc.business_data.bis_quality_sales_monthly.month_sale_oct,
+                monthSaleNov: x.doc.business_data.bis_quality_sales_monthly.month_sale_nov,
+                monthSaleDic: x.doc.business_data.bis_quality_sales_monthly.month_sale_dic
+            };
+            /// FALSE PLD check when this field is empty
+            const isClientPppYesNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'Si' : 'No';
+            const pPpClientName = x.doc.spld.familiar_desempenia_funcion_publica_cargo ?
+                `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paternos} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : '';
+            return {
+                name: x.doc.name,
+                lastname: x.doc.lastname,
+                second_lastname: x.doc.second_lastname,
+                branch: loanApp.branch ? loanApp.branch[1] : '',
+                apply_at: (0, misc_1.formatLocalDate2)(loanApp.apply_at ? loanApp.apply_at : (new Date()).toISOString()).split("/"),
+                loan_cycle: loanCycle > 1 ? loanCycle : '',
+                economicDependants: x.doc.economic_dependants,
+                hasPrimaria: x.doc.education_level ? x.doc.education_level[0] == 4 ? '✖️' : '' : '',
+                hasSecundaria: x.doc.education_level ? x.doc.education_level[0] == 5 ? '✖️' : '' : '',
+                hasPrepa: x.doc.education_level ? x.doc.education_level[0] == 8 ? '✖️' : '' : '',
+                hasUniversidad: x.doc.education_level ? x.doc.education_level[0] == 9 ? '✖️' : '' : '',
+                hasNinguno: x.doc.education_level ? x.doc.education_level[0] == 2 ? '✖️' : '' : '',
+                speaksDialectYes: x.doc.speaks_dialect ? '✖️' : '',
+                speaksDialectNo: x.doc.speaks_dialect ? '' : '✖️',
+                hasDisableYes: x.doc.has_disable ? '✖️' : '',
+                hasDisableNo: x.doc.has_disable ? '' : '✖️',
+                internetAccessYes: x.doc.internet_access ? '✖️' : '',
+                internetAccessNo: x.doc.internet_access ? '' : '✖️',
+                usesSocialMediaYes: x.doc.prefered_social ? x.doc.prefered_social[0] != 1 ? '✖️' : '' : '',
+                usesSocialMediaNo: x.doc.prefered_social ? x.doc.prefered_social[0] == 1 ? '✖️' : '' : '',
+                isSocialMediaFacebook: x.doc.prefered_social ? x.doc.prefered_social[0] == 3 ? '✖️' : '' : '',
+                isSocialMediaWhatsapp: x.doc.prefered_social ? x.doc.prefered_social[0] == 2 ? '✖️' : '' : '',
+                isSocialMediaInstagram: x.doc.prefered_social ? x.doc.prefered_social[0] == 4 ? '✖️' : '' : '',
+                userSocialMedia: x.doc.user_social,
+                memberLoanAmount: (0, misc_1.formatLocalCurrency)(memberLoanAmount),
+                isNewLoan: loanCycle <= 1 ? "✖️" : "",
+                isFemale: x.doc.sex ? x.doc.sex[0] == 3 ? '✖️' : ' ' : '',
+                isMale: x.doc.sex ? x.doc.sex[0] != 3 ? '✖️' : ' ' : '',
+                isSingle: x.doc.marital_status ? x.doc.marital_status[0] == 1 ? "✖️" : "" : "",
+                isMarried: x.doc.marital_status ? x.doc.marital_status[0] == 2 ? "✖️" : "" : "",
+                isCommonLaw: x.doc.marital_status ? x.doc.marital_status[0] == 3 ? "✖️" : "" : "",
+                isNationalityMx: x.doc.nationality ? x.doc.nationality[0] == 1 ? '✖️' : '' : '',
+                notMxNationality: x.doc.nationality ? x.doc.nationality[0] == 1 ? "" : x.doc.nationality[1] : "",
+                countryAndProvince: x.doc.province_of_birth ? `${x.doc.province_of_birth[1]}, ${x.doc.country_of_birth[1]}`.toUpperCase() : "",
+                dob,
+                curp: x.doc.curp,
+                rfc: x.doc.rfc,
+                claveIne: x.doc.clave_ine,
+                email: x.doc.email,
+                mobilePhone: mobilePhone ? mobilePhone.phone : '',
+                otherPhone: otherPhone ? otherPhone.phone : '',
+                geoLat: !!x.doc.coordinates ? x.doc.coordinates[0] : 0,
+                geoLng: !!x.doc.coordinates ? x.doc.coordinates[1] : 0,
+                homeAddress,
+                homeAddressRoad: homeAddress.road ? homeAddress.road[1] : '',
+                bisAddress,
+                bisAddressRoad: bisAddress.road ? bisAddress.road[1] : '',
+                bisAddressSame,
+                hasHouseholdFloor: x.doc.household_floor ? '✖️' : '',
+                hasHouseholdRoof: x.doc.household_roof ? '✖️' : '',
+                hasHouseholdToilet: x.doc.household_toilet ? '✖️' : '',
+                hasHouseholdLatrine: x.doc.household_latrine ? '✖️' : '',
+                hasHouseholdBrick: x.doc.household_brick ? '✖️' : '',
+                isRolHogarJefe: x.doc.rol_hogar ? x.doc.rol_hogar[0] == 1 ? '✖️' : '' : '',
+                isRolHogarEsposo: x.doc.rol_hogar ? x.doc.rol_hogar[0] == 2 ? '✖️' : '' : '',
+                isRolHogarHijo: x.doc.rol_hogar ? x.doc.rol_hogar[0] == 3 ? '✖️' : '' : '',
+                isRolHogarOtro: x.doc.rol_hogar ? x.doc.rol_hogar[0] == 4 ? '✖️' : '' : '',
+                economicActivity: !x.doc.business_data.economic_activity ? 'NO ESPECIFICADO' : x.doc.business_data.economic_activity[1],
+                profession: !x.doc.business_data.profession ? 'NO ESPECIFICADO' : x.doc.business_data.profession[1],
+                occupation: !x.doc.business_data.ocupation ? 'NO ESPECIFICADO' : x.doc.business_data.ocupation[1],
+                numberEmployees: x.doc.business_data.number_employees,
+                bisDataPhone: x.doc.business_data.business_phone ? x.doc.business_data.business_phone : '',
+                loanDestination: x.doc.business_data.loan_destination ? x.doc.business_data.loan_destination[1] : 'NO ESPECIFICADO',
+                bisYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!x.doc.business_data.business_start_date ? x.doc.business_data.business_start_date : new Date()), new Date()),
+                homeYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!homeAddress.residence_since ? homeAddress.residence_since : new Date()), new Date()),
+                homeOwnershipRented: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 2 ? '✖️' : '') : '',
+                homeOwnershipOwned: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 1 ? '✖️' : '') : '',
+                homeOwnershipRelative: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 3 ? '✖️' : '') : '',
+                keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
+                hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
+                previousExperience: x.doc.business_data.previous_loan_experience,
+                isClientPppYesNo, pPpClientName,
+                incomeInfo,
+                expensesInfo,
+                bisQualitySalesMonthly,
+                isBisTypeDaily: x.doc.business_data.bis_season_type === 'D' ? '✖️' : '',
+                isBisTypeWeekly: x.doc.business_data.bis_season_type === 'S' ? '✖️' : '',
+                isBisTypeFortnightly: x.doc.business_data.bis_season_type === 'C' ? '✖️' : '',
+                beneficiaryInfo,
+                loginUser
+            };
+        });
+        const hbs = (0, express_handlebars_1.create)();
+        const htmlData = yield hbs.render('views/solicitud-grupo-tactiva.handlebars', {
+            serverHost,
+            clientsData
+        });
+        res.send(htmlData);
+    }
+    catch (error) {
+        console.log(error);
+        res.status(400).send(error.message);
+    }
+}));
+router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.query.loanId) {
+            throw new Error('parameter loanId is missing in URL');
+        }
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const loanApp = yield db.get(req.query.loanId);
+        if (!loanApp) {
+            throw new Error('Loan App does not exist with the id:' + req.query.loanId);
+        }
+        if (!loanApp.members) {
+            throw new Error('No members found at the loan application!');
+        }
+        const keys = loanApp.members.map((x) => (x.client_id));
+        const clientsQuery = yield db.fetch({ keys: keys });
+        const loginUser = {
+            fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : ''
+        };
+        const newClientsList = clientsQuery.rows.filter((r) => !r.error);
+        const clientsData = newClientsList.map((x) => {
+            const memberData = loanApp.members.find((y) => y.client_id === x.doc._id);
+            const loanCycle = parseInt(memberData.loan_cycle) + 1;
+            const memberLoanAmount = memberData.apply_amount;
+            const beneficiaryInfo = {
+                name: memberData.insurance.beneficiary,
+                relationship: memberData.insurance.relationship,
+                percentage: memberData.insurance.percentage
+            };
+            const dob = x.doc.dob.slice(0, 10).split('-').reverse();
+            dob.length = 3;
+            const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
+            const otherPhone = x.doc.phones.find((y) => y.type === 'Caseta');
+            const homeAddress = x.doc.address.find((y) => y.type === 'DOMICILIO');
+            const bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
+            let bisAddressSame = '';
+            if (bisAddress) { // evaluates first bisAddress exists, since object may not exits
+                if (!!bisAddress.bis_address_same) {
+                    bisAddressSame = bisAddress.bis_address_same ? '✖️' : '';
+                }
+            }
+            homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number}`;
+            homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number}`;
+            bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number}`;
+            bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number}`;
+            const incomeInfo = {
+                sales: x.doc.business_data.income_sales_total,
+                family: x.doc.business_data.income_partner,
+                job: x.doc.business_data.income_job,
+                abroad: x.doc.business_data.income_remittances,
+                other: x.doc.business_data.income_other,
+                total: x.doc.business_data.income_total,
+            };
+            const expensesInfo = {
+                family: x.doc.business_data.expense_family,
+                rent: x.doc.business_data.expense_rent,
+                bis: x.doc.business_data.expense_business,
+                payables: x.doc.business_data.expense_debt,
+                debt: x.doc.business_data.expense_credit_cards,
+                total: x.doc.business_data.expense_total,
+            };
+            const bisQualitySalesMonthly = {
+                monthSaleJan: x.doc.business_data.bis_quality_sales_monthly.month_sale_jan,
+                monthSaleFeb: x.doc.business_data.bis_quality_sales_monthly.month_sale_feb,
+                monthSaleMar: x.doc.business_data.bis_quality_sales_monthly.month_sale_mar,
+                monthSaleApr: x.doc.business_data.bis_quality_sales_monthly.month_sale_apr,
+                monthSaleMay: x.doc.business_data.bis_quality_sales_monthly.month_sale_may,
+                monthSaleJun: x.doc.business_data.bis_quality_sales_monthly.month_sale_jun,
+                monthSaleJul: x.doc.business_data.bis_quality_sales_monthly.month_sale_jul,
+                monthSaleAug: x.doc.business_data.bis_quality_sales_monthly.month_sale_aug,
+                monthSaleSep: x.doc.business_data.bis_quality_sales_monthly.month_sale_sep,
+                monthSaleOct: x.doc.business_data.bis_quality_sales_monthly.month_sale_oct,
+                monthSaleNov: x.doc.business_data.bis_quality_sales_monthly.month_sale_nov,
+                monthSaleDic: x.doc.business_data.bis_quality_sales_monthly.month_sale_dic
+            };
+            /// FALSE PLD check when this field is empty
+            const isClientPppYesNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'Si' : 'No';
+            const pPpClientName = x.doc.spld.familiar_desempenia_funcion_publica_cargo ?
+                `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paternos} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : '';
+            return {
+                name: x.doc.name,
+                lastname: x.doc.lastname,
+                second_lastname: x.doc.second_lastname,
+                branch: loanApp.branch ? loanApp.branch[1] : '',
+                apply_at: (0, misc_1.formatLocalDate2)(loanApp.apply_at ? loanApp.apply_at : (new Date()).toISOString()).split("/"),
+                loan_cycle: loanCycle > 1 ? loanCycle : '',
+                economicDependants: x.doc.economic_dependants,
+                hasPrimaria: x.doc.education_level ? x.doc.education_level[0] == 4 ? '✖️' : '' : '',
+                hasSecundaria: x.doc.education_level ? x.doc.education_level[0] == 5 ? '✖️' : '' : '',
+                hasPrepa: x.doc.education_level ? x.doc.education_level[0] == 8 ? '✖️' : '' : '',
+                hasUniversidad: x.doc.education_level ? x.doc.education_level[0] == 9 ? '✖️' : '' : '',
+                hasNinguno: x.doc.education_level ? x.doc.education_level[0] == 2 ? '✖️' : '' : '',
+                speaksDialectYes: x.doc.speaks_dialect ? '✖️' : '',
+                speaksDialectNo: x.doc.speaks_dialect ? '' : '✖️',
+                hasDisableYes: x.doc.has_disable ? '✖️' : '',
+                hasDisableNo: x.doc.has_disable ? '' : '✖️',
+                internetAccessYes: x.doc.internet_access ? '✖️' : '',
+                internetAccessNo: x.doc.internet_access ? '' : '✖️',
+                usesSocialMediaYes: x.doc.prefered_social ? x.doc.prefered_social[0] == 1 ? '' : '✖️' : '',
+                usesSocialMediaNo: x.doc.prefered_social ? x.doc.prefered_social[0] == 1 ? '' : '' : '✖️',
+                isSocialMediaFacebook: x.doc.prefered_social ? x.doc.prefered_social[0] == 3 ? '✖️' : '' : '',
+                isSocialMediaWhatsapp: x.doc.prefered_social ? x.doc.prefered_social[0] == 2 ? '✖️' : '' : '',
+                isSocialMediaInstagram: x.doc.prefered_social ? x.doc.prefered_social[0] == 4 ? '✖️' : '' : '',
+                userSocialMedia: x.doc.user_social,
+                memberLoanAmount: (0, misc_1.formatLocalCurrency)(memberLoanAmount),
+                isNewLoan: loanCycle <= 1 ? "✖️" : "",
+                isFemale: x.doc.sex ? x.doc.sex[0] == 3 ? '✖️' : '' : '',
+                isMale: x.doc.sex ? x.doc.sex[0] != 3 ? '✖️' : '' : '',
+                isSingle: x.doc.marital_status ? x.doc.marital_status[0] == 1 ? "✖️" : "" : "",
+                isMarried: x.doc.marital_status ? x.doc.marital_status[0] == 2 ? "✖️" : "" : "",
+                isCommonLaw: x.doc.marital_status ? x.doc.marital_status[0] == 3 ? "✖️" : "" : "",
+                isNationalityMx: x.doc.nationality ? x.doc.nationality[0] == 1 ? '✖️' : '' : '',
+                notMxNationality: x.doc.nationality ? x.doc.nationality[0] == 1 ? "" : x.doc.nationality[1] : "",
+                countryAndProvince: x.doc.province_of_birth ? `${x.doc.province_of_birth[1]}, ${x.doc.country_of_birth[1]}`.toUpperCase() : "",
+                dob,
+                curp: x.doc.curp,
+                rfc: x.doc.rfc,
+                claveIne: x.doc.clave_ine,
+                email: x.doc.email,
+                mobilePhone: mobilePhone ? mobilePhone.phone : '',
+                otherPhone: otherPhone ? otherPhone.phone : '',
+                geoLat: !!x.doc.coordinates ? x.doc.coordinates[0] : 0,
+                geoLng: !!x.doc.coordinates ? x.doc.coordinates[1] : 0,
+                homeAddress,
+                homeAddressRoad: homeAddress.road ? homeAddress.road[1] : '',
+                bisAddress,
+                bisAddressRoad: bisAddress.road ? bisAddress.road[1] : '',
+                bisAddressSame,
+                hasHouseholdFloor: x.doc.household_floor ? '✖️' : '',
+                hasHouseholdRoof: x.doc.household_roof ? '✖️' : '',
+                hasHouseholdToilet: x.doc.household_toilet ? '✖️' : '',
+                hasHouseholdLatrine: x.doc.household_latrine ? '✖️' : '',
+                hasHouseholdBrick: x.doc.household_brick ? '✖️' : '',
+                isRolHogarJefe: x.doc.rol_hogar ? x.doc.rol_hogar[0] == 1 ? '✖️' : '' : '',
+                isRolHogarEsposo: x.doc.rol_hogar ? x.doc.rol_hogar[0] == 2 ? '✖️' : '' : '',
+                isRolHogarHijo: x.doc.rol_hogar ? x.doc.rol_hogar[0] == 3 ? '✖️' : '' : '',
+                isRolHogarOtro: x.doc.rol_hogar ? x.doc.rol_hogar[0] == 4 ? '✖️' : '' : '',
+                economicActivity: !x.doc.business_data.economic_activity ? 'NO ESPECIFICADO' : x.doc.business_data.economic_activity[1],
+                profession: !x.doc.business_data.profession ? 'NO ESPECIFICADO' : x.doc.business_data.profession[1],
+                occupation: !x.doc.business_data.ocupation ? 'NO ESPECIFICADO' : x.doc.business_data.ocupation[1],
+                numberEmployees: x.doc.business_data.number_employees,
+                bisDataPhone: x.doc.business_data.business_phone ? x.doc.business_data.business_phone : '',
+                loanDestination: x.doc.business_data.loan_destination ? x.doc.business_data.loan_destination[1] : 'NO ESPECIFICADO',
+                bisYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!x.doc.business_data.business_start_date ? x.doc.business_data.business_start_date : new Date()), new Date()),
+                homeYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!homeAddress.residence_since ? homeAddress.residence_since : new Date()), new Date()),
+                homeOwnershipRented: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 2 ? '✖️' : '') : '',
+                homeOwnershipOwned: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 1 ? '✖️' : '') : '',
+                homeOwnershipRelative: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 3 ? '✖️' : '') : '',
+                keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
+                hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
+                previousExperience: x.doc.business_data.previous_loan_experience,
+                isClientPppYesNo, pPpClientName,
+                incomeInfo,
+                expensesInfo,
+                bisQualitySalesMonthly,
+                isBisTypeDaily: x.doc.business_data.bis_season_type === 'D' ? '✖️' : '',
+                isBisTypeWeekly: x.doc.business_data.bis_season_type === 'S' ? '✖️' : '',
+                isBisTypeFortnightly: x.doc.business_data.bis_season_type === 'C' ? '✖️' : '',
+                beneficiaryInfo,
+                loginUser
+            };
+        });
+        const hbs = (0, express_handlebars_1.create)();
+        const htmlData = yield hbs.render('views/solicitud-grupo-tactiva.handlebars', {
+            serverHost,
+            clientsData
+        });
+        const result = yield renderPDf(htmlData, `solicitud_grupo_tactiva`);
+        res.send(Object.assign({}, result));
     }
     catch (error) {
         console.log(error);
