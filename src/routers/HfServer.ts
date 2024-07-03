@@ -213,7 +213,8 @@ router.get('/products/hf', authorize, async (req, res) => {
         const productsQuery = await db.find({
             selector: {
                 couchdb_type: "PRODUCT"
-            }
+            },
+            limit: 10000
         })
 
         const newData = data[0].map((x: any) => {

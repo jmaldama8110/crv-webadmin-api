@@ -229,7 +229,8 @@ router.get('/products/hf', authorize_1.authorize, (req, res) => __awaiter(void 0
         const productsQuery = yield db.find({
             selector: {
                 couchdb_type: "PRODUCT"
-            }
+            },
+            limit: 10000
         });
         const newData = data[0].map((x) => {
             const i = productsQuery.docs.find((y) => y.external_id == x.id);
