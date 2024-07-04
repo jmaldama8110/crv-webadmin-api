@@ -66,6 +66,7 @@ export async function createLoanHF(data:any) {
             if (!LoanHFCreated) return new Error('Failed to create loan in HF');
 
             loan.id_solicitud = LoanHFCreated[0].idSolicitud;
+            loan.loan_officer = idOficialCredito;
             if (typeClient == 1 && loan.id_cliente == 0) {
                 loan.id_cliente = LoanHFCreated[0].idCliente;
                 // loan.group.id = 0;
@@ -73,12 +74,11 @@ export async function createLoanHF(data:any) {
 
         } else if (loan.renovation) { // TODOelse if revobacion
             console.log('RENOVACIÓN');
-
-            let idOfficer = loan.loan_officer ? loan.loan_officer : 0;
-            const idLoanRenovation = await loanRenovation(loan.id_cliente, loan.id_solicitud, idOfficer, idBranch, id_loan);
+            const idLoanRenovation = await loanRenovation(loan.id_cliente, loan.id_solicitud, idOficialCredito, idBranch, id_loan);
             if (!idLoanRenovation) return new Error('Renovation loan');
             console.log('idRenovation:', idLoanRenovation)
             loan.id_solicitud = idLoanRenovation;
+            loan.loan_officer = idOficialCredito
             loan.renovation = false;
         } else {
             console.log('ACTUALIZACIÓN');
