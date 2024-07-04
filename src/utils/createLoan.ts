@@ -28,7 +28,7 @@ const frecuencyHFToCouch = {
 
 export async function createLoanHF(data:any) {
     try {
-        const { id_loan } = data;
+        const { id_loan, idOficialCredito } = data;
 
         let typeClient;
         let loan:any;
@@ -52,7 +52,15 @@ export async function createLoanHF(data:any) {
         // CREAR LA SOLICITUD, SI ES SOLICITUD NUEVA
         if (isNewLoan) {
             console.log('NUEVA SOLICITUD');
-            const dataCreate = { idUsuario: 0, idOficina: idBranch, num: 1, typeClient: typeClient, idLoan: id_loan }
+            if( !idOficialCredito ) return new Error('id Oficial (id persona) credito obligatorio')
+            const  dataCreate = { 
+                idUsuario: 0, 
+                idOficina: idBranch, 
+                num: 1,
+                typeClient: typeClient,
+                idLoan: id_loan,
+                idOficialCredito
+            }
 
             const LoanHFCreated = await createLoanFromHF(dataCreate);
             if (!LoanHFCreated) return new Error('Failed to create loan in HF');
@@ -229,14 +237,14 @@ export async function createLoanHF(data:any) {
 async function createLoanFromHF(data:any) {
     try {
         console.log(data);
-        const { idUsuario, idOficina, num, typeClient, idLoan } = data;
+        const { idUsuario, idOficina, num, typeClient, idLoan, idOficialCredito } = data;
         // typeClient 2-> individual
         // typeClient 1 -> grupo
         const pool = await sql.connect(sqlConfig);
         const result = await pool.request()
             .input('idUsuario', sql.Int, idUsuario) // Creado por
             .input('idOficina', sql.Int, idOficina)
-            .input('idOficialCredito', sql.Int, 0)
+            .input('idOficialCredito', sql.Int, idOficialCredito)
             .input('idTipoCliente', sql.Int, typeClient) //1 -> Grupo, 2 -> Individual
             .input('idServicioFinanciero', sql.Int, num) // Es el unico que existe
             .input('cantidad', sql.Int, 1) // Numero de solicitudes a hacer

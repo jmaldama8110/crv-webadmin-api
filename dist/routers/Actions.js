@@ -237,7 +237,8 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                             break;
                         }
                         // Create loan
-                        loan = yield (0, createLoan_1.createLoanHF)(action.data);
+                        loan = yield (0, createLoan_1.createLoanHF)(Object.assign(Object.assign({}, action.data), { idOficialCredito: req.user.loan_officer /// get the current user from HF
+                         }));
                         // Validate creation of loan
                         if (loan instanceof Error || !loan) {
                             action.status = 'Error';

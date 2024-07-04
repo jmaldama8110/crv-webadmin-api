@@ -39,7 +39,7 @@ const frecuencyHFToCouch = {
 function createLoanHF(data) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const { id_loan } = data;
+            const { id_loan, idOficialCredito } = data;
             let typeClient;
             let loan;
             loan = yield loanAppGroup.findOne({ _id: id_loan });
@@ -60,7 +60,16 @@ function createLoanHF(data) {
             // CREAR LA SOLICITUD, SI ES SOLICITUD NUEVA
             if (isNewLoan) {
                 console.log('NUEVA SOLICITUD');
-                const dataCreate = { idUsuario: 0, idOficina: idBranch, num: 1, typeClient: typeClient, idLoan: id_loan };
+                if (!idOficialCredito)
+                    return new Error('id Oficial (id persona) credito obligatorio');
+                const dataCreate = {
+                    idUsuario: 0,
+                    idOficina: idBranch,
+                    num: 1,
+                    typeClient: typeClient,
+                    idLoan: id_loan,
+                    idOficialCredito
+                };
                 const LoanHFCreated = yield createLoanFromHF(dataCreate);
                 if (!LoanHFCreated)
                     return new Error('Failed to create loan in HF');
@@ -232,14 +241,14 @@ function createLoanFromHF(data) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.log(data);
-            const { idUsuario, idOficina, num, typeClient, idLoan } = data;
+            const { idUsuario, idOficina, num, typeClient, idLoan, idOficialCredito } = data;
             // typeClient 2-> individual
             // typeClient 1 -> grupo
             const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
             const result = yield pool.request()
                 .input('idUsuario', mssql_1.default.Int, idUsuario) // Creado por
                 .input('idOficina', mssql_1.default.Int, idOficina)
-                .input('idOficialCredito', mssql_1.default.Int, 0)
+                .input('idOficialCredito', mssql_1.default.Int, idOficialCredito)
                 .input('idTipoCliente', mssql_1.default.Int, typeClient) //1 -> Grupo, 2 -> Individual
                 .input('idServicioFinanciero', mssql_1.default.Int, num) // Es el unico que existe
                 .input('cantidad', mssql_1.default.Int, 1) // Numero de solicitudes a hacer

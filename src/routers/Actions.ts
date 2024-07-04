@@ -1,4 +1,4 @@
-import express, { query } from 'express';
+import express from 'express';
 import Action from '../model/Action';
 import { authorize } from '../middleware/authorize';
 import { LoanAppGroup } from '../model/LoanAppGroup';
@@ -121,7 +121,7 @@ router.get('/actions/validate', authorize, async (req, res) => {
     }
 });
 
-router.get('/actions/exec', authorize, async (req, res) => {
+router.get('/actions/exec', authorize, async (req:any, res) => {
     try {
         // Validate action
         let RSP_Result: any = { status: 'ERROR' };
@@ -206,7 +206,10 @@ router.get('/actions/exec', authorize, async (req, res) => {
                             break;
                         }
                         // Create loan
-                        loan = await createLoanHF(action.data);
+                        loan = await createLoanHF({
+                            ...action.data, 
+                            idOficialCredito: req.user.loan_officer  /// get the current user from HF
+                        });
                         // Validate creation of loan
                         if (loan instanceof Error || !loan) {
                             action.status = 'Error';
