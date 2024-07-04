@@ -167,6 +167,10 @@
             width: 15px;
             height: 10px;
          }
+         .cross {
+            font-weight: 800;
+            font-size: 9px;
+         }
         .full-border { border: 1px solid black; }
             .ml-sm { margin-left: 0.5rem }
             .ml-md { margin-left: 1rem }
@@ -267,9 +271,9 @@
             <h3>DATOS DEL DOMICILIO</h3>            
             <div class="flex-content">
                 <p class="wd20 fw-bold">CASA</p>
-                <p class="wd30">{{this.homeOwnershipOwned}}P</p>
-                <p class="wd30">{{this.homeOwnershipRented}}R</p>
-                <p class="wd30">{{this.homeOwnershipRelative}}F</p>
+                <p class="wd30"><span class="cross">{{this.homeOwnershipOwned}}</span>P</p>
+                <p class="wd30"><span class="cross">{{this.homeOwnershipRented}}</span>R</p>
+                <p class="wd30"><span class="cross">{{this.homeOwnershipRelative}}</span>F</p>
                 <p class="wd90 fw-bold">TIEMPO HABITANDO EN ELLA</p>
                 <p class="wd30 border-bottom txt-center">&nbsp;&nbsp;{{this.homeYearsMonths.[0]}}&nbsp;&nbsp;</p>
                 <p class="wd30 fw-bold">AÑOS</p>
@@ -294,8 +298,8 @@
             </div>
             <div class="flex-content">
                 <p class="wd40 fw-bold">SEXO</p>
-                <p class="wd40">{{this.isMale}}H</p>
-                <p class="wd40">{{this.isFemale}}M</p>
+                <p class="wd40"><span class="cross">{{this.isMale}}</span>H</p>
+                <p class="wd40"><span class="cross">{{this.isFemale}}</span>M</p>
             </div>
             <div class="flex-content">
                 <p class="wd80 fw-bold">FECHA DE LA SOLICITUD</p>
@@ -303,17 +307,17 @@
             </div>
             <div class="flex-content">
                 <p class="wd80 fw-bold">ESTADO CIVIL</p>
-                <p class="wd60">{{this.isSingle}}SOLTERA</p>
-                <p class="wd60">{{this.isMarried}}CASADA</p>
-                <p class="wd60">{{this.isCommonLaw}}UNION LIBRE</p>
+                <p class="wd60"><span class="cross">{{this.isSingle}}</span>SOLETRA</p>
+                <p class="wd60"><span class="cross">{{this.isMarried}}</span>CASADA</p>
+                <p class="wd60"><span class="cross">{{this.isCommonLaw}}</span>UNION LIBRE</p>
             </div>
             <div class="flex-content">
                 <p class="wd60 fw-bold">ESCOLARIDAD</p>
-                <p class="wd60 fs-xsm">{{this.hasPrimaria}}PRIMARIA</p>
-                <p class="wd60 fs-xsm">{{this.hasSecundaria}}SECUNDARIA</p>
-                <p class="wd60 fs-xsm">{{this.hasPrepa}}PREPARATORIA</p>
-                <p class="wd60 fs-xsm">{{this.hasUniversidad}}UNIVERSIDAD</p>
-                <p class="wd60 fs-xsm">{{this.hasNinguno}}NINGUNO</p>
+                <p class="wd60 fs-xsm"><span class="cross">{{this.hasPrimaria}}</span></p>
+                <p class="wd60 fs-xsm"><span class="cross">{{this.hasSecundaria}}</span>SECUNDARIA</p>
+                <p class="wd60 fs-xsm"><span class="cross">{{this.hasPrepa}}</span>PREPARATORIA</p>
+                <p class="wd60 fs-xsm"><span class="cross">{{this.hasUniversidad}}</span>UNIVERSIDAD</p>
+                <p class="wd60 fs-xsm"><span class="cross">{{this.hasNinguno}}</span>NINGUNO</p>
             </div>
             <div class="flex-content">
                 <p class="wd40 fw-bold">PROFESIóN</p>
@@ -321,7 +325,7 @@
             </div>
             <div class="flex-content">
                 <p class="wd80 fw-bold">NACIONALIDAD</p>
-                <p class="wd80">{{this.isNationalityMx}}MEXICANA</p>
+                <p class="wd80"><span class="cross">{{this.isNationalityMx}}</span>MEXICANA</p>
                 <p class="wd40 fw-bold">OTRA</p>
                 <p class="wd80 border-bottom">{{this.notMxNationality}}</p>
             </div>
@@ -332,30 +336,30 @@
                 <div class="flex-content">
                     <p class="wd140"><b>¿HABLA USTED ALGUNA LENGUA INDIGENA?</b></p>
                     <p class="fw-bold">Si</p>
-                    <p class="wd40 border-bottom">&nbsp;{{this.speaksDialectYes}}</p>
+                    <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.speaksDialectYes}}</span></p>
                     <p class="fw-bold">No</p>
-                    <p class="wd40 border-bottom">&nbsp;{{this.speaksDialectNo}}</p>
+                    <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.speaksDialectNo}}</span></p>
                 </div>
                 <div class="flex-content">
                     <p class="wd140"><b>¿PADECE USTED ALGUNA DISCAPACIDAD?</b></p>
                     <p class="fw-bold">Si</p>
-                    <p class="wd40 border-bottom">&nbsp;{{this.hasDisableYes}}</p>
+                    <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.hasDisableYes}}</span></p>
                     <p class="fw-bold">No</p>
-                    <p class="wd40 border-bottom">&nbsp;{{this.hasDisableNo}}</p>
+                    <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.hasDisableNo}}</span></p>
                 </div>
                 <div class="flex-content">
                     <p class="wd140"><b>¿CUENTA USTED CON ACCESO A INTERNET?</b></p>
                     <p class="fw-bold">Si</p>
-                    <p class="wd40 border-bottom">&nbsp;{{this.internetAccessYes}}</p>
+                    <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.internetAccessYes}}</span></p>
                     <p class="fw-bold">No</p>
-                    <p class="wd40 border-bottom">&nbsp;{{this.internetAccessNo}}</p>
+                    <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.internetAccessNo}}</span></p>
                 </div>
                 <div class="flex-content">
                     <p class="wd140"><b>¿ES USTED USUARIA DE REDES SOCIALES?</b></p>
                     <p class="fw-bold">Si</p>
-                    <p class="wd40 border-bottom">&nbsp;{{this.usesSocialMediaYes}}</p>
+                    <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.usesSocialMediaYes}}</span></p>
                     <p class="fw-bold">No</p>
-                    <p class="wd40 border-bottom">&nbsp;{{this.usesSocialMediaNo}}</p>
+                    <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.usesSocialMediaNo}}</span></p>
                 </div>
         </div>
 
@@ -410,10 +414,10 @@
         <p class="wd100 border-bottom">&nbsp;{{this.email}}</p>
         <p class="wd20 border-bottom">&nbsp;</p>
         <p class="wd80 fw-bold">ROL EN EL HOGAR</p>
-        <p class="wd60 fw-bold">{{this.isRolHogarJefe}}JEFE</p>
-        <p class="wd60 fw-bold">{{this.isRolHogarEsposo}}ESPOS@</p>
-        <p class="wd60 fw-bold">{{this.isRolHogarHijo}}HIJ@</p>
-        <p class="wd60 fw-bold">{{this.isRolHogarOtro}}OTRO:</p>
+        <p class="wd60 fw-bold"><span class="cross">{{this.isRolHogarJefe}}</span>JEFE</p>
+        <p class="wd60 fw-bold"><span class="cross">{{this.isRolHogarEsposo}}</span>ESPOS@</p>
+        <p class="wd60 fw-bold"><span class="cross">{{this.isRolHogarHijo}}</span>HIJ@</p>
+        <p class="wd60 fw-bold"><span class="cross">{{this.isRolHogarOtro}}</span>OTRO:</p>
     </div>
     <div class="flex-content">
         <p class="wd100 fw-bold">REFERENCIAS DEL DOMICILIO</p>
@@ -486,7 +490,7 @@
     <div>
         <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
         <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        <br/><br/><br/><br/><br/><br/><br/>
     </div>
     <div class="wd700 txt-right pagebreak">Página 1 de 2</div>
 
@@ -677,7 +681,7 @@
     <div>
         <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
         <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
     </div>
     <div class="wd700 txt-right pagebreak">Página 2 de 2</div>
 {{/each}}
