@@ -105,7 +105,7 @@ export async function createLoanHF(data:any) {
                 {
                     id: loan.id_solicitud,
                     id_cliente: loan.id_cliente,
-                    id_oficial: loan.loan_officer != undefined ? loan.loan_officer : 346928,
+                    id_oficial: idOficialCredito,
                     id_disposicion: disposition[0] ? disposition[0].IdDisposición : 0,
                     monto_solicitado: loan.apply_amount,
                     monto_autorizado: loan.approved_total || 0,
