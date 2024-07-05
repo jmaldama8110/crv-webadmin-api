@@ -1073,6 +1073,7 @@ router.get("/docs/pdf/account-statement",authorize, async (req, res) => {
             beneficiaryInfo.address.municipality = beneficiaryFound.address.municipality[1]
             beneficiaryInfo.address.city = beneficiaryFound.address.city[1]
             beneficiaryInfo.address.country = beneficiaryFound.address.country[1]
+            beneficiaryInfo.address.road = beneficiaryFound.address.road[1]
             beneficiaryInfo.address.fullExtNumber = `${beneficiaryFound.address.ext_number ? beneficiaryFound.address.ext_number : ''} ${ beneficiaryFound.address.exterior_number === 'SN' ? '': beneficiaryFound.address.exterior_number }`
             beneficiaryInfo.address.fullIntNumber = `${beneficiaryFound.address.int_number ? beneficiaryFound.address.int_number : ''} ${ beneficiaryFound.address.interior_number === 'SN' ? '': beneficiaryFound.address.interior_number }`
 
