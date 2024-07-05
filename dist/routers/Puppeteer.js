@@ -933,6 +933,8 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
         }
         const keys = loanApp.members.map((x) => (x.client_id));
         const clientsQuery = yield db.fetch({ keys: keys });
+        const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
+        const beneficiaryList = beneficiaryQuery.docs.filter((item) => item.relation_type === "beneficiary");
         const loginUser = {
             fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : ''
         };
@@ -941,10 +943,25 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
             const memberData = loanApp.members.find((y) => y.client_id === x.doc._id);
             const loanCycle = parseInt(memberData.loan_cycle) + 1;
             const memberLoanAmount = memberData.apply_amount;
-            const beneficiaryInfo = {
+            let beneficiaryInfo = {
                 name: memberData.insurance.beneficiary,
+                lastname: '',
+                second_lastname: '',
                 relationship: memberData.insurance.relationship,
-                percentage: memberData.insurance.percentage
+                percentage: memberData.insurance.percentage,
+                address: {
+                    post_code: "",
+                    address_line1: "",
+                    street_reference: "",
+                    road: "",
+                    colony: "",
+                    city: "",
+                    municipality: "",
+                    province: "",
+                    country: "",
+                    fullExtNumber: '',
+                    fullIntNumber: ''
+                }
             };
             const dob = x.doc.dob.slice(0, 10).split('-').reverse();
             dob.length = 3;
@@ -957,6 +974,25 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
                 if (!!bisAddress.bis_address_same) {
                     bisAddressSame = bisAddress.bis_address_same ? 'x' : '';
                 }
+            }
+            /// if Benefiary found, replace info
+            const beneficiaryFound = beneficiaryList.find((item) => (item.client_id === x.doc._id));
+            if (beneficiaryFound) {
+                beneficiaryInfo.name = beneficiaryFound.name;
+                beneficiaryInfo.lastname = beneficiaryFound.lastname;
+                beneficiaryInfo.second_lastname = beneficiaryFound.second_lastname;
+                beneficiaryInfo.percentage = beneficiaryFound.percentage;
+                beneficiaryInfo.relationship = beneficiaryFound.relationship;
+                beneficiaryInfo.address.post_code = beneficiaryFound.address.post_code;
+                beneficiaryInfo.address.address_line1 = beneficiaryFound.address.address_line1;
+                beneficiaryInfo.address.street_reference = beneficiaryFound.street_reference;
+                beneficiaryInfo.address.colony = beneficiaryFound.address.colony[1];
+                beneficiaryInfo.address.province = beneficiaryFound.address.province[1];
+                beneficiaryInfo.address.municipality = beneficiaryFound.address.municipality[1];
+                beneficiaryInfo.address.city = beneficiaryFound.address.city[1];
+                beneficiaryInfo.address.country = beneficiaryFound.address.country[1];
+                beneficiaryInfo.address.fullExtNumber = `${beneficiaryFound.address.ext_number ? beneficiaryFound.address.ext_number : ''} ${beneficiaryFound.address.exterior_number === 'SN' ? '' : beneficiaryFound.address.exterior_number}`;
+                beneficiaryInfo.address.fullIntNumber = `${beneficiaryFound.address.int_number ? beneficiaryFound.address.int_number : ''} ${beneficiaryFound.address.interior_number === 'SN' ? '' : beneficiaryFound.address.interior_number}`;
             }
             homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number}`;
             homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number}`;
