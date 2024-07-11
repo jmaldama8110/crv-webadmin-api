@@ -95,7 +95,7 @@ class User {
         On Oficina.id= Plantilla.id_oficina
         LEFT JOIN CATA_NivelPuesto ON Empleado.id_nivel_puesto = CATA_NivelPuesto.id
         AND CATA_NivelPuesto.activo = 1
-        WHERE rol.codigo='PROM'
+        WHERE rol.codigo IN ('PROM','COORD')
         AND Plantilla.estatus='ACTIVO'
         AND Plantilla.activo=1
         AND Persona.id=${userCredentials.id_persona}`;
