@@ -345,6 +345,7 @@ function assignClientLoanFromHF(data) {
     });
 }
 function assignMontoloanHF(data) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
@@ -386,7 +387,7 @@ function assignMontoloanHF(data) {
             data['SOLICITUD'][0].id_oficial, data['SOLICITUD'][0].id_oficina, data['SOLICITUD'][0].tipo_cliente // 0 TODO: Ver si se requiere en el procedimiento
             );
             if (data['SOLICITUD'][0].tipo_cliente == 1) {
-                TablesSql_1.GrupoSolidario.rows.add(data['GRUPO'].id, //data['SOLICITUD'][0].id_cliente,
+                TablesSql_1.GrupoSolidario.rows.add((_a = data['GRUPO'].id) !== null && _a !== void 0 ? _a : 0, //data['SOLICITUD'][0].id_cliente,
                 // data['GRUPO'].name,
                 data['GRUPO'].name, // name_group
                 data['GRUPO'].address[0].id > 0 ? data['GRUPO'].address[0].id : 0, // Falta

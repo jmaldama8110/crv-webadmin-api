@@ -401,7 +401,7 @@ async function assignMontoloanHF(data:any) {
 
         if (data['SOLICITUD'][0].tipo_cliente == 1) {
             GrupoSolidario.rows.add(
-                data['GRUPO'].id,//data['SOLICITUD'][0].id_cliente,
+                data['GRUPO'].id??0,//data['SOLICITUD'][0].id_cliente,
                 // data['GRUPO'].name,
                 data['GRUPO'].name, // name_group
                 data['GRUPO'].address[0].id > 0 ? data['GRUPO'].address[0].id : 0, // Falta
