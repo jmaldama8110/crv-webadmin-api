@@ -527,6 +527,110 @@ router.get('/clients/hf/search', authorize_1.authorize, (req, res) => __awaiter(
         res.status(400).send(err);
     }
 }));
+router.post('/catalog', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        switch (req.body.catalogName) {
+            case "CATA_ActividadEconomica":
+                yield updateCatalogFromHF('CATA_ActividadEconomica', 10000, true);
+                break;
+            case "CATA_sexo":
+                yield updateCatalogFromHF('CATA_sexo', 10000);
+                break;
+            case "CATA_sector":
+                yield updateCatalogFromHF('CATA_sector', 10000);
+                break;
+            case "CATA_escolaridad":
+                yield updateCatalogFromHF('CATA_escolaridad', 10000);
+                break;
+            case "CATA_estadoCivil":
+                yield updateCatalogFromHF('CATA_estadoCivil', 10000);
+                break;
+            case "CATA_nacionalidad":
+                yield updateCatalogFromHF('CATA_nacionalidad', 10000, true);
+                break;
+            case "CATA_parentesco":
+                yield updateCatalogFromHF('CATA_parentesco', 10000);
+                break;
+            case "CATA_profesion":
+                yield updateCatalogFromHF('CATA_profesion', 10000, true);
+                break;
+            case "CATA_TipoRelacion":
+                yield updateCatalogFromHF('CATA_TipoRelacion', 10000);
+                break;
+            case "CATA_TipoPuesto":
+                yield updateCatalogFromHF('CATA_TipoPuesto', 10000);
+                break;
+            case "CATA_TipoVialidad":
+                yield updateCatalogFromHF('CATA_TipoVialidad', 10000);
+                break;
+            case "CATA_TipoDomicilio":
+                yield updateCatalogFromHF('CATA_TipoDomicilio', 10000);
+                break;
+            case "CATA_Ciudad_Localidad":
+                yield updateCatalogFromHF('CATA_Ciudad_Localidad', 10000);
+                break;
+            case "CATA_destinoCredito":
+                yield updateCatalogFromHF('CATA_destinoCredito', 10000);
+                break;
+            case "CATA_ocupacionPLD":
+                yield updateCatalogFromHF('CATA_ocupacionPLD', 10000, true);
+                break;
+            case "CATA_banco":
+                yield updateCatalogFromHF('CATA_banco', 10000);
+                break;
+            case "CATA_TipoCuentaBancaria":
+                yield updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000);
+                break;
+            case "CATA_MotivoBajaCastigado":
+                yield updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000);
+                break;
+            case "CATA_MotivoBajaCancelacion":
+                yield updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000);
+                break;
+            case "CATA_MotivoBajaRechazado":
+                yield updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000);
+                break;
+            case "CATA_rolHogar":
+                yield updateCatalogFromHF('CATA_rolHogar', 10000);
+                break;
+            case "CATA_ubicacionNegocio":
+                yield updateCatalogFromHF('CATA_ubicacionNegocio', 10000);
+                break;
+            case "SPLD_InstrumentoMonetario":
+                yield updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000);
+                break;
+            case "CATA_RedesSociales":
+                yield updateCatalogFromHF('CATA_RedesSociales', 10000);
+                break;
+            case "CATA_asentamiento":
+                yield updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', 'CITY', 'ciudad_localidad');
+                break;
+            case "CATA_ciudad_localidad":
+                yield updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', 'MUNICIPALITY', 'municipio');
+                break;
+            case "CATA_municipio":
+                yield updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', 'PROVINCE', 'estado');
+                break;
+            case "CATA_estado":
+                yield updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', 'COUNTRY', 'pais');
+                break;
+            case "CATA_pais":
+                yield updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
+                break;
+            case "CATA_GroupMeetingTime":
+                console.log(req.body.catalogName);
+                yield updateCatalogGroupTimes();
+                break;
+            default:
+                throw new Error('No catalogName value provided');
+        }
+        res.status(201).send(`Catalog updated: ${req.body.catalogName}`);
+    }
+    catch (e) {
+        console.log(e);
+        res.status(401).send(e.message);
+    }
+}));
 router.get('/catalogs/sync', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield updateCatalogFromHF('CATA_ActividadEconomica', 10000, true);
@@ -736,8 +840,6 @@ function updateCatalogFromHFByRelationship(name, chunk, shortname, relationship_
                         couchdb_type: shortname,
                         etiqueta: row.etiqueta
                     };
-                    // if(relationship) dataRow.[relationship] = `${relationship_name}|${(row[`id_${relationship}`]).toString()}`;
-                    // if(row.codigo_postal || row.abreviatura || row.codigo) console.log(row.codigo_postal, row.abreviatura, row.codigo)
                     if (row.codigo_postal)
                         dataRow.codigo_postal = row.codigo_postal;
                     if (row.codigo)
@@ -745,23 +847,6 @@ function updateCatalogFromHFByRelationship(name, chunk, shortname, relationship_
                     if (row.abreviatura)
                         dataRow.abreviatura = row.abreviatura;
                     rowData.push(dataRow);
-                    // rowData.push(relationship ? codigo_postal ?  {
-                    //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
-                    //     codigo_postal,
-                    //     couchdb_type: shortname,
-                    //     etiqueta: row.etiqueta,
-                    //     [relationship]: `${relationship_name}|${(row[`id_${relationship}`]).toString()}`,
-                    // } : {
-                    //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
-                    //     couchdb_type: shortname,
-                    //     etiqueta: row.etiqueta,
-                    //     [relationship]: `${relationship_name}|${(row[`id_${relationship}`]).toString()}`,
-                    // } : {
-                    //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
-                    //     // name: shortname,
-                    //     couchdb_type: shortname,
-                    //     etiqueta: row.etiqueta
-                    // });
                     if (rowData.length >= chunk) {
                         request.pause(); //Pausar la insercción
                         db.bulk({ docs: rowData })
@@ -788,6 +873,51 @@ function updateCatalogFromHFByRelationship(name, chunk, shortname, relationship_
             console.log(e);
             throw new Error(e);
         }
+    });
+}
+function updateCatalogGroupTimes() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        yield db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
+        const docsDestroy = yield db.find({ selector: { couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime" }, limit: 100000 });
+        const docsEliminate = docsDestroy.docs.map(doc => {
+            const { _id, _rev } = doc;
+            return { _deleted: true, _id, _rev };
+        });
+        yield db.bulk({ docs: docsEliminate });
+        const meetingTimeDocs = [
+            { id: 1, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "7" },
+            { id: 2, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "7:30" },
+            { id: 3, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "8" },
+            { id: 4, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "8:30" },
+            { id: 5, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "9" },
+            { id: 6, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "9:30" },
+            { id: 7, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "10" },
+            { id: 8, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "10:30" },
+            { id: 9, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "11" },
+            { id: 10, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "11:30" },
+            { id: 11, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "12" },
+            { id: 12, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "12:30" },
+            { id: 13, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "13" },
+            { id: 14, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "13:30" },
+            { id: 15, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "14" },
+            { id: 16, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "14:30" },
+            { id: 17, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "15" },
+            { id: 18, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "15:30" },
+            { id: 19, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "16" },
+            { id: 20, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "16:30" },
+            { id: 21, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "17" },
+            { id: 22, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "17:30" },
+            { id: 23, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "18" },
+            { id: 24, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "18:30" },
+            { id: 25, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "19" },
+            { id: 26, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "19:30" },
+            { id: 27, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "20" },
+            { id: 28, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "20:30" },
+            { id: 29, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "21" },
+            { id: 30, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "21:30" }
+        ];
+        yield db.bulk({ docs: meetingTimeDocs });
     });
 }
 router.get('/clients/hf/getBalance', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1291,9 +1421,11 @@ router.get("/groups/download", authorize_1.authorize, (req, res) => __awaiter(vo
         const data = yield getLoanApplicationById(idSolicitud, branchId);
         const resData = yield processLoanApplicationByDataRS(data);
         yield db.createIndex({ index: { fields: ["couchdb_type"] } });
-        const groupsQuery = yield db.find({ selector: {
+        const groupsQuery = yield db.find({
+            selector: {
                 couchdb_type: "GROUP"
-            }, limit: 100000 });
+            }, limit: 100000
+        });
         /*****  GROUP creation - update ****/
         const coloniesQuery = yield db.find({ selector: { couchdb_type: 'NEIGHBORHOOD' } });
         const colony = coloniesQuery.docs.find((i) => i._id === resData.group_data.address.colony[0]);
@@ -1310,9 +1442,11 @@ router.get("/groups/download", authorize_1.authorize, (req, res) => __awaiter(vo
         }
         /***** END - GROUP creation - update ****/
         /*** CONTRACT create - update */
-        const contractQuery = yield db.find({ selector: {
+        const contractQuery = yield db.find({
+            selector: {
                 couchdb_type: "CONTRACT"
-            }, limit: 100000 });
+            }, limit: 100000
+        });
         const contractData = yield getBalanceById(idCliente);
         for (let x = 0; x < contractData[0].length; x++) {
             const contractDoc = contractQuery.docs.find((item) => item.idContrato == contractData[0][x].idContrato);
@@ -1347,9 +1481,11 @@ router.get("/groups/download", authorize_1.authorize, (req, res) => __awaiter(vo
             }
         }
         /******* LOANAPP_GROUP creation - update */
-        const applicationQuery = yield db.find({ selector: {
+        const applicationQuery = yield db.find({
+            selector: {
                 couchdb_type: "LOANAPP_GROUP"
-            }, limit: 100000 });
+            }, limit: 100000
+        });
         const loanAppDoc = applicationQuery.docs.find((item) => item.id_solicitud == idSolicitud);
         /// if exists, assigns otherwise create a new _ID
         let newLoanAppId = !loanAppDoc ? `${Date.now().toString()}-${resData.loan_app.id_solicitud}` : loanAppDoc._id;

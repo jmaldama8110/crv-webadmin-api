@@ -755,18 +755,27 @@
     {{#with this.beneficiaryInfo}}
     <div class="flex-content">
         <div class="wd600">
-           <p><b>{{name}}</b></p>
-           {{!-- <p>&nbsp;&nbsp;</p> --}}
             <div class="flex-content">
-            <p class="border-top wd200"><b>APELLIDO PATERNO</b></p>
-            <p class="border-top wd200"><b>APELLIDO MATERNO</b></p>
-            <p class="border-top wd200"><b>NOMBRE(S)</b></p>
+                <p class="wd200"><b>{{lastname}}</b></p>
+                <p class="wd200"><b>{{second_lastname}}</b></p>
+                <p class="wd200"><b>{{name}}</b></p>
+            </div>
+
+            <div class="flex-content">
+                <p class="border-top wd200"><b>APELLIDO PATERNO</b></p>
+                <p class="border-top wd200"><b>APELLIDO MATERNO</b></p>
+                <p class="border-top wd200"><b>NOMBRE(S)</b></p>
             </div>
         </div>
         <div>
+
             <table class="solicitud-table">
-                <tr><th class="wd30"></th><th class="wd30"></th><th class="wd80"></th></tr>
+                <tr>{{#each dob}}
+                    <th class="wd30">{{this}}</th>
+                    {{/each}}
+                </tr>
             </table>
+
             <p>FECHA DE NACIMIENTO</p>
         </div>
     </div>
@@ -775,39 +784,44 @@
     <div class="flex-content">
         <div class="wd200"><p><b>PARENTESCO:</b> <u><b>&nbsp;&nbsp;{{relationship}}</b></u> <u><b></b></u></p></div>
         <div class="wd160"><p><b>PORCENTAJE:</b><u><b>&nbsp;&nbsp;{{percentage}}%</b></u> </p></div>
-        <div class="wd100 txt-right"><p><b>TELEFONO:</b></p></div>
+        <div class="wd100 txt-right"><p><b>TELEFONO:&nbsp;</b></p></div>
         <div>
+
             <table class="solicitud-table">
-                <tr>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
-                    <th class="wd20"></th>
+                <tr>{{#each phone}}
+                    <th class="wd20">{{this}}</th>
+                    {{/each}}
                 </tr>
             </table>
         </div>
     </div>
-    {{/with}}
+    
     <div class="flex-content">
         <div class="square"></div>
         <p><b>&nbsp;&nbsp;MISMA DIRECCIÓN DEL CLIENTE</b></p>
     </div>
     <div class="flex-content">
-        <div><p><b>DIRECCIÓN:</b>____________________________________________________________________________________________________________</p></div>
-        <div class="wd200 txt-right"><p>NOMBRE DE LA CALLE</p></div>
-        <div class="wd80 txt-right"><p>NÚM.EXT</p></div>
-        <div class="wd80 txt-right"><p>NÚM.INT</p></div>
-        <div class="wd80 txt-right"><p>COLONIA</p></div>
-        <div class="wd80 txt-right"><p>MUNICIPIO</p></div>
-        <div class="wd50 txt-right"><p>CP</p></div>
-        <div class="wd60 txt-right"><p>ESTADO</p></div>
-        <div class="wd60 txt-right"><p>PAÍS</p></div>
+        <div class="wd100"><p><b>DIRECCION:</b></p></div>
+        <div class="wd200 border-bottom"><p>{{address.address_line1}}</p></div>
+        <div class="wd80 border-bottom"><p>{{address.fullExtNumber}}</p></div>
+        <div class="wd80 border-bottom"><p>{{address.fullIntNumber}}</p></div>
+        <div class="wd80 border-bottom"><p>{{address.colony}}</p></div>
+        <div class="wd80 border-bottom"><p>{{address.municipality}}</p></div>
+        <div class="wd50 border-bottom"><p>{{address.post_code}}</p></div>
+        <div class="wd60 border-bottom"><p>{{address.province}}</p></div>
+        <div class="wd60 border-bottom"><p>{{address.country}}</p></div>
+    </div>
+    {{/with}}
+    <div class="flex-content">
+        <div class="wd100"><p>&nbsp;</p></div>
+        <div class="wd200"><p>NOMBRE DE LA CALLE</p></div>
+        <div class="wd80"><p>NÚM.EXT</p></div>
+        <div class="wd80"><p>NÚM.INT</p></div>
+        <div class="wd80"><p>COLONIA</p></div>
+        <div class="wd80"><p>MUNICIPIO</p></div>
+        <div class="wd50"><p>CP</p></div>
+        <div class="wd60"><p>ESTADO</p></div>
+        <div class="wd60"><p>PAÍS</p></div>
     </div>
 
     <h3>AUTORIZACIÓN PARA SOLICITAR REPORTES DE CRÉDITO</h3>

@@ -85,16 +85,16 @@ export async function getLoanApplicationById(loanAppId: number, branchId: number
 
 }
 
-async function processLoanApplicationByDataRS( data:any) {
+async function processLoanApplicationByDataRS(data: any) {
 
-/**
-         * resultsets[0] => Detalle de la solicitud
-         * resultsets[1] => Ciclo y estatus 
-         * resultsets[2] => Nombre del grupo, dia / hora reunion
-         * resultsets[3] => Direccion del grupo
-         * resultsets[4] => Integrantes, cargo, etc (importe solicitado, autorizado, etc)
-         * resultsets[5] => Integrantes / Detalle Seguro (Costo, tipo seguro, Beneficiario, parentezco, etc)
-*/
+    /**
+             * resultsets[0] => Detalle de la solicitud
+             * resultsets[1] => Ciclo y estatus 
+             * resultsets[2] => Nombre del grupo, dia / hora reunion
+             * resultsets[3] => Direccion del grupo
+             * resultsets[4] => Integrantes, cargo, etc (importe solicitado, autorizado, etc)
+             * resultsets[5] => Integrantes / Detalle Seguro (Costo, tipo seguro, Beneficiario, parentezco, etc)
+    */
 
     const loan_application = data[0][0];
     const loan_cycle = data[1][0];
@@ -119,7 +119,7 @@ async function processLoanApplicationByDataRS( data:any) {
             municipality: [`MUNICIPALITY|${group_address.municipio}`, ''],
             city: [`CITY|${group_address.localidad}`, ''],
             colony: [`NEIGHBORHOOD|${group_address.colonia}`, ''],
-            street_reference: group_address.referencia, 
+            street_reference: group_address.referencia,
             numero_exterior: `${group_address.numero_exterior}`,
             numero_interior: `${group_address.numero_interior}`
         }
@@ -155,8 +155,8 @@ async function processLoanApplicationByDataRS( data:any) {
     const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
 
     await db.createIndex({ index: { fields: ["couchdb_type"] } });
-    const productList = await db.find({ selector: { couchdb_type: "PRODUCT" },limit: 10000 });
-    
+    const productList = await db.find({ selector: { couchdb_type: "PRODUCT" }, limit: 10000 });
+
     const productMaster: any = productList.docs.find((prod: any) => prod.external_id == loan_application.id_producto_maestro)
     if (!productMaster) {
         throw new Error('El producto maestro no se encontro para id_producto_maestro: ' + loan_application.id_producto_maestro);
@@ -199,7 +199,7 @@ async function processLoanApplicationByDataRS( data:any) {
             liquid_guarantee: loan_application.garantia_liquida
         }
     }
-    return  { group_data, loan_app }
+    return { group_data, loan_app }
 }
 
 router.get('/products/hf', authorize, async (req, res) => {
@@ -221,7 +221,7 @@ router.get('/products/hf', authorize, async (req, res) => {
             const i: any = productsQuery.docs.find((y: any) => y.external_id == x.id)
             return { ...i }
         })
-        const productsNew = newData.filter( (x:any) => (!!x._id))
+        const productsNew = newData.filter((x: any) => (!!x._id))
 
         res.send(productsNew)
     }
@@ -279,7 +279,7 @@ router.get("/clients/hf", authorize, async (req, res) => {
     }
 });
 
-function processClientDataRS( data:any){
+function processClientDataRS(data: any) {
     //  get the Client Data with identityNumber and externalId
     /* 
       data.recordsets[0][0]  -> Datos personsales
@@ -291,275 +291,275 @@ function processClientDataRS( data:any){
       data.recordsets[0][6] Ciclo
       data.recordsets[0][7] Datos economicos
       */
-            /// extract CURP and Ine Folio
-            const curp = data.recordsets[1].find(
-                (i: any) => i.tipo_identificacion === "CURP"
-            );
+    /// extract CURP and Ine Folio
+    const curp = data.recordsets[1].find(
+        (i: any) => i.tipo_identificacion === "CURP"
+    );
 
-            const ife = data.recordsets[1].find(
-                (i: any) => i.tipo_identificacion === "IFE"
-            );
-            const rfc = data.recordsets[1].find(
-                (i: any) => i.tipo_identificacion === "RFC"
-            );
+    const ife = data.recordsets[1].find(
+        (i: any) => i.tipo_identificacion === "IFE"
+    );
+    const rfc = data.recordsets[1].find(
+        (i: any) => i.tipo_identificacion === "RFC"
+    );
 
-            /// busca el detalle de la IFE/INE
-            const ineDetail = data.recordsets[2]
-            const ine_detalle = ineDetail.find((i: any) => i.id_identificacion_oficial === ife.id_numero)
+    /// busca el detalle de la IFE/INE
+    const ineDetail = data.recordsets[2]
+    const ine_detalle = ineDetail.find((i: any) => i.id_identificacion_oficial === ife.id_numero)
 
-            const identities = []
-            for (let i = 0; i < data.recordsets[1].length; i++) {
-                const itemIdentity = data.recordsets[1][i];
-                identities.push({
-                    _id: itemIdentity.id,
-                    id_persona: itemIdentity.id_persona,
-                    tipo_id: itemIdentity.tipo_identificacion,
-                    numero_id: itemIdentity.id_numero,
-                    id_direccion: itemIdentity.id_direccion,
-                    status: itemIdentity.estatus_registro
-                })
-            }
+    const identities = []
+    for (let i = 0; i < data.recordsets[1].length; i++) {
+        const itemIdentity = data.recordsets[1][i];
+        identities.push({
+            _id: itemIdentity.id,
+            id_persona: itemIdentity.id_persona,
+            tipo_id: itemIdentity.tipo_identificacion,
+            numero_id: itemIdentity.id_numero,
+            id_direccion: itemIdentity.id_direccion,
+            status: itemIdentity.estatus_registro
+        })
+    }
 
-            const address = [];
-            let email = ''
-            for (let i = 0; i < data.recordsets[3].length; i++) {
-                const add = data.recordsets[3][i]
-                if (add.correo_electronico) {
-                    email = add.correo_electronico;
-                }
-                address.push({
-                    _id: add.id,
-                    type: add.tipo.trim(),
+    const address = [];
+    let email = ''
+    for (let i = 0; i < data.recordsets[3].length; i++) {
+        const add = data.recordsets[3][i]
+        if (add.correo_electronico) {
+            email = add.correo_electronico;
+        }
+        address.push({
+            _id: add.id,
+            type: add.tipo.trim(),
 
-                    country: [`COUNTRY|${add.id_pais}`, add.nombre_pais],
+            country: [`COUNTRY|${add.id_pais}`, add.nombre_pais],
 
-                    province: [`PROVINCE|${add.id_estado}`, add.nombre_estado],
-                    municipality: [`MUNICIPALITY|${add.id_municipio}`, add.nombre_municipio],
-                    city: [`CITY|${add.id_ciudad_localidad}`, add.nombre_ciudad_localidad],
-                    colony: [`NEIGHBORHOOD|${add.id_asentamiento}`, add.nombre_asentamiento],
-                    address_line1: add.direccion,
-                    exterior_number: add.numero_exterior.trim(),
-                    interior_number: add.numero_interior.trim(),
-                    ext_number: add.num_exterior,
-                    int_number: add.num_interior,
-                    street_reference: add.referencia,
-                    ownership_type: [add.casa_situacion, add.casa_situacion_etiqueta],
-                    post_code: add.codigo_postal,
-                    residence_since: add.tiempo_habitado_inicio,
-                    residence_to: add.tiempo_habitado_final,
-                    road: [add.vialidad, add.etiqueta_vialidad],
-                    email
-                })
-            }
-            const phones = [];
-            for (let l = 0; l < data.recordsets[4].length; l++) {
+            province: [`PROVINCE|${add.id_estado}`, add.nombre_estado],
+            municipality: [`MUNICIPALITY|${add.id_municipio}`, add.nombre_municipio],
+            city: [`CITY|${add.id_ciudad_localidad}`, add.nombre_ciudad_localidad],
+            colony: [`NEIGHBORHOOD|${add.id_asentamiento}`, add.nombre_asentamiento],
+            address_line1: add.direccion,
+            exterior_number: add.numero_exterior.trim(),
+            interior_number: add.numero_interior.trim(),
+            ext_number: add.num_exterior,
+            int_number: add.num_interior,
+            street_reference: add.referencia,
+            ownership_type: [add.casa_situacion, add.casa_situacion_etiqueta],
+            post_code: add.codigo_postal,
+            residence_since: add.tiempo_habitado_inicio,
+            residence_to: add.tiempo_habitado_final,
+            road: [add.vialidad, add.etiqueta_vialidad],
+            email
+        })
+    }
+    const phones = [];
+    for (let l = 0; l < data.recordsets[4].length; l++) {
 
-                const phoneAdd = data.recordsets[4][l]
-                if (phoneAdd.idcel_telefono.trim()) {
-                    phones.push({
-                        _id: phoneAdd.id,
-                        phone: phoneAdd.idcel_telefono.trim(),
-                        type: phoneAdd.tipo_telefono.trim(),
-                        company: phoneAdd.compania.trim(),
-                        validated: false
-                    });
-                }
-            }
+        const phoneAdd = data.recordsets[4][l]
+        if (phoneAdd.idcel_telefono.trim()) {
+            phones.push({
+                _id: phoneAdd.id,
+                phone: phoneAdd.idcel_telefono.trim(),
+                type: phoneAdd.tipo_telefono.trim(),
+                company: phoneAdd.compania.trim(),
+                validated: false
+            });
+        }
+    }
 
-            const perSet = {
-                ...data.recordsets[0][0],
-            };
+    const perSet = {
+        ...data.recordsets[0][0],
+    };
 
-            let household_data = {
-                household_floor: false,
-                household_roof: false,
-                household_toilet: false,
-                household_latrine: false,
-                household_brick: false,
-                economic_dependants: '',
-                internet_access: false,
-                prefered_social: [0, ""],
-                rol_hogar: [0, ""],
-                user_social: '',
-                has_disable: false,
-                speaks_dialect: false,
-                has_improved_income: false,
-            }
-            let business_data: any = {
-                bis_location: [0, ""],
-                economic_activity: ['', ''],
-                profession: ['', ''],
-                ocupation: ["", ""],
-                business_start_date: '',
-                business_name: '',
-                business_owned: false,
-                business_phone: '',
-                number_employees: '',
-                loan_destination: [0, ''],
-                income_sales_total: 0,
-                income_partner: 0,
-                income_job: 0,
-                income_remittances: 0,
-                income_other: 0,
-                income_total: 0,
-                expense_family: 0,
-                expense_rent: 0,
-                expense_business: 0,
-                expense_debt: 0,
-                expense_credit_cards: 0,
-                expense_total: 0,
-                keeps_accounting_records: false,
-                has_previous_experience: false,
-                previous_loan_experience: '',
-                bis_season_type: ''
-            }
-            let spld: any = {
-                desempenia_funcion_publica_cargo: "",
-                desempenia_funcion_publica_dependencia: "",
-                familiar_desempenia_funcion_publica_cargo: "",
-                familiar_desempenia_funcion_publica_dependencia: "",
-                familiar_desempenia_funcion_publica_nombre: "",
-                familiar_desempenia_funcion_publica_paterno: "",
-                familiar_desempenia_funcion_publica_materno: "",
-                familiar_desempenia_funcion_publica_parentesco: "",
-                instrumento_monetario: [0, ""]
-            }
-
-
-
-            let econActId = 0, econActCap = '',
-                profId = 0, profCap = '',
-                occupId = 0, occupCap = '', bisLoc = 0
-
-            if (data.recordsets[7].length > 0) {
-
-                if (data.recordsets[7][0].id_actividad_economica) {
-                    econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
-                        econActCap = data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString() : '';
-                }
-
-                profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
-                    profCap = data.recordsets[7][0].nombre_profesion ? data.recordsets[7][0].nombre_profesion.toString() : '';
-
-                occupId = perSet.id_occupation ? perSet.id_occupation : 0,
-                    occupCap = perSet.occupation ? perSet.occupation.toString() : '';
-                bisLoc = !!data.recordsets[7][0].econ_id_ubicacion_negocio ? data.recordsets[7][0].econ_id_ubicacion_negocio : 0
-            }
+    let household_data = {
+        household_floor: false,
+        household_roof: false,
+        household_toilet: false,
+        household_latrine: false,
+        household_brick: false,
+        economic_dependants: '',
+        internet_access: false,
+        prefered_social: [0, ""],
+        rol_hogar: [0, ""],
+        user_social: '',
+        has_disable: false,
+        speaks_dialect: false,
+        has_improved_income: false,
+    }
+    let business_data: any = {
+        bis_location: [0, ""],
+        economic_activity: ['', ''],
+        profession: ['', ''],
+        ocupation: ["", ""],
+        business_start_date: '',
+        business_name: '',
+        business_owned: false,
+        business_phone: '',
+        number_employees: '',
+        loan_destination: [0, ''],
+        income_sales_total: 0,
+        income_partner: 0,
+        income_job: 0,
+        income_remittances: 0,
+        income_other: 0,
+        income_total: 0,
+        expense_family: 0,
+        expense_rent: 0,
+        expense_business: 0,
+        expense_debt: 0,
+        expense_credit_cards: 0,
+        expense_total: 0,
+        keeps_accounting_records: false,
+        has_previous_experience: false,
+        previous_loan_experience: '',
+        bis_season_type: ''
+    }
+    let spld: any = {
+        desempenia_funcion_publica_cargo: "",
+        desempenia_funcion_publica_dependencia: "",
+        familiar_desempenia_funcion_publica_cargo: "",
+        familiar_desempenia_funcion_publica_dependencia: "",
+        familiar_desempenia_funcion_publica_nombre: "",
+        familiar_desempenia_funcion_publica_paterno: "",
+        familiar_desempenia_funcion_publica_materno: "",
+        familiar_desempenia_funcion_publica_parentesco: "",
+        instrumento_monetario: [0, ""]
+    }
 
 
 
-            if (data.recordsets[7].length) {
-                business_data.bis_location = [bisLoc, '']
-                business_data.economic_activity = [econActId, econActCap]
-                business_data.profession = [profId, profCap]
-                business_data.ocupation = [occupId, occupCap]
-                business_data.business_name = data.recordsets[7][0].nombre_negocio
-                business_data.business_start_date = data.recordsets[7][0].econ_fecha_inicio_act_productiva,
-                    business_data.business_owned = false,
-                    business_data.business_phone = "",
+    let econActId = 0, econActCap = '',
+        profId = 0, profCap = '',
+        occupId = 0, occupCap = '', bisLoc = 0
 
-                    business_data.number_employees = data.recordsets[7][0].econ_numero_empleados;
-                business_data.loan_destination = [data.recordsets[7][0].econ_id_destino_credito, ''];
+    if (data.recordsets[7].length > 0) {
 
-                business_data.income_sales_total = data.recordsets[7][0].econ_ventas_totales_cantidad ? data.recordsets[7][0].econ_ventas_totales_cantidad : 0;
-                business_data.income_partner = data.recordsets[7][0].econ_sueldo_conyugue ? data.recordsets[7][0].econ_sueldo_conyugue : 0;
-                business_data.income_other = data.recordsets[7][0].econ_otros_ingresos ? data.recordsets[7][0].econ_otros_ingresos : 0;
-                business_data.income_job = data.recordsets[7][0].econ_pago_casa ? data.recordsets[7][0].econ_pago_casa : 0;
-                business_data.income_remittances = data.recordsets[7][0].econ_cantidad_mensual ? data.recordsets[7][0].econ_cantidad_mensual : 0;
-                business_data.income_total = 0;
+        if (data.recordsets[7][0].id_actividad_economica) {
+            econActId = data.recordsets[7][0].id_actividad_economica ? data.recordsets[7][0].id_actividad_economica : 0,
+                econActCap = data.recordsets[7][0].nombre_actividad_economica ? data.recordsets[7][0].nombre_actividad_economica.toString() : '';
+        }
 
-                business_data.expense_family = data.recordsets[7][0].econ_gastos_familiares ? data.recordsets[7][0].econ_gastos_familiares : 0;
-                business_data.expense_rent = data.recordsets[7][0].econ_renta ? data.recordsets[7][0].econ_renta : 0;
-                business_data.expense_business = data.recordsets[7][0].econ_otros_gastos ? data.recordsets[7][0].econ_otros_gastos : 0;
-                business_data.expense_debt = data.recordsets[7][0].econ_gastos_vivienda ? data.recordsets[7][0].econ_gastos_vivienda : 0;
-                business_data.expense_credit_cards = data.recordsets[7][0].econ_gastos_transporte ? data.recordsets[7][0].econ_gastos_transporte : 0;;
-                business_data.expense_total = 0;
+        profId = data.recordsets[7][0].id_profesion ? data.recordsets[7][0].id_profesion : 0,
+            profCap = data.recordsets[7][0].nombre_profesion ? data.recordsets[7][0].nombre_profesion.toString() : '';
 
-                household_data.economic_dependants = data.recordsets[7][0].econ_dependientes_economicos.toString();
-                household_data.household_brick = !!data.recordsets[7][0].vivienda_block;
-                household_data.household_floor = !!data.recordsets[7][0].vivienda_piso;
-                household_data.household_latrine = !!data.recordsets[7][0].vivienda_letrina;
-                household_data.household_roof = !!data.recordsets[7][0].vivienda_techo_losa;
-                household_data.household_toilet = !!data.recordsets[7][0].vivienda_bano;
+        occupId = perSet.id_occupation ? perSet.id_occupation : 0,
+            occupCap = perSet.occupation ? perSet.occupation.toString() : '';
+        bisLoc = !!data.recordsets[7][0].econ_id_ubicacion_negocio ? data.recordsets[7][0].econ_id_ubicacion_negocio : 0
+    }
 
-                household_data.internet_access = !!data.recordsets[7][0].utiliza_internet;
-                household_data.prefered_social = [data.recordsets[7][0].id_tipo_red_social, ""]
-                household_data.user_social = data.recordsets[7][0].usuario_red_social
-                household_data.rol_hogar = [data.recordsets[7][0].econ_id_rol_hogar, ""];
-                household_data.has_disable = data.recordsets[7][0].habilidad_diferente;
-                household_data.speaks_dialect = data.recordsets[7][0].lengua_indigena;
-                household_data.has_improved_income = data.recordsets[7][0].mejorado_ingreso;
 
-                spld.desempenia_funcion_publica_cargo = data.recordsets[7][0].desempenia_funcion_publica_cargo,
-                    spld.desempenia_funcion_publica_dependencia = data.recordsets[7][0].desempenia_funcion_publica_dependencia,
-                    spld.familiar_desempenia_funcion_publica_cargo = data.recordsets[7][0].familiar_desempenia_funcion_publica_cargo,
-                    spld.familiar_desempenia_funcion_publica_dependencia = data.recordsets[7][0].familiar_desempenia_funcion_publica_dependencia,
-                    spld.familiar_desempenia_funcion_publica_nombre = data.recordsets[7][0].familiar_desempenia_funcion_publica_nombre,
-                    spld.familiar_desempenia_funcion_publica_paterno = data.recordsets[7][0].familiar_desempenia_funcion_publica_paterno,
-                    spld.familiar_desempenia_funcion_publica_materno = data.recordsets[7][0].familiar_desempenia_funcion_publica_materno,
-                    spld.familiar_desempenia_funcion_publica_parentesco = data.recordsets[7][0].familiar_desempenia_funcion_publica_parentesco,
-                    spld.instrumento_monetario = [data.recordsets[7][0].id_instrumento_monetario, ""]
 
-            }
+    if (data.recordsets[7].length) {
+        business_data.bis_location = [bisLoc, '']
+        business_data.economic_activity = [econActId, econActCap]
+        business_data.profession = [profId, profCap]
+        business_data.ocupation = [occupId, occupCap]
+        business_data.business_name = data.recordsets[7][0].nombre_negocio
+        business_data.business_start_date = data.recordsets[7][0].econ_fecha_inicio_act_productiva,
+            business_data.business_owned = false,
+            business_data.business_phone = "",
 
-            const cicloData = data.recordsets[6]
-            const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0
-            
-            let data_efirma = 
-            data.recordsets[9][0] ?
-            data.recordsets[9][0] : 
+            business_data.number_employees = data.recordsets[7][0].econ_numero_empleados;
+        business_data.loan_destination = [data.recordsets[7][0].econ_id_destino_credito, ''];
+
+        business_data.income_sales_total = data.recordsets[7][0].econ_ventas_totales_cantidad ? data.recordsets[7][0].econ_ventas_totales_cantidad : 0;
+        business_data.income_partner = data.recordsets[7][0].econ_sueldo_conyugue ? data.recordsets[7][0].econ_sueldo_conyugue : 0;
+        business_data.income_other = data.recordsets[7][0].econ_otros_ingresos ? data.recordsets[7][0].econ_otros_ingresos : 0;
+        business_data.income_job = data.recordsets[7][0].econ_pago_casa ? data.recordsets[7][0].econ_pago_casa : 0;
+        business_data.income_remittances = data.recordsets[7][0].econ_cantidad_mensual ? data.recordsets[7][0].econ_cantidad_mensual : 0;
+        business_data.income_total = 0;
+
+        business_data.expense_family = data.recordsets[7][0].econ_gastos_familiares ? data.recordsets[7][0].econ_gastos_familiares : 0;
+        business_data.expense_rent = data.recordsets[7][0].econ_renta ? data.recordsets[7][0].econ_renta : 0;
+        business_data.expense_business = data.recordsets[7][0].econ_otros_gastos ? data.recordsets[7][0].econ_otros_gastos : 0;
+        business_data.expense_debt = data.recordsets[7][0].econ_gastos_vivienda ? data.recordsets[7][0].econ_gastos_vivienda : 0;
+        business_data.expense_credit_cards = data.recordsets[7][0].econ_gastos_transporte ? data.recordsets[7][0].econ_gastos_transporte : 0;;
+        business_data.expense_total = 0;
+
+        household_data.economic_dependants = data.recordsets[7][0].econ_dependientes_economicos.toString();
+        household_data.household_brick = !!data.recordsets[7][0].vivienda_block;
+        household_data.household_floor = !!data.recordsets[7][0].vivienda_piso;
+        household_data.household_latrine = !!data.recordsets[7][0].vivienda_letrina;
+        household_data.household_roof = !!data.recordsets[7][0].vivienda_techo_losa;
+        household_data.household_toilet = !!data.recordsets[7][0].vivienda_bano;
+
+        household_data.internet_access = !!data.recordsets[7][0].utiliza_internet;
+        household_data.prefered_social = [data.recordsets[7][0].id_tipo_red_social, ""]
+        household_data.user_social = data.recordsets[7][0].usuario_red_social
+        household_data.rol_hogar = [data.recordsets[7][0].econ_id_rol_hogar, ""];
+        household_data.has_disable = data.recordsets[7][0].habilidad_diferente;
+        household_data.speaks_dialect = data.recordsets[7][0].lengua_indigena;
+        household_data.has_improved_income = data.recordsets[7][0].mejorado_ingreso;
+
+        spld.desempenia_funcion_publica_cargo = data.recordsets[7][0].desempenia_funcion_publica_cargo,
+            spld.desempenia_funcion_publica_dependencia = data.recordsets[7][0].desempenia_funcion_publica_dependencia,
+            spld.familiar_desempenia_funcion_publica_cargo = data.recordsets[7][0].familiar_desempenia_funcion_publica_cargo,
+            spld.familiar_desempenia_funcion_publica_dependencia = data.recordsets[7][0].familiar_desempenia_funcion_publica_dependencia,
+            spld.familiar_desempenia_funcion_publica_nombre = data.recordsets[7][0].familiar_desempenia_funcion_publica_nombre,
+            spld.familiar_desempenia_funcion_publica_paterno = data.recordsets[7][0].familiar_desempenia_funcion_publica_paterno,
+            spld.familiar_desempenia_funcion_publica_materno = data.recordsets[7][0].familiar_desempenia_funcion_publica_materno,
+            spld.familiar_desempenia_funcion_publica_parentesco = data.recordsets[7][0].familiar_desempenia_funcion_publica_parentesco,
+            spld.instrumento_monetario = [data.recordsets[7][0].id_instrumento_monetario, ""]
+
+    }
+
+    const cicloData = data.recordsets[6]
+    const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0
+
+    let data_efirma =
+        data.recordsets[9][0] ?
+            data.recordsets[9][0] :
             {
                 id: 0,
                 id_persona: 0,
-                fiel: ''                
+                fiel: ''
             }
-            const result = {
-                id_persona: perSet.id_persona,
-                id_cliente: perSet.id,
-                name: perSet.name,
-                lastname: perSet.lastname,
-                second_lastname: perSet.second_lastname,
-                email,
-                curp: curp ? curp.id_numero : "",
-                clave_ine: ife ? ife.id_numero : "",
-                numero_emisiones: ine_detalle ? ine_detalle.numero_emision : '',
-                numero_vertical: ine_detalle ? ine_detalle.numero_vertical_ocr : '',
-                rfc: rfc ? rfc.id_numero : "",
-                dob: perSet.dob,
-                loan_cycle,
-                branch: [perSet.id_oficina, perSet.nombre_oficina],
-                sex: [perSet.id_gender, perSet.gender],
-                education_level: [perSet.id_scholarship, perSet.scholarship],
-                identities,
-                address,
-                phones,
-                tributary_regime: [],
-                not_bis: false,
-                client_type: [2, 'INDIVIDUAL'],
-                nationality: [perSet.id_nationality, perSet.nationality],
-                province_of_birth: [
-                    `PROVINCE|${perSet.id_province_of_birth}`,
-                    perSet.province_of_birth,
-                ],
-                country_of_birth: [
-                    `COUNTRY|${perSet.id_country_of_birth}`,
-                    perSet.country_of_birth,
-                ],
+    const result = {
+        id_persona: perSet.id_persona,
+        id_cliente: perSet.id,
+        name: perSet.name,
+        lastname: perSet.lastname,
+        second_lastname: perSet.second_lastname,
+        email,
+        curp: curp ? curp.id_numero : "",
+        clave_ine: ife ? ife.id_numero : "",
+        numero_emisiones: ine_detalle ? ine_detalle.numero_emision : '',
+        numero_vertical: ine_detalle ? ine_detalle.numero_vertical_ocr : '',
+        rfc: rfc ? rfc.id_numero : "",
+        dob: perSet.dob,
+        loan_cycle,
+        branch: [perSet.id_oficina, perSet.nombre_oficina],
+        sex: [perSet.id_gender, perSet.gender],
+        education_level: [perSet.id_scholarship, perSet.scholarship],
+        identities,
+        address,
+        phones,
+        tributary_regime: [],
+        not_bis: false,
+        client_type: [2, 'INDIVIDUAL'],
+        nationality: [perSet.id_nationality, perSet.nationality],
+        province_of_birth: [
+            `PROVINCE|${perSet.id_province_of_birth}`,
+            perSet.province_of_birth,
+        ],
+        country_of_birth: [
+            `COUNTRY|${perSet.id_country_of_birth}`,
+            perSet.country_of_birth,
+        ],
 
-                marital_status: [perSet.id_marital_status, perSet.marital_status],
-                identification_type: [], // INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
-                guarantor: [],
-                business_data,
-                ...household_data,
-                spld,
-                beneficiaries: [],
-                personal_references: [],
-                guarantee: [],
-                ife_details: ineDetail,
-                data_company: [data.recordsets[8][0]],
-                data_efirma: [data_efirma],
-            };
-        
+        marital_status: [perSet.id_marital_status, perSet.marital_status],
+        identification_type: [], // INE/PASAPORTE/CEDULA/CARTILLA MILITAR/LICENCIA
+        guarantor: [],
+        business_data,
+        ...household_data,
+        spld,
+        beneficiaries: [],
+        personal_references: [],
+        guarantee: [],
+        ife_details: ineDetail,
+        data_company: [data.recordsets[8][0]],
+        data_efirma: [data_efirma],
+    };
+
     return result;
 }
 
@@ -601,6 +601,115 @@ router.get('/clients/hf/search', authorize, async (req, res) => {
     }
 })
 
+router.post('/catalog', authorize, async (req, res) => {
+
+    try {
+        switch (req.body.catalogName) {
+            case "CATA_ActividadEconomica":
+                await updateCatalogFromHF('CATA_ActividadEconomica', 10000, true);
+                break;
+            case "CATA_sexo":
+                await updateCatalogFromHF('CATA_sexo', 10000);
+                break;
+            case "CATA_sector":
+                await updateCatalogFromHF('CATA_sector', 10000)
+                break;
+            case "CATA_escolaridad":
+                await updateCatalogFromHF('CATA_escolaridad', 10000);
+                break;
+            case "CATA_estadoCivil":
+                await updateCatalogFromHF('CATA_estadoCivil', 10000);
+                break;
+            case "CATA_nacionalidad":
+                await updateCatalogFromHF('CATA_nacionalidad', 10000, true);
+                break;
+            case "CATA_parentesco":
+                await updateCatalogFromHF('CATA_parentesco', 10000);
+                break;
+            case "CATA_profesion":
+                await updateCatalogFromHF('CATA_profesion', 10000, true);
+                break;
+            case "CATA_TipoRelacion":
+                await updateCatalogFromHF('CATA_TipoRelacion', 10000);
+                break;
+            case "CATA_TipoPuesto":
+                await updateCatalogFromHF('CATA_TipoPuesto', 10000);
+                break;
+            case "CATA_TipoVialidad":
+                await updateCatalogFromHF('CATA_TipoVialidad', 10000);
+                break;
+            case "CATA_TipoDomicilio":
+                await updateCatalogFromHF('CATA_TipoDomicilio', 10000);
+                break;
+            case "CATA_Ciudad_Localidad":
+                await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000);
+                break;
+            case "CATA_destinoCredito":
+                await updateCatalogFromHF('CATA_destinoCredito', 10000);
+                break;
+            case "CATA_ocupacionPLD":
+                await updateCatalogFromHF('CATA_ocupacionPLD', 10000, true);
+                break;
+            case "CATA_banco":
+                await updateCatalogFromHF('CATA_banco', 10000);
+                break;
+            case "CATA_TipoCuentaBancaria":
+                await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000);
+                break;
+            case "CATA_MotivoBajaCastigado":
+                await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000);
+                break;
+            case "CATA_MotivoBajaCancelacion":
+                await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000);
+                break;
+            case "CATA_MotivoBajaRechazado":
+                await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000);
+                break;
+            case "CATA_rolHogar":
+                await updateCatalogFromHF('CATA_rolHogar', 10000);
+                break;
+            case "CATA_ubicacionNegocio":
+                await updateCatalogFromHF('CATA_ubicacionNegocio', 10000);
+                break;
+            case "SPLD_InstrumentoMonetario":
+                await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000);
+                break;
+            case "CATA_RedesSociales":
+                await updateCatalogFromHF('CATA_RedesSociales', 10000);
+                break;
+            case "CATA_asentamiento":
+                await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', 'CITY', 'ciudad_localidad');
+                break;
+            case "CATA_ciudad_localidad":
+                await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', 'MUNICIPALITY', 'municipio');
+                break;
+            case "CATA_municipio":
+                await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', 'PROVINCE', 'estado');
+                break;
+            case "CATA_estado":
+                await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', 'COUNTRY', 'pais');
+                break;
+            case "CATA_pais":
+                await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
+                break;
+            case "CATA_GroupMeetingTime":
+
+                console.log(req.body.catalogName)
+                await updateCatalogGroupTimes();
+                break;
+            default:
+                throw new Error('No catalogName value provided')
+        }
+        res.status(201).send(`Catalog updated: ${req.body.catalogName}`);
+
+    }
+    catch (e: any) {
+        console.log(e);
+        res.status(401).send(e.message);
+    }
+});
+
+
 router.get('/catalogs/sync', authorize, async (req, res) => {
     try {
         await updateCatalogFromHF('CATA_ActividadEconomica', 10000, true)
@@ -629,7 +738,8 @@ router.get('/catalogs/sync', authorize, async (req, res) => {
         await updateCatalogFromHF('CATA_rolHogar', 10000)
         await updateCatalogFromHF('CATA_ubicacionNegocio', 10000)
         await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000)
-        await updateCatalogFromHF('CATA_RedesSociales', 10000)
+        await updateCatalogFromHF('CATA_RedesSociales', 10000);
+
 
         await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', 'CITY', 'ciudad_localidad');
         await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', 'MUNICIPALITY', 'municipio');
@@ -741,18 +851,18 @@ function mapYearPeriodForTerm(frequencyType: string) {
 
 async function updateCatalogFromHF(name: string, chunk: number, filterActive?: boolean) {
     try {
-        
+
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        await db.createIndex({ index: { fields: ["couchdb_type","name"]}});        
-        const docsDestroy = await db.find({ selector: { couchdb_type: "CATALOG",name }, limit: 100000 });
+        await db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
+        const docsDestroy = await db.find({ selector: { couchdb_type: "CATALOG", name }, limit: 100000 });
         if (docsDestroy.docs.length > 0) {
             const docsEliminate = docsDestroy.docs.map(doc => {
                 const { _id, _rev } = doc;
                 return { _deleted: true, _id, _rev }
             })
-            
+
             await db.bulk({ docs: docsEliminate });
-                
+
         }
 
         sql.connect(sqlConfig, (err) => {
@@ -805,7 +915,7 @@ async function updateCatalogFromHF(name: string, chunk: number, filterActive?: b
 async function updateCatalogFromHFByRelationship(name: string, chunk: number, shortname: string, relationship_name?: string, relationship?: string) {
     try {
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        await db.createIndex( { index: { fields:["couchdb_type"]}});
+        await db.createIndex({ index: { fields: ["couchdb_type"] } });
         const docsDestroy = await db.find({ selector: { couchdb_type: shortname }, limit: 100000 });
 
         if (docsDestroy.docs.length > 0) {
@@ -842,31 +952,12 @@ async function updateCatalogFromHFByRelationship(name: string, chunk: number, sh
                     couchdb_type: shortname,
                     etiqueta: row.etiqueta
                 }
-                // if(relationship) dataRow.[relationship] = `${relationship_name}|${(row[`id_${relationship}`]).toString()}`;
-                // if(row.codigo_postal || row.abreviatura || row.codigo) console.log(row.codigo_postal, row.abreviatura, row.codigo)
                 if (row.codigo_postal) dataRow.codigo_postal = row.codigo_postal;
                 if (row.codigo) dataRow.codigo = row.codigo;
                 if (row.abreviatura) dataRow.abreviatura = row.abreviatura;
 
                 rowData.push(dataRow)
 
-                // rowData.push(relationship ? codigo_postal ?  {
-                //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
-                //     codigo_postal,
-                //     couchdb_type: shortname,
-                //     etiqueta: row.etiqueta,
-                //     [relationship]: `${relationship_name}|${(row[`id_${relationship}`]).toString()}`,
-                // } : {
-                //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
-                //     couchdb_type: shortname,
-                //     etiqueta: row.etiqueta,
-                //     [relationship]: `${relationship_name}|${(row[`id_${relationship}`]).toString()}`,
-                // } : {
-                //     _id:`${shortname.toUpperCase()}|${(row.id).toString()}`,
-                //     // name: shortname,
-                //     couchdb_type: shortname,
-                //     etiqueta: row.etiqueta
-                // });
                 if (rowData.length >= chunk) {
                     request.pause(); //Pausar la insercción
 
@@ -900,6 +991,55 @@ async function updateCatalogFromHFByRelationship(name: string, chunk: number, sh
     }
 }
 
+async function updateCatalogGroupTimes() {
+    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    await db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
+    const docsDestroy = await db.find({ selector: { couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime" }, limit: 100000 });
+
+    const docsEliminate = docsDestroy.docs.map(doc => {
+        const { _id, _rev } = doc;
+        return { _deleted: true, _id, _rev }
+    })
+    await db.bulk({ docs: docsEliminate })
+    const meetingTimeDocs = [
+        { id: 1, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "7" },
+        { id: 2, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "7:30" },
+        { id: 3, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "8" },
+        { id: 4, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "8:30" },
+        { id: 5, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "9" },
+        { id: 6, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "9:30" },
+        { id: 7, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "10" },
+        { id: 8, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "10:30" },
+        { id: 9, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "11" },
+        { id: 10, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "11:30" },
+        { id: 11, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "12" },
+        { id: 12, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "12:30" },
+        { id: 13, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "13" },
+        { id: 14, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "13:30" },
+        { id: 15, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "14" },
+        { id: 16, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "14:30" },
+        { id: 17, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "15" },
+        { id: 18, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "15:30" },
+        { id: 19, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "16" },
+        { id: 20, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "16:30" },
+        { id: 21, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "17" },
+        { id: 22, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "17:30" },
+        { id: 23, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "18" },
+        { id: 24, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "18:30" },
+        { id: 25, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "19" },
+        { id: 26, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "19:30" },
+        { id: 27, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "20" },
+        { id: 28, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "20:30" },
+        { id: 29, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "21" },
+        { id: 30, couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime", etiqueta: "21:30" }
+
+    ]
+
+    await db.bulk({ docs: meetingTimeDocs });
+
+
+}
+
 
 router.get('/clients/hf/getBalance', authorize, async (req, res) => {
 
@@ -912,15 +1052,15 @@ router.get('/clients/hf/getBalance', authorize, async (req, res) => {
 });
 
 export async function getBalanceById(idClient: number) {
-   
-        const pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-            .input('idCliente', sql.Int, idClient)
-            .execute('MOV_ObtenerSaldoClienteById');
-        return result.recordsets
+
+    const pool = await sql.connect(sqlConfig);
+    const result = await pool.request()
+        .input('idCliente', sql.Int, idClient)
+        .execute('MOV_ObtenerSaldoClienteById');
+    return result.recordsets
 }
 
-export async function getContractInfo( idContract: number){
+export async function getContractInfo(idContract: number) {
     const pool = await sql.connect(sqlConfig);
 
     const dateTime = new Date();
@@ -929,9 +1069,9 @@ export async function getContractInfo( idContract: number){
         .request()
         .input("dateCurrrent", sql.Date, dateTime)
         .input("dateTimeCurrent", sql.DateTime, dateTime)
-        .input("idContrato", sql.Int, idContract)        
+        .input("idContrato", sql.Int, idContract)
         .query(
-    `
+            `
     SELECT OTOR_Contratos.id_cliente AS idCliente,
     OTOR_Contratos.id AS idContrato,
     OTOR_SolicitudPrestamos.id_producto_maestro,
@@ -1267,18 +1407,18 @@ router.get('/clients/hf/accountstatement', authorize, async (req, res) => {
     }
 })
 
-router.get('/contract',authorize, async(req,res)=>{
-    try{
-        if( !req.query.idContract ){
+router.get('/contract', authorize, async (req, res) => {
+    try {
+        if (!req.query.idContract) {
             throw new Error('idContract missing query param!');
         }
-        const data:any = await getContractInfo(parseInt(req.query.idContract as string));
-        if( !data[0][0] ){
+        const data: any = await getContractInfo(parseInt(req.query.idContract as string));
+        if (!data[0][0]) {
             throw new Error('No contract found')
         }
         res.send(data[0][0])
-    }   
-    catch(e:any){
+    }
+    catch (e: any) {
         res.status(400).send(e.message)
     }
 })
@@ -1350,12 +1490,12 @@ async function findClientByKeyword(keyword: string) {
 
 export async function findClientByExternalId(externalId: number) {
 
-        let pool = await sql.connect(sqlConfig);
-        let result = await pool
-            .request()
-            .input("idCliente", sql.Int, externalId)
-            .execute("MOV_ObtenerDatosPersona");
-        return result;
+    let pool = await sql.connect(sqlConfig);
+    let result = await pool
+        .request()
+        .input("idCliente", sql.Int, externalId)
+        .execute("MOV_ObtenerDatosPersona");
+    return result;
 };
 
 export async function getClientByCurp(curp: string) {
@@ -1408,7 +1548,7 @@ async function searchGroupLoanByName(groupName: string, branchId: number) {
     }
 }
 
-router.get("/groups/download", authorize, async (req:any, res) => {
+router.get("/groups/download", authorize, async (req: any, res) => {
     /** Actualiza toda la información de un grupo */
     try {
         if (!req.query.branchId || !req.query.applicationId || !req.query.idCliente) {
@@ -1417,62 +1557,68 @@ router.get("/groups/download", authorize, async (req:any, res) => {
 
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
 
-        const idCliente = parseInt( req.query.idCliente as string);
-        const idSolicitud = parseInt( req.query.applicationId as string);
-        const branchId = parseInt( req.query.branchId as string);
+        const idCliente = parseInt(req.query.idCliente as string);
+        const idSolicitud = parseInt(req.query.applicationId as string);
+        const branchId = parseInt(req.query.branchId as string);
 
-        const data = await getLoanApplicationById(idSolicitud, branchId); 
+        const data = await getLoanApplicationById(idSolicitud, branchId);
         const resData = await processLoanApplicationByDataRS(data);
 
-        await db.createIndex( { index: { fields: ["couchdb_type"]}});
-        const groupsQuery = await db.find( { selector:{
-            couchdb_type: "GROUP"
-        },limit: 100000 });
+        await db.createIndex({ index: { fields: ["couchdb_type"] } });
+        const groupsQuery = await db.find({
+            selector: {
+                couchdb_type: "GROUP"
+            }, limit: 100000
+        });
 
 
         /*****  GROUP creation - update ****/
-        const coloniesQuery = await db.find({ selector: { couchdb_type: 'NEIGHBORHOOD'}});
-        const colony:any = coloniesQuery.docs.find((i: any) => i._id === resData.group_data.address.colony[0])
-        
-        const groupDoc:any = groupsQuery.docs.find( (item:any) => item.id_cliente == idCliente );
+        const coloniesQuery = await db.find({ selector: { couchdb_type: 'NEIGHBORHOOD' } });
+        const colony: any = coloniesQuery.docs.find((i: any) => i._id === resData.group_data.address.colony[0])
+
+        const groupDoc: any = groupsQuery.docs.find((item: any) => item.id_cliente == idCliente);
         /// if exists, assigns otherwise create a new _ID
         let newGroupId = !groupDoc ? `${Date.now().toString()}-${resData.group_data.id_cliente}` : groupDoc._id;
 
-        const updateGroupDoc:any ={
+        const updateGroupDoc: any = {
             _id: newGroupId,
             ...resData.group_data,
             address: {
-              ...resData.group_data.address,
-              post_code: colony ? colony.codigo_postal : "",
+                ...resData.group_data.address,
+                post_code: colony ? colony.codigo_postal : "",
             },
-            couchdb_type: "GROUP",                
+            couchdb_type: "GROUP",
             created_by: req.user.login,
             branch: req.user.branch,
             created_at: new Date(),
             status: [2, "Activo"],
-          }
-        
-        if( groupDoc ){
+        }
+
+        if (groupDoc) {
             /// group doc exists
             await db.insert({
                 _rev: groupDoc._rev,
-                ...updateGroupDoc })
+                ...updateGroupDoc
+            })
         } else {
             await db.insert({
-                ...updateGroupDoc })
+                ...updateGroupDoc
+            })
         }
         /***** END - GROUP creation - update ****/
 
         /*** CONTRACT create - update */
-        const contractQuery = await db.find( { selector: {
-            couchdb_type: "CONTRACT"
-        }, limit: 100000 });
+        const contractQuery = await db.find({
+            selector: {
+                couchdb_type: "CONTRACT"
+            }, limit: 100000
+        });
 
-        const contractData:any = await getBalanceById(idCliente);
-        for( let x=0; x< contractData[0].length; x++){
-            const contractDoc = contractQuery.docs.find( (item:any) => item.idContrato == contractData[0][x].idContrato );
+        const contractData: any = await getBalanceById(idCliente);
+        for (let x = 0; x < contractData[0].length; x++) {
+            const contractDoc = contractQuery.docs.find((item: any) => item.idContrato == contractData[0][x].idContrato);
             const newIdContract = !contractDoc ? `${Date.now().toString()}-${contractData[0][x].idContrato}` : contractDoc._id
-            
+
             const contractUpdateDoc = {
                 _id: newIdContract,
                 ...contractData[0][x],
@@ -1482,7 +1628,7 @@ router.get("/groups/download", authorize, async (req:any, res) => {
                 branch: req.user.branch,
                 couchdb_type: "CONTRACT",
             }
-            if(contractDoc){
+            if (contractDoc) {
                 await db.insert({
                     _rev: contractDoc._rev,
                     ...contractUpdateDoc
@@ -1492,64 +1638,66 @@ router.get("/groups/download", authorize, async (req:any, res) => {
                     ...contractUpdateDoc
                 })
             }
-            
+
         }
 
         /** CLIENT create - update */
-        const queryTemp = await db.find( { selector: { couchdb_type: "CLIENT" }, limit: 100000 });
-        const clientsQuery = queryTemp.docs.filter( (x:any) => x.branch[0] == req.user.branch[0])
-        const listClientsCreate:any[] = []
-        const listClientsUpdate:any[] = []
-        for(let w=0; w< resData.loan_app.members.length; w++){
-                const clientDataRS = await findClientByExternalId(resData.loan_app.members[w].id_cliente)
-                if (clientDataRS.recordset.length == 1) {
-                    /// only valid when record set OK
-                    const clientDataResult = processClientDataRS(clientDataRS);
-                    const clientDoc = clientsQuery.find( (y:any) => y.id_cliente == clientDataResult.id_cliente);
-                    const newClientId = !clientDoc ? `${(Date.now()).toString()}-${clientDataResult.id_cliente}` : clientDoc._id
+        const queryTemp = await db.find({ selector: { couchdb_type: "CLIENT" }, limit: 100000 });
+        const clientsQuery = queryTemp.docs.filter((x: any) => x.branch[0] == req.user.branch[0])
+        const listClientsCreate: any[] = []
+        const listClientsUpdate: any[] = []
+        for (let w = 0; w < resData.loan_app.members.length; w++) {
+            const clientDataRS = await findClientByExternalId(resData.loan_app.members[w].id_cliente)
+            if (clientDataRS.recordset.length == 1) {
+                /// only valid when record set OK
+                const clientDataResult = processClientDataRS(clientDataRS);
+                const clientDoc = clientsQuery.find((y: any) => y.id_cliente == clientDataResult.id_cliente);
+                const newClientId = !clientDoc ? `${(Date.now()).toString()}-${clientDataResult.id_cliente}` : clientDoc._id
 
-                    const clientUpdateDoc:any = {
-                        couchdb_type: 'CLIENT',
-                        ...clientDataDef,
-                        ...clientDataResult,
-                        business_data: {
-                          ...clientDataDef.business_data,
-                          ...clientDataResult.business_data
-                        },
-                        status: [2,'Aprovado'],
-                        _id: newClientId
-                    }
-
-                    if( clientDoc ){
-                        listClientsUpdate.push({ 
-                            _rev: clientDoc._rev,
-                            ...clientUpdateDoc
-                        })
-                    } else {
-                        listClientsCreate.push(clientUpdateDoc)
-                    }
+                const clientUpdateDoc: any = {
+                    couchdb_type: 'CLIENT',
+                    ...clientDataDef,
+                    ...clientDataResult,
+                    business_data: {
+                        ...clientDataDef.business_data,
+                        ...clientDataResult.business_data
+                    },
+                    status: [2, 'Aprovado'],
+                    _id: newClientId
                 }
+
+                if (clientDoc) {
+                    listClientsUpdate.push({
+                        _rev: clientDoc._rev,
+                        ...clientUpdateDoc
+                    })
+                } else {
+                    listClientsCreate.push(clientUpdateDoc)
+                }
+            }
         }
 
         /******* LOANAPP_GROUP creation - update */
-        const applicationQuery = await db.find( { selector: {
-            couchdb_type: "LOANAPP_GROUP"
-        }, limit: 100000 });
+        const applicationQuery = await db.find({
+            selector: {
+                couchdb_type: "LOANAPP_GROUP"
+            }, limit: 100000
+        });
 
-        
-        const loanAppDoc = applicationQuery.docs.find( (item:any)  => item.id_solicitud == idSolicitud );
+
+        const loanAppDoc = applicationQuery.docs.find((item: any) => item.id_solicitud == idSolicitud);
         /// if exists, assigns otherwise create a new _ID
-        let newLoanAppId = !loanAppDoc ?`${ Date.now().toString()}-${resData.loan_app.id_solicitud}` : loanAppDoc._id;
+        let newLoanAppId = !loanAppDoc ? `${Date.now().toString()}-${resData.loan_app.id_solicitud}` : loanAppDoc._id;
 
-        const newMembersData = resData.loan_app.members.map( (m:any) =>{
-            let docClientFound = listClientsCreate.concat(listClientsUpdate).find( (j:any) => j.id_cliente == m.id_cliente );
+        const newMembersData = resData.loan_app.members.map((m: any) => {
+            let docClientFound = listClientsCreate.concat(listClientsUpdate).find((j: any) => j.id_cliente == m.id_cliente);
             return {
                 ...m,
                 client_id: docClientFound._id
             }
         })
 
-        const updateLoanAppDoc =  {
+        const updateLoanAppDoc = {
             couchdb_type: "LOANAPP_GROUP",
             ...resData.loan_app,
             _id: newLoanAppId,
@@ -1564,18 +1712,18 @@ router.get("/groups/download", authorize, async (req:any, res) => {
             created_at: new Date().toISOString(),
             branch: req.user.branch
         }
-        if( loanAppDoc ){
+        if (loanAppDoc) {
             await db.insert({
                 _rev: loanAppDoc._rev,
                 ...updateLoanAppDoc
             })
         } else {
-            await db.insert({                
+            await db.insert({
                 ...updateLoanAppDoc
             })
         }
 
-        await db.bulk({ docs:listClientsCreate.concat(listClientsUpdate)});
+        await db.bulk({ docs: listClientsCreate.concat(listClientsUpdate) });
 
         res.send(resData);
     }
@@ -1585,7 +1733,7 @@ router.get("/groups/download", authorize, async (req:any, res) => {
     }
 });
 
-export async function productsSync(){
+export async function productsSync() {
 
     const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
     const product: any = await getProductsWeb();
@@ -1659,7 +1807,7 @@ export async function productsSync(){
     });
     await db.bulk({ docs: rowData });
 
-    return { docs: rowData.length } 
+    return { docs: rowData.length }
 
 }
 

@@ -195,10 +195,12 @@ router.get("/docs/pdf/account-statement", authorize_1.authorize, (req, res) => _
                         granTotal: totales.granTotal + pplan[i].total
                     };
                 }
-                return { capitalTotal: (0, misc_1.formatLocalCurrency)(totales.capitalTotal),
+                return {
+                    capitalTotal: (0, misc_1.formatLocalCurrency)(totales.capitalTotal),
                     interesTotal: (0, misc_1.formatLocalCurrency)(totales.interesTotal),
                     ivaTotal: (0, misc_1.formatLocalCurrency)(totales.ivaTotal),
-                    granTotal: (0, misc_1.formatLocalCurrency)(totales.granTotal) };
+                    granTotal: (0, misc_1.formatLocalCurrency)(totales.granTotal)
+                };
             },
             integrantesLista: mbrsFr.map((i) => {
                 const clientItem = mbrs.find((x) => x.id_cliente == i.id_cliente);
@@ -450,9 +452,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
             throw new Error('parameter loanId is missing in URL');
         }
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        yield db.createIndex({ index: { fields: ["couchdb_type"] } });
-        const query = yield db.find({ selector: { couchdb_type: "LOANAPP_GROUP" }, limit: 50000 });
-        const loanApp = query.docs.find((i) => i._id === req.query.loanId);
+        const loanApp = yield db.get(req.query.loanId);
         if (!loanApp) {
             throw new Error('Loan App does not exist with the id:' + req.query.loanId);
         }
@@ -461,6 +461,9 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
         }
         const keys = loanApp.members.map((x) => (x.client_id));
         const clientsQuery = yield db.fetch({ keys: keys });
+        /// get bulk info on beneficiaries
+        const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
+        const beneficiaryList = beneficiaryQuery.docs.filter((item) => item.relation_type === "beneficiary");
         const loginUser = {
             fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : '__________________________________________________________________'
         };
@@ -469,11 +472,52 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
             const memberData = loanApp.members.find((y) => y.client_id === x.doc._id);
             const loanCycle = parseInt(memberData.loan_cycle) + 1;
             const memberLoanAmount = memberData.apply_amount;
-            const beneficiaryInfo = {
+            let beneficiaryInfo = {
                 name: memberData.insurance.beneficiary,
+                lastname: '',
+                second_lastname: '',
                 relationship: memberData.insurance.relationship,
-                percentage: memberData.insurance.percentage
+                percentage: memberData.insurance.percentage,
+                phone: [],
+                dob: [],
+                address: {
+                    post_code: "",
+                    address_line1: "",
+                    street_reference: "",
+                    road: "",
+                    colony: "",
+                    city: "",
+                    municipality: "",
+                    province: "",
+                    country: "",
+                    fullExtNumber: '',
+                    fullIntNumber: ''
+                }
             };
+            /// if Benefiary found, replace info
+            const beneficiaryFound = beneficiaryList.find((item) => (item.client_id === x.doc._id));
+            if (beneficiaryFound) {
+                const dob = beneficiaryFound.dob.slice(0, 10).split('-').reverse();
+                dob.length = 3;
+                beneficiaryInfo.name = beneficiaryFound.name;
+                beneficiaryInfo.dob = dob;
+                beneficiaryInfo.lastname = beneficiaryFound.lastname;
+                beneficiaryInfo.second_lastname = beneficiaryFound.second_lastname;
+                beneficiaryInfo.percentage = beneficiaryFound.percentage;
+                beneficiaryInfo.relationship = beneficiaryFound.relationship;
+                beneficiaryInfo.phone = beneficiaryFound.phone ? beneficiaryFound.phone.split("") : [];
+                beneficiaryInfo.address.post_code = beneficiaryFound.address.post_code;
+                beneficiaryInfo.address.address_line1 = beneficiaryFound.address.address_line1;
+                beneficiaryInfo.address.street_reference = beneficiaryFound.street_reference;
+                beneficiaryInfo.address.colony = beneficiaryFound.address.colony[1];
+                beneficiaryInfo.address.province = beneficiaryFound.address.province[1];
+                beneficiaryInfo.address.municipality = beneficiaryFound.address.municipality[1];
+                beneficiaryInfo.address.city = beneficiaryFound.address.city[1];
+                beneficiaryInfo.address.country = beneficiaryFound.address.country[1];
+                beneficiaryInfo.address.road = beneficiaryFound.address.road[1];
+                beneficiaryInfo.address.fullExtNumber = `${beneficiaryFound.address.ext_number ? beneficiaryFound.address.ext_number : ''} ${beneficiaryFound.address.exterior_number === 'SN' ? '' : beneficiaryFound.address.exterior_number}`;
+                beneficiaryInfo.address.fullIntNumber = `${beneficiaryFound.address.int_number ? beneficiaryFound.address.int_number : ''} ${beneficiaryFound.address.interior_number === 'SN' ? '' : beneficiaryFound.address.interior_number}`;
+            }
             const dob = x.doc.dob.slice(0, 10).split('-').reverse();
             dob.length = 3;
             const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
@@ -543,8 +587,8 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                 nationality: x.doc.nationality ? x.doc.nationality[0] == 1 ? "MEXICANA" : "OTRA" : "",
                 countrtAndProvince: x.doc.province_of_birth ? `${x.doc.province_of_birth[1]}, ${x.doc.country_of_birth[1]}`.toUpperCase() : "",
                 dob,
-                curp: x.doc.curp,
-                rfc: x.doc.rfc,
+                curp: (0, misc_1.arrayFromStringSize)(x.doc.curp, 18, '*'),
+                rfc: (0, misc_1.arrayFromStringSize)(x.doc.rfc, 13, '*'),
                 email: x.doc.email,
                 mobilePhone: !!mobilePhone ? (0, misc_1.arrayFromStringSize)(mobilePhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
                 otherPhone: !!otherPhone ? (0, misc_1.arrayFromStringSize)(otherPhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
@@ -600,9 +644,7 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
             throw new Error('parameter loanId is missing in URL');
         }
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        yield db.createIndex({ index: { fields: ["couchdb_type"] } });
-        const query = yield db.find({ selector: { couchdb_type: "LOANAPP_GROUP" }, limit: 50000 });
-        const loanApp = query.docs.find((i) => i._id === req.query.loanId);
+        const loanApp = yield db.get(req.query.loanId);
         if (!loanApp) {
             throw new Error('Loan App does not exist with the id:' + req.query.loanId);
         }
@@ -611,6 +653,9 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
         }
         const keys = loanApp.members.map((x) => (x.client_id));
         const clientsQuery = yield db.fetch({ keys: keys });
+        /// get bulk info on beneficiaries
+        const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
+        const beneficiaryList = beneficiaryQuery.docs.filter((item) => item.relation_type === "beneficiary");
         const loginUser = {
             fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : '__________________________________________________________________'
         };
@@ -619,11 +664,52 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
             const memberData = loanApp.members.find((y) => y.client_id === x.doc._id);
             const loanCycle = parseInt(memberData.loan_cycle) + 1;
             const memberLoanAmount = memberData.apply_amount;
-            const beneficiaryInfo = {
+            let beneficiaryInfo = {
                 name: memberData.insurance.beneficiary,
+                lastname: '',
+                second_lastname: '',
                 relationship: memberData.insurance.relationship,
-                percentage: memberData.insurance.percentage
+                percentage: memberData.insurance.percentage,
+                phone: [],
+                dob: [],
+                address: {
+                    post_code: "",
+                    address_line1: "",
+                    street_reference: "",
+                    road: "",
+                    colony: "",
+                    city: "",
+                    municipality: "",
+                    province: "",
+                    country: "",
+                    fullExtNumber: '',
+                    fullIntNumber: ''
+                }
             };
+            /// if Benefiary found, replace info
+            const beneficiaryFound = beneficiaryList.find((item) => (item.client_id === x.doc._id));
+            if (beneficiaryFound) {
+                const dob = beneficiaryFound.dob.slice(0, 10).split('-').reverse();
+                dob.length = 3;
+                beneficiaryInfo.name = beneficiaryFound.name;
+                beneficiaryInfo.dob = dob;
+                beneficiaryInfo.lastname = beneficiaryFound.lastname;
+                beneficiaryInfo.second_lastname = beneficiaryFound.second_lastname;
+                beneficiaryInfo.percentage = beneficiaryFound.percentage;
+                beneficiaryInfo.relationship = beneficiaryFound.relationship;
+                beneficiaryInfo.phone = beneficiaryFound.phone ? beneficiaryFound.phone.split("") : [];
+                beneficiaryInfo.address.post_code = beneficiaryFound.address.post_code;
+                beneficiaryInfo.address.address_line1 = beneficiaryFound.address.address_line1;
+                beneficiaryInfo.address.street_reference = beneficiaryFound.street_reference;
+                beneficiaryInfo.address.colony = beneficiaryFound.address.colony[1];
+                beneficiaryInfo.address.province = beneficiaryFound.address.province[1];
+                beneficiaryInfo.address.municipality = beneficiaryFound.address.municipality[1];
+                beneficiaryInfo.address.city = beneficiaryFound.address.city[1];
+                beneficiaryInfo.address.country = beneficiaryFound.address.country[1];
+                beneficiaryInfo.address.road = beneficiaryFound.address.road[1];
+                beneficiaryInfo.address.fullExtNumber = `${beneficiaryFound.address.ext_number ? beneficiaryFound.address.ext_number : ''} ${beneficiaryFound.address.exterior_number === 'SN' ? '' : beneficiaryFound.address.exterior_number}`;
+                beneficiaryInfo.address.fullIntNumber = `${beneficiaryFound.address.int_number ? beneficiaryFound.address.int_number : ''} ${beneficiaryFound.address.interior_number === 'SN' ? '' : beneficiaryFound.address.interior_number}`;
+            }
             const dob = x.doc.dob.slice(0, 10).split('-').reverse();
             dob.length = 3;
             const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
@@ -760,6 +846,8 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
         }
         const keys = loanApp.members.map((x) => (x.client_id));
         const clientsQuery = yield db.fetch({ keys: keys });
+        const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
+        const beneficiaryList = beneficiaryQuery.docs.filter((item) => item.relation_type === "beneficiary");
         const loginUser = {
             fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : ''
         };
@@ -768,10 +856,25 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
             const memberData = loanApp.members.find((y) => y.client_id === x.doc._id);
             const loanCycle = parseInt(memberData.loan_cycle) + 1;
             const memberLoanAmount = memberData.apply_amount;
-            const beneficiaryInfo = {
+            let beneficiaryInfo = {
                 name: memberData.insurance.beneficiary,
+                lastname: '',
+                second_lastname: '',
                 relationship: memberData.insurance.relationship,
-                percentage: memberData.insurance.percentage
+                percentage: memberData.insurance.percentage,
+                address: {
+                    post_code: "",
+                    address_line1: "",
+                    street_reference: "",
+                    road: "",
+                    colony: "",
+                    city: "",
+                    municipality: "",
+                    province: "",
+                    country: "",
+                    fullExtNumber: '',
+                    fullIntNumber: ''
+                }
             };
             const dob = x.doc.dob.slice(0, 10).split('-').reverse();
             dob.length = 3;
@@ -785,40 +888,30 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
                     bisAddressSame = bisAddress.bis_address_same ? 'x' : '';
                 }
             }
+            /// if Benefiary found, replace info
+            const beneficiaryFound = beneficiaryList.find((item) => (item.client_id === x.doc._id));
+            if (beneficiaryFound) {
+                beneficiaryInfo.name = beneficiaryFound.name;
+                beneficiaryInfo.lastname = beneficiaryFound.lastname;
+                beneficiaryInfo.second_lastname = beneficiaryFound.second_lastname;
+                beneficiaryInfo.percentage = beneficiaryFound.percentage;
+                beneficiaryInfo.relationship = beneficiaryFound.relationship;
+                beneficiaryInfo.address.post_code = beneficiaryFound.address.post_code;
+                beneficiaryInfo.address.address_line1 = beneficiaryFound.address.address_line1;
+                beneficiaryInfo.address.street_reference = beneficiaryFound.street_reference;
+                beneficiaryInfo.address.colony = beneficiaryFound.address.colony[1];
+                beneficiaryInfo.address.province = beneficiaryFound.address.province[1];
+                beneficiaryInfo.address.municipality = beneficiaryFound.address.municipality[1];
+                beneficiaryInfo.address.city = beneficiaryFound.address.city[1];
+                beneficiaryInfo.address.country = beneficiaryFound.address.country[1];
+                beneficiaryInfo.address.road = beneficiaryFound.address.road[1];
+                beneficiaryInfo.address.fullExtNumber = `${beneficiaryFound.address.ext_number ? beneficiaryFound.address.ext_number : ''} ${beneficiaryFound.address.exterior_number === 'SN' ? '' : beneficiaryFound.address.exterior_number}`;
+                beneficiaryInfo.address.fullIntNumber = `${beneficiaryFound.address.int_number ? beneficiaryFound.address.int_number : ''} ${beneficiaryFound.address.interior_number === 'SN' ? '' : beneficiaryFound.address.interior_number}`;
+            }
             homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number}`;
             homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number}`;
             bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number}`;
             bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number}`;
-            const incomeInfo = {
-                sales: x.doc.business_data.income_sales_total,
-                family: x.doc.business_data.income_partner,
-                job: x.doc.business_data.income_job,
-                abroad: x.doc.business_data.income_remittances,
-                other: x.doc.business_data.income_other,
-                total: x.doc.business_data.income_total,
-            };
-            const expensesInfo = {
-                family: x.doc.business_data.expense_family,
-                rent: x.doc.business_data.expense_rent,
-                bis: x.doc.business_data.expense_business,
-                payables: x.doc.business_data.expense_debt,
-                debt: x.doc.business_data.expense_credit_cards,
-                total: x.doc.business_data.expense_total,
-            };
-            const bisQualitySalesMonthly = {
-                monthSaleJan: x.doc.business_data.bis_quality_sales_monthly.month_sale_jan,
-                monthSaleFeb: x.doc.business_data.bis_quality_sales_monthly.month_sale_feb,
-                monthSaleMar: x.doc.business_data.bis_quality_sales_monthly.month_sale_mar,
-                monthSaleApr: x.doc.business_data.bis_quality_sales_monthly.month_sale_apr,
-                monthSaleMay: x.doc.business_data.bis_quality_sales_monthly.month_sale_may,
-                monthSaleJun: x.doc.business_data.bis_quality_sales_monthly.month_sale_jun,
-                monthSaleJul: x.doc.business_data.bis_quality_sales_monthly.month_sale_jul,
-                monthSaleAug: x.doc.business_data.bis_quality_sales_monthly.month_sale_aug,
-                monthSaleSep: x.doc.business_data.bis_quality_sales_monthly.month_sale_sep,
-                monthSaleOct: x.doc.business_data.bis_quality_sales_monthly.month_sale_oct,
-                monthSaleNov: x.doc.business_data.bis_quality_sales_monthly.month_sale_nov,
-                monthSaleDic: x.doc.business_data.bis_quality_sales_monthly.month_sale_dic
-            };
             /// FALSE PLD check when this field is empty
             const isClientPppYesNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'Si' : 'No';
             const pPpClientName = x.doc.spld.familiar_desempenia_funcion_publica_cargo ?
@@ -896,12 +989,6 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
                 hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
                 previousExperience: x.doc.business_data.previous_loan_experience,
                 isClientPppYesNo, pPpClientName,
-                incomeInfo,
-                expensesInfo,
-                bisQualitySalesMonthly,
-                isBisTypeDaily: x.doc.business_data.bis_season_type === 'D' ? 'x' : '',
-                isBisTypeWeekly: x.doc.business_data.bis_season_type === 'S' ? 'x' : '',
-                isBisTypeFortnightly: x.doc.business_data.bis_season_type === 'C' ? 'x' : '',
                 beneficiaryInfo,
                 loginUser
             };
@@ -999,36 +1086,6 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
             homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number}`;
             bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number}`;
             bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number}`;
-            const incomeInfo = {
-                sales: x.doc.business_data.income_sales_total,
-                family: x.doc.business_data.income_partner,
-                job: x.doc.business_data.income_job,
-                abroad: x.doc.business_data.income_remittances,
-                other: x.doc.business_data.income_other,
-                total: x.doc.business_data.income_total,
-            };
-            const expensesInfo = {
-                family: x.doc.business_data.expense_family,
-                rent: x.doc.business_data.expense_rent,
-                bis: x.doc.business_data.expense_business,
-                payables: x.doc.business_data.expense_debt,
-                debt: x.doc.business_data.expense_credit_cards,
-                total: x.doc.business_data.expense_total,
-            };
-            const bisQualitySalesMonthly = {
-                monthSaleJan: x.doc.business_data.bis_quality_sales_monthly.month_sale_jan,
-                monthSaleFeb: x.doc.business_data.bis_quality_sales_monthly.month_sale_feb,
-                monthSaleMar: x.doc.business_data.bis_quality_sales_monthly.month_sale_mar,
-                monthSaleApr: x.doc.business_data.bis_quality_sales_monthly.month_sale_apr,
-                monthSaleMay: x.doc.business_data.bis_quality_sales_monthly.month_sale_may,
-                monthSaleJun: x.doc.business_data.bis_quality_sales_monthly.month_sale_jun,
-                monthSaleJul: x.doc.business_data.bis_quality_sales_monthly.month_sale_jul,
-                monthSaleAug: x.doc.business_data.bis_quality_sales_monthly.month_sale_aug,
-                monthSaleSep: x.doc.business_data.bis_quality_sales_monthly.month_sale_sep,
-                monthSaleOct: x.doc.business_data.bis_quality_sales_monthly.month_sale_oct,
-                monthSaleNov: x.doc.business_data.bis_quality_sales_monthly.month_sale_nov,
-                monthSaleDic: x.doc.business_data.bis_quality_sales_monthly.month_sale_dic
-            };
             /// FALSE PLD check when this field is empty
             const isClientPppYesNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'Si' : 'No';
             const pPpClientName = x.doc.spld.familiar_desempenia_funcion_publica_cargo ?
@@ -1106,12 +1163,6 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
                 hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
                 previousExperience: x.doc.business_data.previous_loan_experience,
                 isClientPppYesNo, pPpClientName,
-                incomeInfo,
-                expensesInfo,
-                bisQualitySalesMonthly,
-                isBisTypeDaily: x.doc.business_data.bis_season_type === 'D' ? 'x' : '',
-                isBisTypeWeekly: x.doc.business_data.bis_season_type === 'S' ? 'x' : '',
-                isBisTypeFortnightly: x.doc.business_data.bis_season_type === 'C' ? 'x' : '',
                 beneficiaryInfo,
                 loginUser
             };
