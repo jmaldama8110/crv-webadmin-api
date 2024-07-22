@@ -497,8 +497,9 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
             /// if Benefiary found, replace info
             const beneficiaryFound = beneficiaryList.find((item) => (item.client_id === x.doc._id));
             if (beneficiaryFound) {
-                const dob = beneficiaryFound.dob.slice(0, 10).split('-').reverse();
-                dob.length = 3;
+                const dob = beneficiaryFound.dob ?
+                    beneficiaryFound.dob.slice(0, 10).split('-').reverse() :
+                    ['', '', ''];
                 beneficiaryInfo.name = beneficiaryFound.name;
                 beneficiaryInfo.dob = dob;
                 beneficiaryInfo.lastname = beneficiaryFound.lastname;
@@ -689,8 +690,9 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
             /// if Benefiary found, replace info
             const beneficiaryFound = beneficiaryList.find((item) => (item.client_id === x.doc._id));
             if (beneficiaryFound) {
-                const dob = beneficiaryFound.dob.slice(0, 10).split('-').reverse();
-                dob.length = 3;
+                const dob = beneficiaryFound.dob ?
+                    beneficiaryFound.dob.slice(0, 10).split('-').reverse() :
+                    ['', '', ''];
                 beneficiaryInfo.name = beneficiaryFound.name;
                 beneficiaryInfo.dob = dob;
                 beneficiaryInfo.lastname = beneficiaryFound.lastname;
@@ -876,7 +878,8 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
                     fullIntNumber: ''
                 }
             };
-            const dob = x.doc.dob.slice(0, 10).split('-').reverse();
+            const dob = x.doc.dob ?
+                x.doc.dob.slice(0, 10).split('-').reverse() : [];
             dob.length = 3;
             const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
             const otherPhone = x.doc.phones.find((y) => y.type === 'Caseta');
@@ -1050,7 +1053,8 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
                     fullIntNumber: ''
                 }
             };
-            const dob = x.doc.dob.slice(0, 10).split('-').reverse();
+            const dob = x.doc.dob ?
+                x.doc.dob.slice(0, 10).split('-').reverse() : [];
             dob.length = 3;
             const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
             const otherPhone = x.doc.phones.find((y) => y.type === 'Caseta');

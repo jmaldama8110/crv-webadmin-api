@@ -499,7 +499,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
         relationship: memberData.insurance.relationship,
         percentage: memberData.insurance.percentage,
         phone: [],
-        dob: [],
+        dob: [] ,
         address: {
           post_code: "",
           address_line1: "",
@@ -518,9 +518,11 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
       /// if Benefiary found, replace info
       const beneficiaryFound: any = beneficiaryList.find((item: any) => (item.client_id === x.doc._id))
       if (beneficiaryFound) {
-        const dob = beneficiaryFound.dob.slice(0, 10).split('-').reverse();
-        dob.length = 3;
-
+        const dob = 
+          beneficiaryFound.dob ? 
+            beneficiaryFound.dob.slice(0, 10).split('-').reverse() :
+            ['','','']
+        
         beneficiaryInfo.name = beneficiaryFound.name
         beneficiaryInfo.dob = dob
         beneficiaryInfo.lastname = beneficiaryFound.lastname
@@ -732,8 +734,10 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
       /// if Benefiary found, replace info
       const beneficiaryFound: any = beneficiaryList.find((item: any) => (item.client_id === x.doc._id))
       if (beneficiaryFound) {
-        const dob = beneficiaryFound.dob.slice(0, 10).split('-').reverse();
-        dob.length = 3;
+        const dob = 
+          beneficiaryFound.dob ? 
+            beneficiaryFound.dob.slice(0, 10).split('-').reverse() :
+            ['','','']
 
         beneficiaryInfo.name = beneficiaryFound.name
         beneficiaryInfo.dob = dob
@@ -940,7 +944,10 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
           fullIntNumber: ''
         }
       }
-      const dob = x.doc.dob.slice(0, 10).split('-').reverse();
+
+      const dob = 
+          x.doc.dob ?
+        x.doc.dob.slice(0, 10).split('-').reverse() : []
       dob.length = 3;
 
       const mobilePhone = x.doc.phones.find((y: any) => y.type === 'Móvil')
@@ -1137,7 +1144,9 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
           fullIntNumber: ''
         }
       }
-      const dob = x.doc.dob.slice(0, 10).split('-').reverse();
+      const dob = 
+          x.doc.dob ?
+        x.doc.dob.slice(0, 10).split('-').reverse() : []
       dob.length = 3;
 
       const mobilePhone = x.doc.phones.find((y: any) => y.type === 'Móvil')
