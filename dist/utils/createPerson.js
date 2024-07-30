@@ -20,13 +20,10 @@ const moment_1 = __importDefault(require("moment"));
 const Functions_1 = require("./Functions");
 const TablesSql_1 = require("./TablesSql");
 const DocumentCollection_1 = require("../model/DocumentCollection");
-let ClientDoc = new Client_1.Client();
-const Document = new DocumentCollection_1.DocumentCollection();
-const formato = 'YYYY-MM-DD';
-const Funct = new Functions_1.Functions();
 function createPersonHF(data) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
+        let ClientDoc = new Client_1.Client({ branch: data.branch });
         try {
             const { _id } = data;
             const clientCouch = yield ClientDoc.findOne({ _id });
@@ -114,6 +111,8 @@ exports.createPersonHF = createPersonHF;
 function sortDataPerson(client) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
+        const Document = new DocumentCollection_1.DocumentCollection({ branch: client.branch });
+        const Funct = new Functions_1.Functions();
         try {
             let person = {};
             const IS_CREATE = client.id_persona === 0;
@@ -265,6 +264,7 @@ function sortDataPerson(client) {
     });
 }
 const getDates = (fecha) => {
+    const formato = 'YYYY-MM-DD';
     const date = moment_1.default.utc(fecha).format(formato);
     return date;
 };

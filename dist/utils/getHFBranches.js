@@ -35,32 +35,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authorize = void 0;
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+exports.findDbs = exports.getHfBranches = void 0;
+const mssql_1 = __importDefault(require("mssql"));
+const connSQL_1 = require("../db/connSQL");
 const Nano = __importStar(require("nano"));
-const authorize = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
-    try {
-        const token = req.header('Authorization').replace('Bearer ', '');
-        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY ? process.env.JWT_SECRET_KEY : '');
-        const expiresAt = new Date(decoded.sync_info.sync_expiration);
-        if (expiresAt.getTime() < new Date().getTime()) {
-            throw new Error('Token has expired');
-        }
-        /// uses default DB
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        yield db.createIndex({ index: { fields: ["couchdb_type", "token"] } });
-        const tokenQuery = yield db.find({ selector: { couchdb_type: "TOKEN", token: token } });
-        if (!tokenQuery.docs.length) {
-            throw new Error();
-        }
-        req.currentToken = token;
-        req.user = decoded.user;
-        next();
-    }
-    catch (error) {
-        console.log(error);
-        res.status(401).send('No authorization!');
-    }
-});
-exports.authorize = authorize;
+let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
+function getHfBranches() {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        const queryBranchesResultSet = yield mssql_1.default.query `SELECT CORP_CuotaNegocio.id_origen AS id, 
+         CORP_CuotaNegocio.etiqueta AS nombre,
+         CuotaNegocioPadre.id_origen AS id_zona
+    FROM CORP_CuotaNegocio
+    INNER JOIN CORP_CuotaNegocio CuotaNegocioPadre
+    ON CORP_CuotaNegocio.id_cuota_negocio_padre = CuotaNegocioPadre.id
+    WHERE CORP_CuotaNegocio.activo = 1
+    AND CORP_CuotaNegocio.id_tipo_cuota_negocio = 3
+    AND CORP_CuotaNegocio.id_categoria_cuota_negocio = 2`;
+        const result = queryBranchesResultSet.recordset.map((i) => ({
+            id: i.id,
+            name: i.name
+        }));
+        return result;
+    });
+}
+exports.getHfBranches = getHfBranches;
+function findDbs() {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Recupera la lista de BD de Sucursales solamente, quitando la global
+        const dblist = yield nano.db.list();
+        const newlist = dblist.filter((db) => (db.includes("cnsrv-promotor")))
+            .filter((x) => (x != 'cnsrv-promotor'));
+        return newlist;
+    });
+}
+exports.findDbs = findDbs;

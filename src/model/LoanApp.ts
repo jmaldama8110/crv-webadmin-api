@@ -7,7 +7,6 @@ export class LoanApp extends DocumentCollection {
     id_solicitud: any;
     id_cliente: any;
     loan_officer: any;
-    branch: any;
     id_producto: any;
     id_disposicion: any;
     apply_amount: any;
@@ -28,7 +27,7 @@ export class LoanApp extends DocumentCollection {
     members: any;
 
     constructor(obj = {} as any) {
-        super()
+        super({ branch: obj.branch })
         this._id = obj._id || Date.now().toString(),
             this._rev = obj._rev,
             this.couchdb_type = 'LOANAPP',

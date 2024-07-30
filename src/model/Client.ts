@@ -32,7 +32,6 @@ export class Client extends DocumentCollection {
     dob: string;
     sex: [number, string];
     province_of_birth: [string, string];
-    branch: [number, string];
     address: any[];
     business_data: {
       bis_location: [number, string];  // new
@@ -136,15 +135,15 @@ export class Client extends DocumentCollection {
     };
     comprobante_domicilio_pics: any[];
 
-    constructor( newDoc?: Client  ) {
+    constructor( newDoc?: any  ) {
 
-        super();
-
+        super( { branch: newDoc ? newDoc.branch : [0,''] });
+        console.log("Client constructor",{ branch: newDoc ? newDoc.branch : [0,''] })
         this._id = newDoc ? newDoc._id : Date.now().toString()
         this._rev = newDoc ? newDoc._rev : ''
         this.couchdb_type = 'CLIENT'
         this.address =  newDoc ? newDoc.address : []
-        this.branch = newDoc ? newDoc!.branch : [0,'']
+        this.branch = newDoc ? newDoc.branch : [0,'']
         this.business_data = newDoc ? 
           newDoc!.business_data : 
           {

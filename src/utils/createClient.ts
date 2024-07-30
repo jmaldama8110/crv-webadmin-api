@@ -5,10 +5,11 @@ import { Functions } from './Functions';
 import { UDT_CLIE_DatoBancario, UDT_CLIE_Individual, UDT_CLIE_Solicitud, UDT_CONT_Direcciones, UDT_CONT_Empresa, UDT_CONT_FirmaElectronica, UDT_CONT_Identificaciones, UDT_CONT_Negocios, UDT_CONT_Oficinas, UDT_CONT_Persona, UDT_CONT_Telefonos, UDT_SPLD_DatosCliente, UTD_CLIE_Clientes, cleanTable } from './TablesSql';
 import { getDates, getId } from './createPerson';
 
-let ClientDoc = new Client();
 const Funct = new Functions();
 
 export async function createClientHF(data:any) {
+    let ClientDoc = new Client({ branch: data.branch });
+
     try {
         const { _id } = data;
         const clientCouch:any = await ClientDoc.findOne({ _id });

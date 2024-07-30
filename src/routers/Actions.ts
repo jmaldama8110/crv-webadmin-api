@@ -11,18 +11,18 @@ import * as Nano from 'nano';
 import sql from 'mssql';
 import { sqlConfig } from '../db/connSQL';
 import { getBalanceById, getContractInfo } from './HfServer';
-import { checkProperty } from '../utils/misc';
+import { findDbs } from '../utils/getHFBranches';
+
 
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 
-let loanAppGroup = new LoanAppGroup();
-let ClientDoc = new Client();
-
-let ActionDoc = new Action();
 
 const router = express.Router();
 
-router.get('/actions/validate', authorize, async (req, res) => {
+router.get('/actions/validate', authorize, async (req: any, res) => {
+    let loanAppGroup = new LoanAppGroup({ branch: req.user.branch });
+    let ClientDoc = new Client({ branch: req.user.branch });
+    let ActionDoc = new Action({ branch: req.user.branch });
     try {
         // Validate action
 
@@ -66,6 +66,7 @@ router.get('/actions/validate', authorize, async (req, res) => {
                         let client: any;
                         const _id = row.client_id;
                         client = await ClientDoc.findOne({ _id });
+                        
                         if (client === undefined) {
                             info.client_id = _id;
                             RSP_Result = await ActionDoc.generarErrorRSP('Client new is not found: ' + row.client_id, info);
@@ -83,6 +84,7 @@ router.get('/actions/validate', authorize, async (req, res) => {
                         }
                     }
                     if (RSP_ResultNewMembers.length > 0) {
+                        console.log(RSP_ResultNewMembers)
                         RSP_Result = await ActionDoc.generarErrorRSP("The new members have a trouble with any validation.", RSP_ResultNewMembers);
                         break;
                     }
@@ -116,12 +118,18 @@ router.get('/actions/validate', authorize, async (req, res) => {
             RSP_Result = await ActionDoc.generarErrorRSP(response.message, info);
         res.status(201).send(RSP_Result);
     } catch (err: any) {
+        console.log(err)
         let RSP_Result = await ActionDoc.generarErrorRSP(err.message, req.query);
         res.status(400).send(RSP_Result)
     }
 });
 
-router.get('/actions/exec', authorize, async (req:any, res) => {
+router.get('/actions/exec', authorize, async (req: any, res) => {
+
+    let loanAppGroup = new LoanAppGroup({ branch: req.user.branch });
+    let ClientDoc = new Client({ branch: req.user.branch });
+    let ActionDoc = new Action({ branch: req.user.branch });
+
     try {
         // Validate action
         let RSP_Result: any = { status: 'ERROR' };
@@ -163,7 +171,7 @@ router.get('/actions/exec', authorize, async (req:any, res) => {
                                 }
                                 //Si no hay error crear cliente
                                 else {
-                                    const clientSaved: any = await createClientHF({ "_id": row.client_id });
+                                    const clientSaved: any = await createClientHF({ "_id": row.client_id, branch: req.user.branch });
                                     RSP_ResultClient.status = "OK";
                                     //Validar creación del cliente
                                     if (!clientSaved || clientSaved instanceof Error) {
@@ -207,7 +215,8 @@ router.get('/actions/exec', authorize, async (req:any, res) => {
                         }
                         // Create loan
                         loan = await createLoanHF({
-                            ...action.data, 
+                            ...action.data,
+                            branch: req.user.branch,
                             idOficialCredito: req.user.loan_officer  /// get the current user from HF
                         });
                         // Validate creation of loan
@@ -225,7 +234,7 @@ router.get('/actions/exec', authorize, async (req:any, res) => {
                         break;
                     case 'CREATE_UPDATE_CLIENT':
                         // Create person and client
-                        const personCreatedHF: any = await createPersonHF(action.data);
+                        const personCreatedHF: any = await createPersonHF({ ...action.data, branch: req.user.branch });
                         //Validar error al crear persona
                         if (!personCreatedHF || personCreatedHF instanceof Error) {
                             action.status = 'Error'
@@ -235,7 +244,7 @@ router.get('/actions/exec', authorize, async (req:any, res) => {
                         }
                         //Si no hay error crear cliente
                         else {
-                            const clientSaved: any = await createClientHF(action.data);
+                            const clientSaved: any = await createClientHF({ ...action.data, branch: req.user.branch });
                             //Validar creación del cliente
                             if (!clientSaved || clientSaved instanceof Error) {
                                 action.status = 'Error'
@@ -405,9 +414,15 @@ export const clientDataDef: any = {
 
 router.get('/db_update_loans_contracts', authorize, async (req, res) => {
     try {
-
-        const loans = await updateLoanAppStatus();
-        res.send({ loans })
+        if( !req.query.branchId){
+            throw new Error('No branch Id provided')
+        }
+        const dbList = await findDbs();
+        for(let x=0; x < dbList.length; x++){
+            console.log('Updating LoanApp status for',dbList[x])
+            await updateLoanAppStatus(dbList[x])
+        }
+        res.send('Ok')
     }
     catch (e: any) {
         console.log(e);
@@ -416,9 +431,8 @@ router.get('/db_update_loans_contracts', authorize, async (req, res) => {
 });
 
 
-export async function updateLoanAppStatus() {
-
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+export async function updateLoanAppStatus(dbName: string) {
+    const db = nano.use(dbName);
     const queryActions = await db.find({
         selector: {
             couchdb_type: "LOANAPP_GROUP"
@@ -623,116 +637,6 @@ router.get('/actions/fix/09042024', authorize, async (req, res) => {
     }
 });
 
-router.get('/fix_address_ext_int_numbers_types', authorize, async (req, res) => {
-
-    try {
-
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        await db.createIndex( { index: { fields: ["couchdb_type"]}})
-        const queryActions = await db.find({
-            selector: {
-                couchdb_type: "CLIENT"
-            },
-            limit: 100000
-        });
-
-        
-        const recordsToUpdate = []
-        for( let i=0; i< queryActions.docs.length; i++){
-
-            let clientDoc:any = queryActions.docs[i];
-            let addressError = false;
-            let newAddressArray = []
-            for( let j=0; j<clientDoc.address.length; j++){
-                let addressDoc = clientDoc.address[j];
-                if( !checkProperty('ext_number',addressDoc,0) ||
-                    !checkProperty('int_number', addressDoc,0) ||
-                    !checkProperty('exterior_number', addressDoc,"SN") ||
-                    !checkProperty('interior_number', addressDoc,"SN") ||
-                    !checkProperty('ownership_type', addressDoc,[1,"PROPIA"])
-                
-                ){
-                    addressError = true;
-                    addressDoc = {
-                        ...addressDoc,
-                        ext_number: 0,
-                        int_number: 0,
-                        exterior_number: 'SN',
-                        interior_number: 'SN',
-                        ownership_type: [1,"PROPIA"]
-                    }
-                }
-                newAddressArray.push(addressDoc)
-            }
-            if( addressError) {
-                clientDoc.address = newAddressArray;
-                recordsToUpdate.push(clientDoc)
-            }
-        }
-        await db.bulk({ docs: recordsToUpdate });
-        console.log(`Registros de Clientes con Issues: ${recordsToUpdate.length} de ${queryActions.docs.length}`)
-        res.send({ recordsUpdated: recordsToUpdate.map( (i:any) => ({ id_cliente: i.id_cliente }))})
-    }
-    catch (e: any) {
-        res.status(400).send(e.message);
-    }
-});
-router.get('/fix_loans_missing_member_id', authorize, async (req, res) => {
-
-    try {
-
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        await db.createIndex( { index: { fields: ["couchdb_type"]}})
-        const queryActions = await db.find({
-            selector: {
-                couchdb_type: "LOANAPP_GROUP"
-            },
-            limit: 10000
-        });
-        console.log(`Loans: ${queryActions.docs.length}`)
-        
-        const clientsQuery = await db.find({
-            selector: {
-                couchdb_type: "CLIENT"
-            },
-            limit: 10000
-        });
-        console.log(`Clients: ${clientsQuery.docs.length}`);
-
-        const recordsToUpdate:any = []
-        for( let i=0; i< queryActions.docs.length; i++){
-
-            let loanDoc:any = queryActions.docs[i];
-            let loanWithIssues = false;
-            let newMembersArray = []
-
-            for( let j=0; j<loanDoc.members.length; j++){
-                let memberDoc:any = loanDoc.members[j];
-                if( !memberDoc.client_id ){ // founds an client_id empty
-                    loanWithIssues = true;
-                    const clientDoc:any = clientsQuery.docs.find( (k:any) => (k.id_cliente == memberDoc.id_cliente));
-                    if( clientDoc ){
-                        memberDoc = {
-                            ...memberDoc,
-                            client_id: clientDoc._id
-                        }    
-                    }
-                }
-                newMembersArray.push(memberDoc)
-            }
-            if( loanWithIssues) {
-                loanDoc.members = newMembersArray;
-                recordsToUpdate.push(loanDoc)
-            }
-        }
-        await db.bulk({ docs: recordsToUpdate });
-        console.log(`Loans to update: ${recordsToUpdate.length}`)
-        res.send({ recordsUpdated: recordsToUpdate.map( (i:any) => ( { ...i}))})
-    }
-    catch (e: any) {
-        res.status(400).send(e.message);
-    }
-});
 
 
 

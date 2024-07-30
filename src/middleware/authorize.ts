@@ -13,9 +13,8 @@ export const authorize  = async (req:any, res:any, next:any) => {
         if( expiresAt.getTime() < new Date().getTime() ) {
             throw new Error('Token has expired');
         }
-    
+        /// uses default DB
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-
         await db.createIndex( { index: { fields: ["couchdb_type", "token"]}});
         const tokenQuery = await db.find( { selector: { couchdb_type: "TOKEN", token: token }});
         

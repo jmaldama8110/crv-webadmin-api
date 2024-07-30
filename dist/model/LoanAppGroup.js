@@ -14,7 +14,7 @@ const DocumentCollection_1 = require("./DocumentCollection");
 const LoanApp_1 = require("./LoanApp");
 class LoanAppGroup extends DocumentCollection_1.DocumentCollection {
     constructor(obj = {}) {
-        super();
+        super({ branch: obj.branch });
         this._id = obj._id || Date.now().toString(),
             this._rev = obj._rev,
             this.couchdb_type = 'LOANAPP_GROUP',
@@ -22,7 +22,7 @@ class LoanAppGroup extends DocumentCollection_1.DocumentCollection {
             this.id_solicitud = obj.id_solicitud || 0,
             this.id_cliente = obj.id_cliente || 0,
             this.loan_officer = obj.loan_officer || 0,
-            this.branch = obj.branch || [1, 'ORIENTE'],
+            this.branch = obj.branch || [0, ''],
             this.id_producto = obj.id_producto || 0, // Product HF, Se crea cuando pasa a estatus Por Autorizar
             this.id_disposicion = obj.id_disposicion || 0, // Se obtiene dependiendo el producto maestro
             this.apply_amount = obj.apply_amount || 0, // En caso de grupos es la suma total de monto de lo integrantes
@@ -123,10 +123,10 @@ class LoanAppGroup extends DocumentCollection_1.DocumentCollection {
     }
     getLoan(id_loan) {
         return __awaiter(this, void 0, void 0, function* () {
-            let loanAppGroup = new LoanAppGroup();
+            let loanAppGroup = new LoanAppGroup({ branch: this.branch });
             let loan = yield loanAppGroup.findOne({ _id: id_loan });
             if (loan === undefined) {
-                let loanApp = new LoanApp_1.LoanApp();
+                let loanApp = new LoanApp_1.LoanApp({ branch: this.branch });
                 loan = yield loanApp.findOne({ _id: id_loan });
             }
             return loan;

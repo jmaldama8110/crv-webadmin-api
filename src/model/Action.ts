@@ -15,7 +15,7 @@ export default class Action extends DocumentCollection {
 
     
     constructor( obj = { } as any){
-        super();
+        super({ branch: obj.branch });
         this._id = obj._id || Date.now().toString();
         this._rev = obj._rev;
         this.couchdb_type = 'ACTION';
@@ -25,6 +25,7 @@ export default class Action extends DocumentCollection {
         this.status = obj.status || 'Pending';
         this.errors = obj.errors || [];
         this.isOk = obj.isOk || false;
+        
     }
 
     async getClientHFById(externalId:number) {
@@ -857,7 +858,7 @@ export default class Action extends DocumentCollection {
                 action: null
             };
         try {
-            const act = new Action();
+            const act = new Action({ branch: this.branch });
             const action:any = await act.findOne({ _id: id_action });
 
             if (!action){
@@ -875,6 +876,7 @@ export default class Action extends DocumentCollection {
             response.action = action;
             return response;
         } catch (error:any) {
+            
             response.message = error.message;
             return response;
         }

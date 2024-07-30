@@ -6,22 +6,20 @@ import { Functions } from './Functions';
 import { UDT_CONT_DireccionContacto, UDT_CONT_Persona, UDT_CONT_Identificaciones, UDT_CONT_CURP, UDT_CONT_IFE, UDT_CONT_Telefonos, cleanTable } from './TablesSql';
 import { DocumentCollection } from '../model/DocumentCollection';
 
-let ClientDoc = new Client();
-const Document = new DocumentCollection();
-const formato = 'YYYY-MM-DD';
-const Funct = new Functions();
 
-export async function createPersonHF(data:any) {
+export async function createPersonHF(data: any) {
+    let ClientDoc = new Client({ branch: data.branch });
+
     try {
         const { _id } = data;
-        const clientCouch:any = await ClientDoc.findOne({ _id });
-        if(!clientCouch) return new Error('Client not Foun in couch');
+        const clientCouch: any = await ClientDoc.findOne({ _id });
+        if (!clientCouch) return new Error('Client not Foun in couch');
 
         const dataSort = await sortDataPerson(clientCouch);
         if (!dataSort) return new Error('data sort Error');
-        let curp = dataSort['IDENTIFICACIONES'].filter( (item:any) => item.tipo_identificacion == 'CURP')[0]?.id_numero;
-        let validation_curp = await validateCURPDuplicada(curp,dataSort['DATOS_PERSONALES'][0].id);
-        if(validation_curp !== "OK")
+        let curp = dataSort['IDENTIFICACIONES'].filter((item: any) => item.tipo_identificacion == 'CURP')[0]?.id_numero;
+        let validation_curp = await validateCURPDuplicada(curp, dataSort['DATOS_PERSONALES'][0].id);
+        if (validation_curp !== "OK")
             return new Error(validation_curp);
         const pool = await sql.connect(sqlConfig);
         UDT_CONT_DireccionContacto.rows.length = 0;
@@ -92,7 +90,7 @@ export async function createPersonHF(data:any) {
 
         //Son para CURP Fisica (NO SE USA)
         UDT_CONT_CURP.rows.add(
-            dataSort['IDENTIFICACIONES'].filter( (item:any) => item.tipo_identificacion == 'CURP')[0].id_curp,
+            dataSort['IDENTIFICACIONES'].filter((item: any) => item.tipo_identificacion == 'CURP')[0].id_curp,
             0,
             '',
             '',
@@ -102,7 +100,7 @@ export async function createPersonHF(data:any) {
 
         UDT_CONT_IFE.rows.add(
             dataSort['DATOS_IFE'][0].id,
-            dataSort['IDENTIFICACIONES'].filter((item:any) => item.tipo_identificacion == 'IFE')[0].id_numero, // Clave de elector - 18 Caracteres TODO: FILTRAR EL NUMERO DEL IFE DE IDENTIFICACIONES
+            dataSort['IDENTIFICACIONES'].filter((item: any) => item.tipo_identificacion == 'IFE')[0].id_numero, // Clave de elector - 18 Caracteres TODO: FILTRAR EL NUMERO DEL IFE DE IDENTIFICACIONES
             dataSort['DATOS_IFE'][0].numero_emision,
             dataSort['DATOS_IFE'][0].numero_vertical_ocr
         );
@@ -116,7 +114,7 @@ export async function createPersonHF(data:any) {
             dataSort['TELEFONOS'][0].sms // 0-False, 1-True
         );
 
-        const result:any = await pool.request()
+        const result: any = await pool.request()
             .input('DATOSDireccion', UDT_CONT_DireccionContacto)
             .input('DATOSPersona', UDT_CONT_Persona)
             .input('DATOSIdentificacion', UDT_CONT_Identificaciones)
@@ -125,10 +123,10 @@ export async function createPersonHF(data:any) {
             .input('DATOSTelefono', UDT_CONT_Telefonos)
             .input('etiqueta_opcion', sql.VarChar(50), action2) // INSERTAR_PERSONA/ACTUALIZAR_PERSONA
             .input('id_session', sql.Int, 0) // Quien manda la informacion
-            .input('_id_client', sql.BigInt, _id.slice(0,13))
+            .input('_id_client', sql.BigInt, _id.slice(0, 13))
             .execute("MOV_AdministrarInformacionPersona")
 
-        if(result.recordsets[0][0].Resultado.trim().toUpperCase() === "VALIDATE")
+        if (result.recordsets[0][0].Resultado.trim().toUpperCase() === "VALIDATE")
             return new Error(result.recordsets[0][0].Mensaje);
         cleanTable(UDT_CONT_DireccionContacto);
         cleanTable(UDT_CONT_Persona);
@@ -144,33 +142,36 @@ export async function createPersonHF(data:any) {
         await new Client(clientCouch).save();
 
         return result.recordsets;
-    } catch (error:any) {
+    } catch (error: any) {
         console.log(error);
         return new Error(error.stack);
     }
 }
 
-async function sortDataPerson(client:any) {
+async function sortDataPerson(client: any) {
+    const Document = new DocumentCollection({ branch: client.branch });
+    const Funct = new Functions();
+
     try {
-        let person:any = {};
+        let person: any = {};
         const IS_CREATE = client.id_persona === 0
         // const CREATE = false;
 
         const addresses = client.address;
-        const dirDomi = await addresses.filter((addresses:any) => addresses.type == 'DOMICILIO');
-        const dirIfe = await addresses.filter((addresses:any) => addresses.type == 'IFE');
-        const dirRfc = await addresses.filter((addresses:any) => addresses.type == 'RFC');
+        const dirDomi = await addresses.filter((addresses: any) => addresses.type == 'DOMICILIO');
+        const dirIfe = await addresses.filter((addresses: any) => addresses.type == 'IFE');
+        const dirRfc = await addresses.filter((addresses: any) => addresses.type == 'RFC');
         const identities = client.identities;
 
-        const ife = await client.identities.filter((id:any) => id.tipo_id == 'IFE' && id.status.trim().toUpperCase() == "ACTIVO");
-        const rfc = await client.identities.filter((id:any) => id.tipo_id == 'RFC' && id.status.trim().toUpperCase() == "ACTIVO");
-        const curp = await client.identities.filter((id:any) => id.tipo_id == 'CURP' && id.status.trim().toUpperCase() == "ACTIVO");
+        const ife = await client.identities.filter((id: any) => id.tipo_id == 'IFE' && id.status.trim().toUpperCase() == "ACTIVO");
+        const rfc = await client.identities.filter((id: any) => id.tipo_id == 'RFC' && id.status.trim().toUpperCase() == "ACTIVO");
+        const curp = await client.identities.filter((id: any) => id.tipo_id == 'CURP' && id.status.trim().toUpperCase() == "ACTIVO");
         const phones = client.phones;
 
         const entidad_nac = dirDomi[0].province[0] ? dirDomi[0].province[0] : 'PROVINCE|5';
         // console.log({entidad_nac})
-        const province:any = await Document.findOne({ _id: entidad_nac, couchdb_type: 'PROVINCE' });
-        if (!province) {console.log('Province not found'); return }
+        const province: any = await Document.findOne({ _id: entidad_nac, couchdb_type: 'PROVINCE' });
+        if (!province) { console.log('Province not found'); return }
 
         person.DATOS_PERSONALES = [
             {
@@ -230,7 +231,7 @@ async function sortDataPerson(client:any) {
                 id_asentamiento: dirDomi[0].colony[0] ? getId(dirDomi[0].colony[0]) : 42665,
                 direccion: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : " ",
                 referencia: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : " ",
-                casa_situacion: dirDomi[0].ownership_type ? dirDomi[0].ownership_type[0] : 0 ,
+                casa_situacion: dirDomi[0].ownership_type ? dirDomi[0].ownership_type[0] : 0,
                 tiempo_habitado_inicio: dirDomi[0].residence_since ? getDates(dirDomi[0].residence_since) : "2022-06-22",
                 tiempo_habitado_final: dirDomi[0].residence_to ? getDates(dirDomi[0].residence_to) : "2022-06-20",
                 correo_electronico: client.email ? client.email : '',
@@ -307,7 +308,7 @@ async function sortDataPerson(client:any) {
         person.TELEFONOS.push(
             {
                 id: IS_CREATE ? 0 : Funct.validateInt(phonePerson._id),
-                idcel_telefono: phonePerson && phonePerson.phone ?  phonePerson.phone : "0000000000",
+                idcel_telefono: phonePerson && phonePerson.phone ? phonePerson.phone : "0000000000",
                 extension: "",
                 tipo_telefono: phonePerson ? phonePerson.type ? phonePerson.type : "Móvil" : "Móvil",
                 compania: phonePerson ? phonePerson.company ? phonePerson.company : "Telcel" : "Telcel",
@@ -316,26 +317,26 @@ async function sortDataPerson(client:any) {
         )
 
         return person;
-    } catch (error:any) {
+    } catch (error: any) {
         console.log(error);
         return new Error(error.stack);
     }
 }
-export const getDates = (fecha:any) => {
+export const getDates = (fecha: any) => {
+    const formato = 'YYYY-MM-DD';
     const date = moment.utc(fecha).format(formato)
     return date;
 }
 
-export function getId(el:any) {
+export function getId(el: any) {
     return parseInt(el.split('|')[1])
 }
 
-export async function validateCURPDuplicada(curp:any,id_persona:any)
-{
-    if((curp ?? "").length == 0)
+export async function validateCURPDuplicada(curp: any, id_persona: any) {
+    if ((curp ?? "").length == 0)
         curp = "CURPX1";
     curp = curp.trim();
-    if(id_persona == 0)
+    if (id_persona == 0)
         id_persona = -1;
     const pool = await sql.connect(sqlConfig);
     let result = await pool.request()
@@ -345,10 +346,9 @@ export async function validateCURPDuplicada(curp:any,id_persona:any)
             "FROM CONT_IdentificacionOficial " +
             "WHERE tipo_identificacion='CURP' AND estatus_registro='ACTIVO' AND id_numero=@curp AND id_persona<>@id_persona;");
 
-    if (result.recordset.length > 0)
-    {
-        if(result.recordset[0].cantidad > 0)
-            return "CURP "+curp+" existente en HF con id_persona "+result.recordset[0].id_persona;
+    if (result.recordset.length > 0) {
+        if (result.recordset[0].cantidad > 0)
+            return "CURP " + curp + " existente en HF con id_persona " + result.recordset[0].id_persona;
     }
     return "OK";
 }

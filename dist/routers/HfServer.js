@@ -92,7 +92,7 @@ router.get('/groups/hf/loanapps', authorize_1.authorize, (req, res) => __awaiter
             throw new Error('Query parametrs branchId or groupName are missing!');
         }
         const data = yield getLoanApplicationById(parseInt(req.query.applicationId), parseInt(req.query.branchId));
-        const resultObject = yield processLoanApplicationByDataRS(data);
+        const resultObject = yield processLoanApplicationByDataRS(data, req.user.branch);
         res.status(200).send(resultObject);
     }
     catch (err) {
@@ -111,7 +111,7 @@ function getLoanApplicationById(loanAppId, branchId) {
     });
 }
 exports.getLoanApplicationById = getLoanApplicationById;
-function processLoanApplicationByDataRS(data) {
+function processLoanApplicationByDataRS(data, branch) {
     return __awaiter(this, void 0, void 0, function* () {
         /**
                  * resultsets[0] => Detalle de la solicitud
@@ -172,7 +172,7 @@ function processLoanApplicationByDataRS(data) {
             };
         });
         /// retrieves Product information, that is not provided by HF
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
         yield db.createIndex({ index: { fields: ["couchdb_type"] } });
         const productList = yield db.find({ selector: { couchdb_type: "PRODUCT" }, limit: 10000 });
         const productMaster = productList.docs.find((prod) => prod.external_id == loan_application.id_producto_maestro);
@@ -225,7 +225,7 @@ router.get('/products/hf', authorize_1.authorize, (req, res) => __awaiter(void 0
             throw new Error('Query parametrs branchId or ClientType are missing!');
         }
         const data = yield getProductsByBranch(parseFloat(req.query.branchId.toString()), parseFloat(req.query.clientType.toString()));
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
         const productsQuery = yield db.find({
             selector: {
                 couchdb_type: "PRODUCT"
@@ -531,95 +531,95 @@ router.post('/catalog', authorize_1.authorize, (req, res) => __awaiter(void 0, v
     try {
         switch (req.body.catalogName) {
             case "CATA_ActividadEconomica":
-                yield updateCatalogFromHF('CATA_ActividadEconomica', 10000, true);
+                yield updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch, true);
                 break;
             case "CATA_sexo":
-                yield updateCatalogFromHF('CATA_sexo', 10000);
+                yield updateCatalogFromHF('CATA_sexo', 10000, req.user.branch);
                 break;
             case "CATA_sector":
-                yield updateCatalogFromHF('CATA_sector', 10000);
+                yield updateCatalogFromHF('CATA_sector', 10000, req.user.branch);
                 break;
             case "CATA_escolaridad":
-                yield updateCatalogFromHF('CATA_escolaridad', 10000);
+                yield updateCatalogFromHF('CATA_escolaridad', 10000, req.user.branch);
                 break;
             case "CATA_estadoCivil":
-                yield updateCatalogFromHF('CATA_estadoCivil', 10000);
+                yield updateCatalogFromHF('CATA_estadoCivil', 10000, req.user.branch);
                 break;
             case "CATA_nacionalidad":
-                yield updateCatalogFromHF('CATA_nacionalidad', 10000, true);
+                yield updateCatalogFromHF('CATA_nacionalidad', 10000, req.user.branch, true);
                 break;
             case "CATA_parentesco":
-                yield updateCatalogFromHF('CATA_parentesco', 10000);
+                yield updateCatalogFromHF('CATA_parentesco', 10000, req.user.branch);
                 break;
             case "CATA_profesion":
-                yield updateCatalogFromHF('CATA_profesion', 10000, true);
+                yield updateCatalogFromHF('CATA_profesion', 10000, req.user.branch, true);
                 break;
             case "CATA_TipoRelacion":
-                yield updateCatalogFromHF('CATA_TipoRelacion', 10000);
+                yield updateCatalogFromHF('CATA_TipoRelacion', 10000, req.user.branch);
                 break;
             case "CATA_TipoPuesto":
-                yield updateCatalogFromHF('CATA_TipoPuesto', 10000);
+                yield updateCatalogFromHF('CATA_TipoPuesto', 10000, req.user.branch);
                 break;
             case "CATA_TipoVialidad":
-                yield updateCatalogFromHF('CATA_TipoVialidad', 10000);
+                yield updateCatalogFromHF('CATA_TipoVialidad', 10000, req.user.branch);
                 break;
             case "CATA_TipoDomicilio":
-                yield updateCatalogFromHF('CATA_TipoDomicilio', 10000);
+                yield updateCatalogFromHF('CATA_TipoDomicilio', 10000, req.user.branch);
                 break;
             case "CATA_Ciudad_Localidad":
-                yield updateCatalogFromHF('CATA_Ciudad_Localidad', 10000);
+                yield updateCatalogFromHF('CATA_Ciudad_Localidad', 10000, req.user.branch);
                 break;
             case "CATA_destinoCredito":
-                yield updateCatalogFromHF('CATA_destinoCredito', 10000);
+                yield updateCatalogFromHF('CATA_destinoCredito', 10000, req.user.branch);
                 break;
             case "CATA_ocupacionPLD":
-                yield updateCatalogFromHF('CATA_ocupacionPLD', 10000, true);
+                yield updateCatalogFromHF('CATA_ocupacionPLD', 10000, req.user.branch, true);
                 break;
             case "CATA_banco":
-                yield updateCatalogFromHF('CATA_banco', 10000);
+                yield updateCatalogFromHF('CATA_banco', 10000, req.user.branch);
                 break;
             case "CATA_TipoCuentaBancaria":
-                yield updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000);
+                yield updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000, req.user.branch);
                 break;
             case "CATA_MotivoBajaCastigado":
-                yield updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000);
+                yield updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000, req.user.branch);
                 break;
             case "CATA_MotivoBajaCancelacion":
-                yield updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000);
+                yield updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000, req.user.branch);
                 break;
             case "CATA_MotivoBajaRechazado":
-                yield updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000);
+                yield updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000, req.user.branch);
                 break;
             case "CATA_rolHogar":
-                yield updateCatalogFromHF('CATA_rolHogar', 10000);
+                yield updateCatalogFromHF('CATA_rolHogar', 10000, req.user.branch);
                 break;
             case "CATA_ubicacionNegocio":
-                yield updateCatalogFromHF('CATA_ubicacionNegocio', 10000);
+                yield updateCatalogFromHF('CATA_ubicacionNegocio', 10000, req.user.branch);
                 break;
             case "SPLD_InstrumentoMonetario":
-                yield updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000);
+                yield updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000, req.user.branch);
                 break;
             case "CATA_RedesSociales":
-                yield updateCatalogFromHF('CATA_RedesSociales', 10000);
+                yield updateCatalogFromHF('CATA_RedesSociales', 10000, req.user.branch);
                 break;
             case "CATA_asentamiento":
-                yield updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', 'CITY', 'ciudad_localidad');
+                yield updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', req.user.branch, 'CITY', 'ciudad_localidad');
                 break;
             case "CATA_ciudad_localidad":
-                yield updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', 'MUNICIPALITY', 'municipio');
+                yield updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', req.user.branch, 'MUNICIPALITY', 'municipio');
                 break;
             case "CATA_municipio":
-                yield updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', 'PROVINCE', 'estado');
+                yield updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', req.user.branch, 'PROVINCE', 'estado');
                 break;
             case "CATA_estado":
-                yield updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', 'COUNTRY', 'pais');
+                yield updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', req.user.branch, 'COUNTRY', 'pais');
                 break;
             case "CATA_pais":
-                yield updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
+                yield updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY', req.user.branch);
                 break;
             case "CATA_GroupMeetingTime":
                 console.log(req.body.catalogName);
-                yield updateCatalogGroupTimes();
+                yield updateCatalogGroupTimes(req.user.branch);
                 break;
             default:
                 throw new Error('No catalogName value provided');
@@ -633,35 +633,35 @@ router.post('/catalog', authorize_1.authorize, (req, res) => __awaiter(void 0, v
 }));
 router.get('/catalogs/sync', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield updateCatalogFromHF('CATA_ActividadEconomica', 10000, true);
-        yield updateCatalogFromHF('CATA_sexo', 10000);
-        yield updateCatalogFromHF('CATA_sector', 10000);
-        yield updateCatalogFromHF('CATA_escolaridad', 10000);
-        yield updateCatalogFromHF('CATA_estadoCivil', 10000);
-        yield updateCatalogFromHF('CATA_nacionalidad', 10000, true);
-        yield updateCatalogFromHF('CATA_parentesco', 10000);
-        yield updateCatalogFromHF('CATA_profesion', 10000, true);
-        yield updateCatalogFromHF('CATA_TipoRelacion', 10000);
-        yield updateCatalogFromHF('CATA_TipoPuesto', 10000);
-        yield updateCatalogFromHF('CATA_TipoVialidad', 10000);
-        yield updateCatalogFromHF('CATA_TipoDomicilio', 10000);
-        yield updateCatalogFromHF('CATA_Ciudad_Localidad', 10000);
-        yield updateCatalogFromHF('CATA_destinoCredito', 10000);
-        yield updateCatalogFromHF('CATA_ocupacionPLD', 10000, true);
-        yield updateCatalogFromHF('CATA_banco', 10000);
-        yield updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000);
-        yield updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000);
-        yield updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000);
-        yield updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000);
-        yield updateCatalogFromHF('CATA_rolHogar', 10000);
-        yield updateCatalogFromHF('CATA_ubicacionNegocio', 10000);
-        yield updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000);
-        yield updateCatalogFromHF('CATA_RedesSociales', 10000);
-        yield updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', 'CITY', 'ciudad_localidad');
-        yield updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', 'MUNICIPALITY', 'municipio');
-        yield updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', 'PROVINCE', 'estado');
-        yield updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', 'COUNTRY', 'pais');
-        yield updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
+        yield updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch, true);
+        yield updateCatalogFromHF('CATA_sexo', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_sector', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_escolaridad', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_estadoCivil', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_nacionalidad', 10000, req.user.branch, true);
+        yield updateCatalogFromHF('CATA_parentesco', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_profesion', 10000, req.user.branch, true);
+        yield updateCatalogFromHF('CATA_TipoRelacion', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_TipoPuesto', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_TipoVialidad', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_TipoDomicilio', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_Ciudad_Localidad', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_destinoCredito', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_ocupacionPLD', 10000, req.user.branch, true);
+        yield updateCatalogFromHF('CATA_banco', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_rolHogar', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_ubicacionNegocio', 10000, req.user.branch);
+        yield updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000, req.user.branch);
+        yield updateCatalogFromHF('CATA_RedesSociales', 10000, req.user.branch);
+        yield updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', req.user.branch, 'CITY', 'ciudad_localidad');
+        yield updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', req.user.branch, 'MUNICIPALITY', 'municipio');
+        yield updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', req.user.branch, 'PROVINCE', 'estado');
+        yield updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', req.user.branch, 'COUNTRY', 'pais');
+        yield updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY', req.user.branch);
         res.status(201).send('Done!');
     }
     catch (error) {
@@ -671,7 +671,7 @@ router.get('/catalogs/sync', authorize_1.authorize, (req, res) => __awaiter(void
 }));
 router.get('/products/sync', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield productsSync();
+        const result = yield productsSync(req.user.branch);
         res.send(result);
     }
     catch (e) {
@@ -752,10 +752,10 @@ function mapYearPeriodForTerm(frequencyType) {
             return undefined;
     }
 }
-function updateCatalogFromHF(name, chunk, filterActive) {
+function updateCatalogFromHF(name, chunk, branch, filterActive) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+            const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
             yield db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
             const docsDestroy = yield db.find({ selector: { couchdb_type: "CATALOG", name }, limit: 100000 });
             if (docsDestroy.docs.length > 0) {
@@ -805,10 +805,10 @@ function updateCatalogFromHF(name, chunk, filterActive) {
         }
     });
 }
-function updateCatalogFromHFByRelationship(name, chunk, shortname, relationship_name, relationship) {
+function updateCatalogFromHFByRelationship(name, chunk, shortname, branch, relationship_name, relationship) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+            const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
             yield db.createIndex({ index: { fields: ["couchdb_type"] } });
             const docsDestroy = yield db.find({ selector: { couchdb_type: shortname }, limit: 100000 });
             if (docsDestroy.docs.length > 0) {
@@ -875,9 +875,9 @@ function updateCatalogFromHFByRelationship(name, chunk, shortname, relationship_
         }
     });
 }
-function updateCatalogGroupTimes() {
+function updateCatalogGroupTimes(branch) {
     return __awaiter(this, void 0, void 0, function* () {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
         yield db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
         const docsDestroy = yield db.find({ selector: { couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime" }, limit: 100000 });
         const docsEliminate = docsDestroy.docs.map(doc => {
@@ -1414,12 +1414,12 @@ router.get("/groups/download", authorize_1.authorize, (req, res) => __awaiter(vo
         if (!req.query.branchId || !req.query.applicationId || !req.query.idCliente) {
             throw new Error('branch Id, application id or id Cliente params missing');
         }
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
         const idCliente = parseInt(req.query.idCliente);
         const idSolicitud = parseInt(req.query.applicationId);
         const branchId = parseInt(req.query.branchId);
         const data = yield getLoanApplicationById(idSolicitud, branchId);
-        const resData = yield processLoanApplicationByDataRS(data);
+        const resData = yield processLoanApplicationByDataRS(data, req.user.branch);
         yield db.createIndex({ index: { fields: ["couchdb_type"] } });
         const groupsQuery = yield db.find({
             selector: {
@@ -1508,9 +1508,9 @@ router.get("/groups/download", authorize_1.authorize, (req, res) => __awaiter(vo
         res.status(400).send(e.message);
     }
 }));
-function productsSync() {
+function productsSync(branch) {
     return __awaiter(this, void 0, void 0, function* () {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
         const product = yield getProductsWeb();
         if (!product || product.length === 0) {
             throw new Error("Not able to find the product(s)");

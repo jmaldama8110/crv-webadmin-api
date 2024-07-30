@@ -8,10 +8,8 @@ import { Functions } from './Functions';
 import { getDates, getId } from './createPerson';
 import { UDT_Solicitud, Cliente, GrupoSolidario, Direccion, UDT_SolicitudDetalle, UDT_CLIE_DetalleSeguro, UDT_CLIE_ReferenciasPersonales, UDT_OTOR_GarantiaPrendaria, UDT_OTOR_TuHogarConConserva, UDT_CLIE_TuHogarConConservaCoacreditado, cleanTable } from './TablesSql';
 
-let loanAppGroup = new LoanAppGroup();
-let ClientDoc = new Client();
-let loanApp = new LoanApp();
-let groupDoc = new Group();
+
+
 const Funct = new Functions();
 
 const frecuencysCouchtoHF = {
@@ -27,6 +25,11 @@ const frecuencyHFToCouch = {
 
 
 export async function createLoanHF(data:any) {
+    let loanAppGroup = new LoanAppGroup({ branch: data.branch });
+    let ClientDoc = new Client({ branch: data.branch });
+    let loanApp = new LoanApp({ branch: data.branch });
+    let groupDoc = new Group({ branch: data.branch });
+
     try {
         const { id_loan, idOficialCredito } = data;
 

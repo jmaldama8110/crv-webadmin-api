@@ -18,7 +18,8 @@ const connSQL_1 = require("../db/connSQL");
 const DocumentCollection_1 = require("./DocumentCollection");
 class Client extends DocumentCollection_1.DocumentCollection {
     constructor(newDoc) {
-        super();
+        super({ branch: newDoc ? newDoc.branch : [0, ''] });
+        console.log("Client constructor", { branch: newDoc ? newDoc.branch : [0, ''] });
         this._id = newDoc ? newDoc._id : Date.now().toString();
         this._rev = newDoc ? newDoc._rev : '';
         this.couchdb_type = 'CLIENT';

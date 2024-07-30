@@ -18,7 +18,7 @@ const TablesSql_1 = require("../utils/TablesSql");
 const DocumentCollection_1 = require("./DocumentCollection");
 class Action extends DocumentCollection_1.DocumentCollection {
     constructor(obj = {}) {
-        super();
+        super({ branch: obj.branch });
         this._id = obj._id || Date.now().toString();
         this._rev = obj._rev;
         this.couchdb_type = 'ACTION';
@@ -713,7 +713,7 @@ class Action extends DocumentCollection_1.DocumentCollection {
                 action: null
             };
             try {
-                const act = new Action();
+                const act = new Action({ branch: this.branch });
                 const action = yield act.findOne({ _id: id_action });
                 if (!action) {
                     response.message = 'Action not found';

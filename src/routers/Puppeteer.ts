@@ -17,10 +17,10 @@ const serverHost = `${process.env.WEB_SERVER_HOST}`;
 
 const router = express.Router();
 
-router.get("/docs/pdf/account-statement", authorize, async (req, res) => {
+router.get("/docs/pdf/account-statement", authorize, async (req:any, res) => {
   try {
 
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
     // Look up for the contract Id Information Generated ACCOUNT_STATEMENT
     const accStt: any = await db.get(`CONTRACT|${req.query.contractId}`);
     const summary = accStt.rs[0][0];
@@ -465,7 +465,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
       throw new Error('parameter loanId is missing in URL');
     }
 
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
     const loanApp: any = await db.get(req.query.loanId as string);
     if (!loanApp) {
       throw new Error('Loan App does not exist with the id:' + req.query.loanId);
@@ -677,11 +677,10 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
 
   try {
 
-    if (!req.query.loanId) {
-      throw new Error('parameter loanId is missing in URL');
+    if (!req.query.loanId || req.query.dbName) {
+      throw new Error('parameter loanId or dbName are missing in URL');
     }
-
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const db = nano.use(req.query.dbName as string);
     const loanApp: any = await db.get(req.query.loanId as string);
     if (!loanApp) {
       throw new Error('Loan App does not exist with the id:' + req.query.loanId);
@@ -895,11 +894,10 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
 
   try {
 
-    if (!req.query.loanId) {
-      throw new Error('parameter loanId is missing in URL');
+    if (!req.query.loanId || req.query.dbName) {
+      throw new Error('parameter loanId or dbName are missing in URL');
     }
-
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const db = nano.use(req.query.dbName as string);
     const loanApp: any = await db.get(req.query.loanId as string);
     if (!loanApp) {
       throw new Error('Loan App does not exist with the id:' + req.query.loanId);
@@ -1093,13 +1091,11 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
 router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) => {
 
   try {
-
-
     if (!req.query.loanId) {
       throw new Error('parameter loanId is missing in URL');
     }
 
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
     const loanApp: any = await db.get(req.query.loanId as string);
     if (!loanApp) {
       throw new Error('Loan App does not exist with the id:' + req.query.loanId);

@@ -22,10 +22,6 @@ const Group_1 = require("../model/Group");
 const Functions_1 = require("./Functions");
 const createPerson_1 = require("./createPerson");
 const TablesSql_1 = require("./TablesSql");
-let loanAppGroup = new LoanAppGroup_1.LoanAppGroup();
-let ClientDoc = new Client_1.Client();
-let loanApp = new LoanApp_1.LoanApp();
-let groupDoc = new Group_1.Group();
 const Funct = new Functions_1.Functions();
 const frecuencysCouchtoHF = {
     'S': 'SEMANAL',
@@ -38,6 +34,10 @@ const frecuencyHFToCouch = {
 };
 function createLoanHF(data) {
     return __awaiter(this, void 0, void 0, function* () {
+        let loanAppGroup = new LoanAppGroup_1.LoanAppGroup({ branch: data.branch });
+        let ClientDoc = new Client_1.Client({ branch: data.branch });
+        let loanApp = new LoanApp_1.LoanApp({ branch: data.branch });
+        let groupDoc = new Group_1.Group({ branch: data.branch });
         try {
             const { id_loan, idOficialCredito } = data;
             let typeClient;

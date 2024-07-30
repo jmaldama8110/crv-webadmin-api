@@ -129,7 +129,8 @@ class User {
             };
             const jwt_secret_key = process.env.JWT_SECRET_KEY ? process.env.JWT_SECRET_KEY : '';
             const token = jsonwebtoken_1.default.sign({ user, sync_info }, jwt_secret_key);
-            const db = nano.use(process.env.COUCHDB_NAME);
+            // user's default DB
+            const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
             const data = {
                 _id: Date.now().toString(),
                 couchdb_type: "TOKEN",

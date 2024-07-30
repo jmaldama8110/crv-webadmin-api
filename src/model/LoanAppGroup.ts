@@ -8,7 +8,6 @@ export class LoanAppGroup extends DocumentCollection {
     id_solicitud: any;
     id_cliente: any;
     loan_officer: any;
-    branch: any;
     id_producto: any;
     id_disposicion: any;
     apply_amount: any;
@@ -29,7 +28,8 @@ export class LoanAppGroup extends DocumentCollection {
     members: any;
     
     constructor(obj = {} as any) {
-        super()
+        
+        super({ branch: obj.branch })
         this._id = obj._id || Date.now().toString(),
             this._rev = obj._rev,
             this.couchdb_type = 'LOANAPP_GROUP',
@@ -37,7 +37,7 @@ export class LoanAppGroup extends DocumentCollection {
             this.id_solicitud = obj.id_solicitud || 0,
             this.id_cliente = obj.id_cliente || 0,
             this.loan_officer = obj.loan_officer || 0,
-            this.branch = obj.branch || [1, 'ORIENTE'],
+            this.branch = obj.branch || [0, ''],
             this.id_producto = obj.id_producto || 0, // Product HF, Se crea cuando pasa a estatus Por Autorizar
             this.id_disposicion = obj.id_disposicion || 0, // Se obtiene dependiendo el producto maestro
             this.apply_amount = obj.apply_amount || 0,  // En caso de grupos es la suma total de monto de lo integrantes
@@ -139,10 +139,12 @@ export class LoanAppGroup extends DocumentCollection {
 
     }
     async getLoan(id_loan:string) {
-        let loanAppGroup = new LoanAppGroup();
+        
+        let loanAppGroup = new LoanAppGroup({ branch: this.branch});
+        
         let loan = await loanAppGroup.findOne({ _id: id_loan });
         if (loan === undefined){
-            let loanApp = new LoanApp();
+            let loanApp = new LoanApp({ branch: this.branch});
             loan = await loanApp.findOne({ _id: id_loan });
         }
         return loan;

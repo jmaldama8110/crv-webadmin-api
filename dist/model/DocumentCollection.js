@@ -39,7 +39,7 @@ class DocumentCollection {
     constructor(obj = {}) {
         this._id = obj._id || Date.now().toString(),
             this._rev = obj._rev;
-        // this._couchdb_type = couchdb_type,
+        this.branch = obj.branch;
         this.created_at = new Date(Date.now()).toISOString();
         this.updated_at = obj.updated_at || new Date(Date.now()).toISOString();
     }
@@ -50,10 +50,10 @@ class DocumentCollection {
         return Object.assign({}, this);
     }
     save() {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const branchName = this.branch ? `-${this.branch[1].replace(/ /g, '').toLowerCase()}` : "";
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}${branchName}` : '');
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             const data = this.getDataPrivate();
-            // console.log('saving: ', data)
             db.insert(data)
                 .then((doc) => {
                 this._rev = doc.rev;
@@ -66,14 +66,10 @@ class DocumentCollection {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 try {
-                    let selector = { couchdb_type: { "$eq": this.couchdb_type } };
-                    for (const [key, value] of Object.entries(data)) {
-                        selector = Object.assign(selector, { [key]: { "$eq": value } });
-                    }
-                    // console.log(selector)
-                    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-                    const codeFounds = yield db.find({ selector: selector });
-                    resolve(codeFounds.docs[0]);
+                    const branchName = this.branch ? `-${this.branch[1].replace(/ /g, '').toLowerCase()}` : "";
+                    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}${branchName}` : '');
+                    const localDocument = yield db.get(data._id);
+                    resolve(localDocument);
                 }
                 catch (error) {
                     reject(error);
@@ -89,7 +85,8 @@ class DocumentCollection {
             }
             ;
             // console.log({selector})
-            const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+            const branchName = this.branch ? `-${this.branch[1].replace(/ /g, '').toLowerCase()}` : "";
+            const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}${branchName}` : '');
             // const codeFounds = await db.find({ selector: selector });
             const codeFounds = yield db.find({ selector });
             // console.log(codeFounds.docs)
@@ -99,7 +96,8 @@ class DocumentCollection {
     delete() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+                const branchName = this.branch ? `-${this.branch[1].replace(/ /g, '').toLowerCase()}` : "";
+                const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}${branchName}` : '');
                 const result = yield db.destroy(this._id, this._rev);
                 return result;
             }

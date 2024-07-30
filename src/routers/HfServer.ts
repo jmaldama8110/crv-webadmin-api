@@ -57,14 +57,14 @@ router.get('/clients/exists', authorize, async (req: any, res: any) => {
 
 });
 
-router.get('/groups/hf/loanapps', authorize, async (req, res) => {
+router.get('/groups/hf/loanapps', authorize, async (req:any, res) => {
     try {
 
         if (!(req.query.branchId && req.query.applicationId)) {
             throw new Error('Query parametrs branchId or groupName are missing!')
         }
         const data: any = await getLoanApplicationById(parseInt(req.query.applicationId as string), parseInt(req.query.branchId as string));
-        const resultObject = await processLoanApplicationByDataRS(data);
+        const resultObject = await processLoanApplicationByDataRS(data,req.user.branch);
         res.status(200).send(resultObject);
 
 
@@ -85,7 +85,7 @@ export async function getLoanApplicationById(loanAppId: number, branchId: number
 
 }
 
-async function processLoanApplicationByDataRS(data: any) {
+async function processLoanApplicationByDataRS(data: any, branch:[number,string]) {
 
     /**
              * resultsets[0] => Detalle de la solicitud
@@ -152,7 +152,7 @@ async function processLoanApplicationByDataRS(data: any) {
     })
 
     /// retrieves Product information, that is not provided by HF
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
 
     await db.createIndex({ index: { fields: ["couchdb_type"] } });
     const productList = await db.find({ selector: { couchdb_type: "PRODUCT" }, limit: 10000 });
@@ -202,14 +202,15 @@ async function processLoanApplicationByDataRS(data: any) {
     return { group_data, loan_app }
 }
 
-router.get('/products/hf', authorize, async (req, res) => {
+router.get('/products/hf', authorize, async (req:any, res) => {
     try {
         if (!(req.query.branchId && req.query.clientType)) {
             throw new Error('Query parametrs branchId or ClientType are missing!')
         }
 
         const data: any = await getProductsByBranch(parseFloat(req.query.branchId.toString()), parseFloat(req.query.clientType.toString()))
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
         const productsQuery = await db.find({
             selector: {
                 couchdb_type: "PRODUCT"
@@ -601,101 +602,101 @@ router.get('/clients/hf/search', authorize, async (req, res) => {
     }
 })
 
-router.post('/catalog', authorize, async (req, res) => {
+router.post('/catalog', authorize, async (req:any, res) => {
 
     try {
         switch (req.body.catalogName) {
             case "CATA_ActividadEconomica":
-                await updateCatalogFromHF('CATA_ActividadEconomica', 10000, true);
+                await updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch,true);
                 break;
             case "CATA_sexo":
-                await updateCatalogFromHF('CATA_sexo', 10000);
+                await updateCatalogFromHF('CATA_sexo', 10000,req.user.branch);
                 break;
             case "CATA_sector":
-                await updateCatalogFromHF('CATA_sector', 10000)
+                await updateCatalogFromHF('CATA_sector', 10000,req.user.branch)
                 break;
             case "CATA_escolaridad":
-                await updateCatalogFromHF('CATA_escolaridad', 10000);
+                await updateCatalogFromHF('CATA_escolaridad', 10000,req.user.branch);
                 break;
             case "CATA_estadoCivil":
-                await updateCatalogFromHF('CATA_estadoCivil', 10000);
+                await updateCatalogFromHF('CATA_estadoCivil', 10000,req.user.branch);
                 break;
             case "CATA_nacionalidad":
-                await updateCatalogFromHF('CATA_nacionalidad', 10000, true);
+                await updateCatalogFromHF('CATA_nacionalidad', 10000,req.user.branch, true);
                 break;
             case "CATA_parentesco":
-                await updateCatalogFromHF('CATA_parentesco', 10000);
+                await updateCatalogFromHF('CATA_parentesco', 10000, req.user.branch);
                 break;
             case "CATA_profesion":
-                await updateCatalogFromHF('CATA_profesion', 10000, true);
+                await updateCatalogFromHF('CATA_profesion', 10000, req.user.branch, true);
                 break;
             case "CATA_TipoRelacion":
-                await updateCatalogFromHF('CATA_TipoRelacion', 10000);
+                await updateCatalogFromHF('CATA_TipoRelacion', 10000, req.user.branch);
                 break;
             case "CATA_TipoPuesto":
-                await updateCatalogFromHF('CATA_TipoPuesto', 10000);
+                await updateCatalogFromHF('CATA_TipoPuesto', 10000, req.user.branch);
                 break;
             case "CATA_TipoVialidad":
-                await updateCatalogFromHF('CATA_TipoVialidad', 10000);
+                await updateCatalogFromHF('CATA_TipoVialidad', 10000, req.user.branch);
                 break;
             case "CATA_TipoDomicilio":
-                await updateCatalogFromHF('CATA_TipoDomicilio', 10000);
+                await updateCatalogFromHF('CATA_TipoDomicilio', 10000, req.user.branch);
                 break;
             case "CATA_Ciudad_Localidad":
-                await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000);
+                await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000,req.user.branch);
                 break;
             case "CATA_destinoCredito":
-                await updateCatalogFromHF('CATA_destinoCredito', 10000);
+                await updateCatalogFromHF('CATA_destinoCredito', 10000,req.user.branch);
                 break;
             case "CATA_ocupacionPLD":
-                await updateCatalogFromHF('CATA_ocupacionPLD', 10000, true);
+                await updateCatalogFromHF('CATA_ocupacionPLD', 10000,req.user.branch, true);
                 break;
             case "CATA_banco":
-                await updateCatalogFromHF('CATA_banco', 10000);
+                await updateCatalogFromHF('CATA_banco', 10000,req.user.branch);
                 break;
             case "CATA_TipoCuentaBancaria":
-                await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000);
+                await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000,req.user.branch);
                 break;
             case "CATA_MotivoBajaCastigado":
-                await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000);
+                await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000,req.user.branch);
                 break;
             case "CATA_MotivoBajaCancelacion":
-                await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000);
+                await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000,req.user.branch);
                 break;
             case "CATA_MotivoBajaRechazado":
-                await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000);
+                await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000,req.user.branch);
                 break;
             case "CATA_rolHogar":
-                await updateCatalogFromHF('CATA_rolHogar', 10000);
+                await updateCatalogFromHF('CATA_rolHogar', 10000,req.user.branch);
                 break;
             case "CATA_ubicacionNegocio":
-                await updateCatalogFromHF('CATA_ubicacionNegocio', 10000);
+                await updateCatalogFromHF('CATA_ubicacionNegocio', 10000,req.user.branch);
                 break;
             case "SPLD_InstrumentoMonetario":
-                await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000);
+                await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000,req.user.branch);
                 break;
             case "CATA_RedesSociales":
-                await updateCatalogFromHF('CATA_RedesSociales', 10000);
+                await updateCatalogFromHF('CATA_RedesSociales', 10000,req.user.branch);
                 break;
             case "CATA_asentamiento":
-                await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', 'CITY', 'ciudad_localidad');
+                await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD',req.user.branch, 'CITY', 'ciudad_localidad');
                 break;
             case "CATA_ciudad_localidad":
-                await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', 'MUNICIPALITY', 'municipio');
+                await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY',req.user.branch, 'MUNICIPALITY', 'municipio');
                 break;
             case "CATA_municipio":
-                await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', 'PROVINCE', 'estado');
+                await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY',req.user.branch, 'PROVINCE', 'estado');
                 break;
             case "CATA_estado":
-                await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', 'COUNTRY', 'pais');
+                await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE',req.user.branch, 'COUNTRY', 'pais');
                 break;
             case "CATA_pais":
-                await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
+                await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY',req.user.branch);
                 break;
             case "CATA_GroupMeetingTime":
 
                 console.log(req.body.catalogName)
-                await updateCatalogGroupTimes();
+                await updateCatalogGroupTimes(req.user.branch);
                 break;
             default:
                 throw new Error('No catalogName value provided')
@@ -710,42 +711,42 @@ router.post('/catalog', authorize, async (req, res) => {
 });
 
 
-router.get('/catalogs/sync', authorize, async (req, res) => {
+router.get('/catalogs/sync', authorize, async (req:any, res) => {
     try {
-        await updateCatalogFromHF('CATA_ActividadEconomica', 10000, true)
-        await updateCatalogFromHF('CATA_sexo', 10000)
-        await updateCatalogFromHF('CATA_sector', 10000)
-        await updateCatalogFromHF('CATA_escolaridad', 10000)
-        await updateCatalogFromHF('CATA_estadoCivil', 10000)
-        await updateCatalogFromHF('CATA_nacionalidad', 10000, true)
+        await updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch,true)
+        await updateCatalogFromHF('CATA_sexo', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_sector', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_escolaridad', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_estadoCivil', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_nacionalidad', 10000,req.user.branch, true)
 
-        await updateCatalogFromHF('CATA_parentesco', 10000)
-        await updateCatalogFromHF('CATA_profesion', 10000, true)
-        await updateCatalogFromHF('CATA_TipoRelacion', 10000)
-        await updateCatalogFromHF('CATA_TipoPuesto', 10000)
-        await updateCatalogFromHF('CATA_TipoVialidad', 10000)
-        await updateCatalogFromHF('CATA_TipoDomicilio', 10000)
-        await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000)
-        await updateCatalogFromHF('CATA_destinoCredito', 10000)
-        await updateCatalogFromHF('CATA_ocupacionPLD', 10000, true)
-        await updateCatalogFromHF('CATA_banco', 10000)
-        await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000)
+        await updateCatalogFromHF('CATA_parentesco', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_profesion', 10000,req.user.branch, true)
+        await updateCatalogFromHF('CATA_TipoRelacion', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_TipoPuesto', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_TipoVialidad', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_TipoDomicilio', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_destinoCredito', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_ocupacionPLD', 10000,req.user.branch, true)
+        await updateCatalogFromHF('CATA_banco', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000,req.user.branch)
 
-        await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000)
-        await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000)
-        await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000)
+        await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000,req.user.branch)
 
-        await updateCatalogFromHF('CATA_rolHogar', 10000)
-        await updateCatalogFromHF('CATA_ubicacionNegocio', 10000)
-        await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000)
-        await updateCatalogFromHF('CATA_RedesSociales', 10000);
+        await updateCatalogFromHF('CATA_rolHogar', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_ubicacionNegocio', 10000,req.user.branch)
+        await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_RedesSociales', 10000,req.user.branch);
 
 
-        await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', 'CITY', 'ciudad_localidad');
-        await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', 'MUNICIPALITY', 'municipio');
-        await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', 'PROVINCE', 'estado');
-        await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', 'COUNTRY', 'pais');
-        await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY');
+        await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD',req.user.branch, 'CITY', 'ciudad_localidad');
+        await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY',req.user.branch, 'MUNICIPALITY', 'municipio');
+        await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY',req.user.branch, 'PROVINCE', 'estado');
+        await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE',req.user.branch, 'COUNTRY', 'pais');
+        await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY',req.user.branch);
 
         res.status(201).send('Done!');
     }
@@ -756,10 +757,10 @@ router.get('/catalogs/sync', authorize, async (req, res) => {
 });
 
 
-router.get('/products/sync', authorize, async (req, res) => {
+router.get('/products/sync', authorize, async (req:any, res) => {
 
     try {
-        const result = await productsSync();
+        const result = await productsSync(req.user.branch);
         res.send(result);
 
     } catch (e) {
@@ -849,10 +850,9 @@ function mapYearPeriodForTerm(frequencyType: string) {
 
 
 
-async function updateCatalogFromHF(name: string, chunk: number, filterActive?: boolean) {
+async function updateCatalogFromHF(name: string, chunk: number,branch: [number, string], filterActive?: boolean) {
     try {
-
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
         await db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
         const docsDestroy = await db.find({ selector: { couchdb_type: "CATALOG", name }, limit: 100000 });
         if (docsDestroy.docs.length > 0) {
@@ -912,9 +912,9 @@ async function updateCatalogFromHF(name: string, chunk: number, filterActive?: b
     }
 }
 
-async function updateCatalogFromHFByRelationship(name: string, chunk: number, shortname: string, relationship_name?: string, relationship?: string) {
+async function updateCatalogFromHFByRelationship(name: string, chunk: number, shortname: string, branch:[number, string],relationship_name?: string, relationship?: string) {
     try {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
         await db.createIndex({ index: { fields: ["couchdb_type"] } });
         const docsDestroy = await db.find({ selector: { couchdb_type: shortname }, limit: 100000 });
 
@@ -991,8 +991,8 @@ async function updateCatalogFromHFByRelationship(name: string, chunk: number, sh
     }
 }
 
-async function updateCatalogGroupTimes() {
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+async function updateCatalogGroupTimes(branch:[number,string]) {
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
     await db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
     const docsDestroy = await db.find({ selector: { couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime" }, limit: 100000 });
 
@@ -1554,15 +1554,14 @@ router.get("/groups/download", authorize, async (req: any, res) => {
         if (!req.query.branchId || !req.query.applicationId || !req.query.idCliente) {
             throw new Error('branch Id, application id or id Cliente params missing');
         }
-
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
 
         const idCliente = parseInt(req.query.idCliente as string);
         const idSolicitud = parseInt(req.query.applicationId as string);
         const branchId = parseInt(req.query.branchId as string);
 
         const data = await getLoanApplicationById(idSolicitud, branchId);
-        const resData = await processLoanApplicationByDataRS(data);
+        const resData = await processLoanApplicationByDataRS(data,req.user.branch);
 
         await db.createIndex({ index: { fields: ["couchdb_type"] } });
         const groupsQuery = await db.find({
@@ -1733,9 +1732,9 @@ router.get("/groups/download", authorize, async (req: any, res) => {
     }
 });
 
-export async function productsSync() {
+export async function productsSync( branch:[number,string]) {
 
-    const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
     const product: any = await getProductsWeb();
     if (!product || product.length === 0) {
         throw new Error("Not able to find the product(s)");

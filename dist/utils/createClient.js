@@ -19,11 +19,11 @@ const Client_1 = require("../model/Client");
 const Functions_1 = require("./Functions");
 const TablesSql_1 = require("./TablesSql");
 const createPerson_1 = require("./createPerson");
-let ClientDoc = new Client_1.Client();
 const Funct = new Functions_1.Functions();
 function createClientHF(data) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
+        let ClientDoc = new Client_1.Client({ branch: data.branch });
         try {
             const { _id } = data;
             const clientCouch = yield ClientDoc.findOne({ _id });

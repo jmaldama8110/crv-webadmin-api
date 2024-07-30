@@ -49,14 +49,14 @@ const Nano = __importStar(require("nano"));
 const mssql_1 = __importDefault(require("mssql"));
 const connSQL_1 = require("../db/connSQL");
 const HfServer_1 = require("./HfServer");
-const misc_1 = require("../utils/misc");
+const getHFBranches_1 = require("../utils/getHFBranches");
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
-let loanAppGroup = new LoanAppGroup_1.LoanAppGroup();
-let ClientDoc = new Client_1.Client();
-let ActionDoc = new Action_1.default();
 const router = express_1.default.Router();
 exports.ActionsRouter = router;
 router.get('/actions/validate', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let loanAppGroup = new LoanAppGroup_1.LoanAppGroup({ branch: req.user.branch });
+    let ClientDoc = new Client_1.Client({ branch: req.user.branch });
+    let ActionDoc = new Action_1.default({ branch: req.user.branch });
     try {
         // Validate action
         let RSP_Result = { status: 'ERROR' };
@@ -115,6 +115,7 @@ router.get('/actions/validate', authorize_1.authorize, (req, res) => __awaiter(v
                         }
                     }
                     if (RSP_ResultNewMembers.length > 0) {
+                        console.log(RSP_ResultNewMembers);
                         RSP_Result = yield ActionDoc.generarErrorRSP("The new members have a trouble with any validation.", RSP_ResultNewMembers);
                         break;
                     }
@@ -149,11 +150,15 @@ router.get('/actions/validate', authorize_1.authorize, (req, res) => __awaiter(v
         res.status(201).send(RSP_Result);
     }
     catch (err) {
+        console.log(err);
         let RSP_Result = yield ActionDoc.generarErrorRSP(err.message, req.query);
         res.status(400).send(RSP_Result);
     }
 }));
 router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    let loanAppGroup = new LoanAppGroup_1.LoanAppGroup({ branch: req.user.branch });
+    let ClientDoc = new Client_1.Client({ branch: req.user.branch });
+    let ActionDoc = new Action_1.default({ branch: req.user.branch });
     try {
         // Validate action
         let RSP_Result = { status: 'ERROR' };
@@ -194,7 +199,7 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                                 }
                                 //Si no hay error crear cliente
                                 else {
-                                    const clientSaved = yield (0, createClient_1.createClientHF)({ "_id": row.client_id });
+                                    const clientSaved = yield (0, createClient_1.createClientHF)({ "_id": row.client_id, branch: req.user.branch });
                                     RSP_ResultClient.status = "OK";
                                     //Validar creación del cliente
                                     if (!clientSaved || clientSaved instanceof Error) {
@@ -237,7 +242,7 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                             break;
                         }
                         // Create loan
-                        loan = yield (0, createLoan_1.createLoanHF)(Object.assign(Object.assign({}, action.data), { idOficialCredito: req.user.loan_officer /// get the current user from HF
+                        loan = yield (0, createLoan_1.createLoanHF)(Object.assign(Object.assign({}, action.data), { branch: req.user.branch, idOficialCredito: req.user.loan_officer /// get the current user from HF
                          }));
                         // Validate creation of loan
                         if (loan instanceof Error || !loan) {
@@ -254,7 +259,7 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                         break;
                     case 'CREATE_UPDATE_CLIENT':
                         // Create person and client
-                        const personCreatedHF = yield (0, createPerson_1.createPersonHF)(action.data);
+                        const personCreatedHF = yield (0, createPerson_1.createPersonHF)(Object.assign(Object.assign({}, action.data), { branch: req.user.branch }));
                         //Validar error al crear persona
                         if (!personCreatedHF || personCreatedHF instanceof Error) {
                             action.status = 'Error';
@@ -264,7 +269,7 @@ router.get('/actions/exec', authorize_1.authorize, (req, res) => __awaiter(void 
                         }
                         //Si no hay error crear cliente
                         else {
-                            const clientSaved = yield (0, createClient_1.createClientHF)(action.data);
+                            const clientSaved = yield (0, createClient_1.createClientHF)(Object.assign(Object.assign({}, action.data), { branch: req.user.branch }));
                             //Validar creación del cliente
                             if (!clientSaved || clientSaved instanceof Error) {
                                 action.status = 'Error';
@@ -427,17 +432,24 @@ exports.clientDataDef = {
 };
 router.get('/db_update_loans_contracts', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const loans = yield updateLoanAppStatus();
-        res.send({ loans });
+        if (!req.query.branchId) {
+            throw new Error('No branch Id provided');
+        }
+        const dbList = yield (0, getHFBranches_1.findDbs)();
+        for (let x = 0; x < dbList.length; x++) {
+            console.log('Updating LoanApp status for', dbList[x]);
+            yield updateLoanAppStatus(dbList[x]);
+        }
+        res.send('Ok');
     }
     catch (e) {
         console.log(e);
         res.status(400).send(e.message);
     }
 }));
-function updateLoanAppStatus() {
+function updateLoanAppStatus(dbName) {
     return __awaiter(this, void 0, void 0, function* () {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
+        const db = nano.use(dbName);
         const queryActions = yield db.find({
             selector: {
                 couchdb_type: "LOANAPP_GROUP"
@@ -575,93 +587,6 @@ router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __await
     }
     catch (e) {
         console.log(e);
-        res.status(400).send(e.message);
-    }
-}));
-router.get('/fix_address_ext_int_numbers_types', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        yield db.createIndex({ index: { fields: ["couchdb_type"] } });
-        const queryActions = yield db.find({
-            selector: {
-                couchdb_type: "CLIENT"
-            },
-            limit: 100000
-        });
-        const recordsToUpdate = [];
-        for (let i = 0; i < queryActions.docs.length; i++) {
-            let clientDoc = queryActions.docs[i];
-            let addressError = false;
-            let newAddressArray = [];
-            for (let j = 0; j < clientDoc.address.length; j++) {
-                let addressDoc = clientDoc.address[j];
-                if (!(0, misc_1.checkProperty)('ext_number', addressDoc, 0) ||
-                    !(0, misc_1.checkProperty)('int_number', addressDoc, 0) ||
-                    !(0, misc_1.checkProperty)('exterior_number', addressDoc, "SN") ||
-                    !(0, misc_1.checkProperty)('interior_number', addressDoc, "SN") ||
-                    !(0, misc_1.checkProperty)('ownership_type', addressDoc, [1, "PROPIA"])) {
-                    addressError = true;
-                    addressDoc = Object.assign(Object.assign({}, addressDoc), { ext_number: 0, int_number: 0, exterior_number: 'SN', interior_number: 'SN', ownership_type: [1, "PROPIA"] });
-                }
-                newAddressArray.push(addressDoc);
-            }
-            if (addressError) {
-                clientDoc.address = newAddressArray;
-                recordsToUpdate.push(clientDoc);
-            }
-        }
-        yield db.bulk({ docs: recordsToUpdate });
-        console.log(`Registros de Clientes con Issues: ${recordsToUpdate.length} de ${queryActions.docs.length}`);
-        res.send({ recordsUpdated: recordsToUpdate.map((i) => ({ id_cliente: i.id_cliente })) });
-    }
-    catch (e) {
-        res.status(400).send(e.message);
-    }
-}));
-router.get('/fix_loans_missing_member_id', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        yield db.createIndex({ index: { fields: ["couchdb_type"] } });
-        const queryActions = yield db.find({
-            selector: {
-                couchdb_type: "LOANAPP_GROUP"
-            },
-            limit: 10000
-        });
-        console.log(`Loans: ${queryActions.docs.length}`);
-        const clientsQuery = yield db.find({
-            selector: {
-                couchdb_type: "CLIENT"
-            },
-            limit: 10000
-        });
-        console.log(`Clients: ${clientsQuery.docs.length}`);
-        const recordsToUpdate = [];
-        for (let i = 0; i < queryActions.docs.length; i++) {
-            let loanDoc = queryActions.docs[i];
-            let loanWithIssues = false;
-            let newMembersArray = [];
-            for (let j = 0; j < loanDoc.members.length; j++) {
-                let memberDoc = loanDoc.members[j];
-                if (!memberDoc.client_id) { // founds an client_id empty
-                    loanWithIssues = true;
-                    const clientDoc = clientsQuery.docs.find((k) => (k.id_cliente == memberDoc.id_cliente));
-                    if (clientDoc) {
-                        memberDoc = Object.assign(Object.assign({}, memberDoc), { client_id: clientDoc._id });
-                    }
-                }
-                newMembersArray.push(memberDoc);
-            }
-            if (loanWithIssues) {
-                loanDoc.members = newMembersArray;
-                recordsToUpdate.push(loanDoc);
-            }
-        }
-        yield db.bulk({ docs: recordsToUpdate });
-        console.log(`Loans to update: ${recordsToUpdate.length}`);
-        res.send({ recordsUpdated: recordsToUpdate.map((i) => (Object.assign({}, i))) });
-    }
-    catch (e) {
         res.status(400).send(e.message);
     }
 }));

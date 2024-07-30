@@ -113,8 +113,8 @@ export default class User {
         { user, sync_info },
             jwt_secret_key
         );
-
-        const db = nano.use(process.env.COUCHDB_NAME!);
+        // user's default DB
+        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         const data:any  = {
             _id: Date.now().toString(),
             couchdb_type: "TOKEN",
