@@ -618,7 +618,6 @@ router.post('/catalog', authorize_1.authorize, (req, res) => __awaiter(void 0, v
                 yield updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY', req.user.branch);
                 break;
             case "CATA_GroupMeetingTime":
-                console.log(req.body.catalogName);
                 yield updateCatalogGroupTimes(req.user.branch);
                 break;
             default:
@@ -657,6 +656,7 @@ router.get('/catalogs/sync', authorize_1.authorize, (req, res) => __awaiter(void
         yield updateCatalogFromHF('CATA_ubicacionNegocio', 10000, req.user.branch);
         yield updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000, req.user.branch);
         yield updateCatalogFromHF('CATA_RedesSociales', 10000, req.user.branch);
+        yield updateCatalogGroupTimes(req.user.branch);
         yield updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', req.user.branch, 'CITY', 'ciudad_localidad');
         yield updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', req.user.branch, 'MUNICIPALITY', 'municipio');
         yield updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', req.user.branch, 'PROVINCE', 'estado');

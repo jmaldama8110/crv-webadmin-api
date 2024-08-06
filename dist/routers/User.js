@@ -59,14 +59,23 @@ router.post("/users/hf/login", (req, res) => __awaiter(void 0, void 0, void 0, f
 }));
 router.post("/db_all_docs", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        if (!req.body.path || !req.body.db_name || !req.body.branch_id) {
+            throw new Error("path,db_name, branch_id params are mising...");
+        }
         let nano = Nano.default(req.body.path);
         const db = nano.use(req.body.db_name);
         const today = Date.now().toString();
         const fileName = `${req.body.db_name}-${today}.txt`;
         const doclist = yield db.list({ include_docs: true });
-        const data = doclist.rows.map((row) => {
+        const allDocs = doclist.rows.map((row) => {
             delete row.doc._rev;
             return Object.assign({}, row.doc);
+        });
+        const branchId = parseInt(req.query.branch_id);
+        const data = allDocs.filter((i) => {
+            i.branch ?
+                i.branch[0] == branchId :
+                false;
         });
         const filePath = path_1.default.join(__dirname, fileName);
         fs_1.default.appendFileSync(filePath, JSON.stringify(data));
@@ -90,6 +99,7 @@ router.post('/db_restore', authorize_1.authorize, (req, res) => __awaiter(void 0
         res.send({ count: data.length });
     }
     catch (e) {
+        console.log(e);
         res.status(400).send(e.message);
     }
 }));

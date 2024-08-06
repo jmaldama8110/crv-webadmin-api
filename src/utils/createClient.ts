@@ -397,8 +397,8 @@ function sortDataClient(client:any) {
                     id: IS_CREATE ? 0 : Funct.validateInt(client.data_company[0]["id_empresa"]),
                     id_dir: IS_CREATE ? 0 : Funct.validateInt(campo._id), //id de la dirección del negocio
                     nombre: business_data.business_name ? business_data.business_name.trim() : "NEGOCIO",
-                    calle: campo.address_line1 ? campo.address_line1 : "Calle ...",
-                    referencia: campo.address_line1 ? campo.address_line1 : "Calle ...",
+                    calle: campo.address_line1 ? campo.address_line1 : "",
+                    referencia: campo.street_reference ? campo.street_reference : "",
                     letra_exterior: campo.exterior_number ? campo.exterior_number.toString() : "SN",
                     letra_interior: campo.interior_number ? campo.interior_number.toString() : "SN",
                     num_exterior: Funct.validateInt(Funct.ConvertInt(campo.ext_number)),

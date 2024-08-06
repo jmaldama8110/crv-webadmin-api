@@ -27,21 +27,30 @@ router.post("/users/hf/login", async (req, res) => {
 
 router.post("/db_all_docs", authorize, async (req, res) => {
   try {
-
+    if ( !req.body.path || !req.body.db_name || !req.body.branch_id){
+      throw new Error("path,db_name, branch_id params are mising...")
+    }
     let nano = Nano.default(req.body.path);
     const db = nano.use(req.body.db_name);
-
+    
     const today = Date.now().toString();
     const fileName = `${req.body.db_name}-${today}.txt`
     
     const doclist = await db.list({ include_docs: true });
-    const data = doclist.rows.map((row: any) => {
+    const allDocs = doclist.rows.map((row: any) => {
       delete row.doc._rev
       return {
         ...row.doc
       }
     });
 
+    const branchId = parseInt(req.query.branch_id as string)
+    const data = allDocs.filter( (i:any) => {
+      i.branch ?
+      i.branch[0] == branchId :
+      false
+    })
+      
     const filePath = path.join(__dirname,fileName);
 
     fs.appendFileSync(filePath,JSON.stringify(data))
@@ -69,6 +78,7 @@ router.post('/db_restore', authorize, async (req,res) =>{
     
   }
   catch(e:any){
+    console.log(e);
     res.status(400).send(e.message)
   }
 })

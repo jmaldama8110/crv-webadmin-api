@@ -695,7 +695,6 @@ router.post('/catalog', authorize, async (req:any, res) => {
                 break;
             case "CATA_GroupMeetingTime":
 
-                console.log(req.body.catalogName)
                 await updateCatalogGroupTimes(req.user.branch);
                 break;
             default:
@@ -740,7 +739,7 @@ router.get('/catalogs/sync', authorize, async (req:any, res) => {
         await updateCatalogFromHF('CATA_ubicacionNegocio', 10000,req.user.branch)
         await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000,req.user.branch)
         await updateCatalogFromHF('CATA_RedesSociales', 10000,req.user.branch);
-
+        await updateCatalogGroupTimes(req.user.branch);
 
         await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD',req.user.branch, 'CITY', 'ciudad_localidad');
         await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY',req.user.branch, 'MUNICIPALITY', 'municipio');

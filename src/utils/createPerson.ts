@@ -230,7 +230,7 @@ async function sortDataPerson(client: any) {
                 id_localidad: dirDomi[0].city[0] ? getId(dirDomi[0].city[0]) : 1534,
                 id_asentamiento: dirDomi[0].colony[0] ? getId(dirDomi[0].colony[0]) : 42665,
                 direccion: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : " ",
-                referencia: dirDomi[0].address_line1 ? dirDomi[0].address_line1 : " ",
+                referencia: dirDomi[0].street_reference ? dirDomi[0].street_reference : " ",
                 casa_situacion: dirDomi[0].ownership_type ? dirDomi[0].ownership_type[0] : 0,
                 tiempo_habitado_inicio: dirDomi[0].residence_since ? getDates(dirDomi[0].residence_since) : "2022-06-22",
                 tiempo_habitado_final: dirDomi[0].residence_to ? getDates(dirDomi[0].residence_to) : "2022-06-20",
