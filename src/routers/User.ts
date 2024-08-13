@@ -27,8 +27,8 @@ router.post("/users/hf/login", async (req, res) => {
 
 router.post("/db_all_docs", authorize, async (req, res) => {
   try {
-    if ( !req.body.path || !req.body.db_name || !req.body.branch_id){
-      throw new Error("path,db_name, branch_id params are mising...")
+    if ( !req.body.path || !req.body.db_name){
+      throw new Error("path,db_name params are mising...")
     }
     let nano = Nano.default(req.body.path);
     const db = nano.use(req.body.db_name);
@@ -43,17 +43,10 @@ router.post("/db_all_docs", authorize, async (req, res) => {
         ...row.doc
       }
     });
-
-    const branchId = parseInt(req.query.branch_id as string)
-    const data = allDocs.filter( (i:any) => {
-      i.branch ?
-      i.branch[0] == branchId :
-      false
-    })
       
     const filePath = path.join(__dirname,fileName);
 
-    fs.appendFileSync(filePath,JSON.stringify(data))
+    fs.appendFileSync(filePath,JSON.stringify(allDocs))
     
     res.send({ fileName });
   }
@@ -70,6 +63,7 @@ router.post('/db_restore', authorize, async (req,res) =>{
         throw new Error('No fileName or target or db_name parameter provided in body request')
       }
     const filePath = path.join(__dirname,req.body.fileName as string);
+    console.log(filePath);
     const data:any = JSON.parse(fs.readFileSync(filePath, "utf8") );
     let nano = Nano.default(req.body.target);
     const db = nano.use(req.body.db_name);
