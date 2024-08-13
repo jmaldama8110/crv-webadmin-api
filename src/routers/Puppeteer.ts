@@ -547,7 +547,9 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
       dob.length = 3;
 
       const mobilePhone = x.doc.phones.find((y: any) => y.type === 'Móvil')
-      const otherPhone = x.doc.phones.find((y: any) => y.type === 'Caseta')
+      /// telefono del Beneficiario, en el telefono de REFERENCIA
+      const otherPhone = beneficiaryInfo.phone
+
 
       const homeAddress = x.doc.address.find((y: any) => y.type === 'DOMICILIO');
       const bisAddress = x.doc.address.find((y: any) => y.type === 'NEGOCIO');
@@ -622,7 +624,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
         rfc: arrayFromStringSize(x.doc.rfc, 13, '*'),
         email: x.doc.email,
         mobilePhone: !!mobilePhone ? arrayFromStringSize(mobilePhone.phone, 10, '*') : arrayFromStringSize('', 10, ''),
-        otherPhone: !!otherPhone ? arrayFromStringSize(otherPhone.phone, 10, '*') : arrayFromStringSize('', 10, ''),
+        otherPhone,
         geoLat: !!x.doc.coordinates ? x.doc.coordinates[0] : 0,
         geoLng: !!x.doc.coordinates ? x.doc.coordinates[1] : 0,
         homeAddress,
@@ -677,21 +679,21 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
 
   try {
 
-    if (!req.query.loanId || req.query.dbName) {
+    if (!req.query.loanId || !req.query.dbName) {
       throw new Error('parameter loanId or dbName are missing in URL');
     }
-    const db = nano.use(req.query.dbName as string);
+    const dbName = req.query.dbName as string;
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${dbName.replace(/ /g,'').toLowerCase()}` : '');
     const loanApp: any = await db.get(req.query.loanId as string);
     if (!loanApp) {
       throw new Error('Loan App does not exist with the id:' + req.query.loanId);
     }
-
+    
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
+    
     const keys = loanApp.members.map((x: any) => (x.client_id));
-
-
     const clientsQuery = await db.fetch({ keys: keys })
 
     /// get bulk info on beneficiaries
@@ -714,7 +716,7 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
         relationship: memberData.insurance.relationship,
         percentage: memberData.insurance.percentage,
         phone: [],
-        dob: [],
+        dob: [] ,
         address: {
           post_code: "",
           address_line1: "",
@@ -737,7 +739,7 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
           beneficiaryFound.dob ? 
             beneficiaryFound.dob.slice(0, 10).split('-').reverse() :
             ['','','']
-
+        
         beneficiaryInfo.name = beneficiaryFound.name
         beneficiaryInfo.dob = dob
         beneficiaryInfo.lastname = beneficiaryFound.lastname
@@ -762,7 +764,8 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
       dob.length = 3;
 
       const mobilePhone = x.doc.phones.find((y: any) => y.type === 'Móvil')
-      const otherPhone = x.doc.phones.find((y: any) => y.type === 'Caseta')
+      /// telefono del Beneficiario, en el telefono de REFERENCIA
+      const otherPhone = beneficiaryInfo.phone
 
       const homeAddress = x.doc.address.find((y: any) => y.type === 'DOMICILIO');
       const bisAddress = x.doc.address.find((y: any) => y.type === 'NEGOCIO');
@@ -837,7 +840,7 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
         rfc: arrayFromStringSize(x.doc.rfc, 13, '*'),
         email: x.doc.email,
         mobilePhone: !!mobilePhone ? arrayFromStringSize(mobilePhone.phone, 10, '*') : arrayFromStringSize('', 10, ''),
-        otherPhone: !!otherPhone ? arrayFromStringSize(otherPhone.phone, 10, '*') : arrayFromStringSize('', 10, ''),
+        otherPhone,
         geoLat: !!x.doc.coordinates ? x.doc.coordinates[0] : 0,
         geoLng: !!x.doc.coordinates ? x.doc.coordinates[1] : 0,
         homeAddress,
@@ -871,6 +874,8 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
         loginUser
       }
     })
+
+
 
     const hbs = create();
     const htmlData = await hbs.render('views/solicitud-grupo-solidario.handlebars', {

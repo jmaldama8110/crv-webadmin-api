@@ -522,7 +522,8 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
             const dob = x.doc.dob.slice(0, 10).split('-').reverse();
             dob.length = 3;
             const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
-            const otherPhone = x.doc.phones.find((y) => y.type === 'Caseta');
+            /// telefono del Beneficiario, en el telefono de REFERENCIA
+            const otherPhone = beneficiaryInfo.phone;
             const homeAddress = x.doc.address.find((y) => y.type === 'DOMICILIO');
             const bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
             let bisAddressSame = 'No';
@@ -592,7 +593,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
                 rfc: (0, misc_1.arrayFromStringSize)(x.doc.rfc, 13, '*'),
                 email: x.doc.email,
                 mobilePhone: !!mobilePhone ? (0, misc_1.arrayFromStringSize)(mobilePhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
-                otherPhone: !!otherPhone ? (0, misc_1.arrayFromStringSize)(otherPhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
+                otherPhone,
                 geoLat: !!x.doc.coordinates ? x.doc.coordinates[0] : 0,
                 geoLng: !!x.doc.coordinates ? x.doc.coordinates[1] : 0,
                 homeAddress,
@@ -641,10 +642,11 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
 }));
 router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!req.query.loanId || req.query.dbName) {
+        if (!req.query.loanId || !req.query.dbName) {
             throw new Error('parameter loanId or dbName are missing in URL');
         }
-        const db = nano.use(req.query.dbName);
+        const dbName = req.query.dbName;
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${dbName.replace(/ /g, '').toLowerCase()}` : '');
         const loanApp = yield db.get(req.query.loanId);
         if (!loanApp) {
             throw new Error('Loan App does not exist with the id:' + req.query.loanId);
@@ -715,7 +717,8 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
             const dob = x.doc.dob.slice(0, 10).split('-').reverse();
             dob.length = 3;
             const mobilePhone = x.doc.phones.find((y) => y.type === 'Móvil');
-            const otherPhone = x.doc.phones.find((y) => y.type === 'Caseta');
+            /// telefono del Beneficiario, en el telefono de REFERENCIA
+            const otherPhone = beneficiaryInfo.phone;
             const homeAddress = x.doc.address.find((y) => y.type === 'DOMICILIO');
             const bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
             let bisAddressSame = 'No';
@@ -785,7 +788,7 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
                 rfc: (0, misc_1.arrayFromStringSize)(x.doc.rfc, 13, '*'),
                 email: x.doc.email,
                 mobilePhone: !!mobilePhone ? (0, misc_1.arrayFromStringSize)(mobilePhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
-                otherPhone: !!otherPhone ? (0, misc_1.arrayFromStringSize)(otherPhone.phone, 10, '*') : (0, misc_1.arrayFromStringSize)('', 10, ''),
+                otherPhone,
                 geoLat: !!x.doc.coordinates ? x.doc.coordinates[0] : 0,
                 geoLng: !!x.doc.coordinates ? x.doc.coordinates[1] : 0,
                 homeAddress,
