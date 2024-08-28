@@ -327,7 +327,8 @@ router.get('/docs/pdf/tarjeton-digital', authorize_1.authorize, (req, res) => __
             bbajioInfo,
             banorteInfo,
             bbvaInfo,
-            conservaInfo
+            conservaInfo,
+            oxxoInfo
         });
         const result = yield renderPDf(htmlData, 'tarjeton-pago');
         res.send(Object.assign({}, result));
@@ -354,6 +355,7 @@ router.get('/docs/html/tarjeton-digital', (req, res) => __awaiter(void 0, void 0
             tipo_evento: i.tipo_evento,
             tipo_cliente: i.tipo_cliente
         }));
+        console.log(referencesData);
         const hbs = (0, express_handlebars_1.create)();
         const bbienestarInfo = referencesData.find(x => x.id_intermerdiario == 1 && x.nombre == "BANSEFI");
         const banorteInfo = referencesData.find(x => x.id_intermerdiario == 15 && x.nombre == 'BANORTE');

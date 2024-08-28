@@ -318,7 +318,8 @@ router.get('/docs/pdf/tarjeton-digital', authorize, async (req: any, res: any) =
       bbajioInfo,
       banorteInfo,
       bbvaInfo,
-      conservaInfo
+      conservaInfo,
+      oxxoInfo
     });
 
     const result = await renderPDf(htmlData, 'tarjeton-pago');
@@ -353,6 +354,7 @@ router.get('/docs/html/tarjeton-digital', async (req: any, res: any) => {
       tipo_evento: i.tipo_evento,
       tipo_cliente: i.tipo_cliente
     }))
+    console.log(referencesData);
 
     const hbs = create();
 
