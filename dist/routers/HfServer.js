@@ -522,8 +522,7 @@ router.get("/clients/hf/person-search", authorize_1.authorize, (req, res) => __a
         }
         let data = yield findClientByKeyword(req.query.keyword);
         const branchId = parseInt(req.query.branchId);
-        const newData = data.recordset.filter((i) => i.id_oficina == branchId);
-        res.send(newData);
+        res.send(data.recordset);
     }
     catch (e) {
         console.log(e);
