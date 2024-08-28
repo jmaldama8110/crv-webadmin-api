@@ -478,6 +478,22 @@ function processClientDataRS(data) {
     }
     const cicloData = data.recordsets[6];
     const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0;
+    // Default data_company values sets to 0 or emptry strings
+    let data_company = [
+        {
+            id_empresa: 0,
+            nombre_comercial: "",
+            id_oficina_empresa: 0,
+            nombre_oficina: "",
+            numero_empleados: 0,
+            revolvencia: "",
+            id_empleado: 0
+        }
+    ];
+    // evaluates whether an object is not empty, then asign it
+    if (!!data.recordsets[8][0]) {
+        data_company = [data.recordsets[8][0]]; // inside brackets
+    }
     let data_efirma = data.recordsets[9][0] ?
         data.recordsets[9][0] :
         {
@@ -493,7 +509,7 @@ function processClientDataRS(data) {
         ], country_of_birth: [
             `COUNTRY|${perSet.id_country_of_birth}`,
             perSet.country_of_birth,
-        ], marital_status: [perSet.id_marital_status, perSet.marital_status], identification_type: [], guarantor: [], business_data }, household_data), { spld, beneficiaries: [], personal_references: [], guarantee: [], ife_details: ineDetail, data_company: [data.recordsets[8][0]], data_efirma: [data_efirma] });
+        ], marital_status: [perSet.id_marital_status, perSet.marital_status], identification_type: [], guarantor: [], business_data }, household_data), { spld, beneficiaries: [], personal_references: [], guarantee: [], ife_details: ineDetail, data_company, data_efirma: [data_efirma] });
     return result;
 }
 router.get("/clients/hf/person-search", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {

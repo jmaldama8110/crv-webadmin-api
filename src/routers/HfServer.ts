@@ -505,6 +505,23 @@ function processClientDataRS(data: any) {
 
     const cicloData = data.recordsets[6]
     const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0
+    
+    // Default data_company values sets to 0 or emptry strings
+    let data_company = [
+        {
+            id_empresa: 0,
+            nombre_comercial: "",
+            id_oficina_empresa: 0,
+            nombre_oficina: "",
+            numero_empleados: 0,
+            revolvencia: "",
+            id_empleado: 0
+        }
+    ]
+    // evaluates whether an object is not empty, then asign it
+    if( !! data.recordsets[8][0]  ){
+        data_company = [ data.recordsets[8][0] ] // inside brackets
+    }
 
     let data_efirma =
         data.recordsets[9][0] ?
@@ -557,7 +574,7 @@ function processClientDataRS(data: any) {
         personal_references: [],
         guarantee: [],
         ife_details: ineDetail,
-        data_company: [data.recordsets[8][0]],
+        data_company,
         data_efirma: [data_efirma],
     };
 

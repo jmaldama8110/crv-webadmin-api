@@ -251,6 +251,7 @@ router.get('/docs/pdf/tarjeton-digital', authorize_1.authorize, (req, res) => __
         const santaderInfo = referencesData.find(x => x.id_intermerdiario == 13 && x.nombre == 'SANTANDER');
         const afirmeInfo = referencesData.find(x => x.id_intermerdiario == 14 && x.nombre == "AFIRME");
         const antadInfo = referencesData.find(x => x.id_intermerdiario == 15 && x.nombre == 'ANTAD');
+        const oxxoInfo = referencesData.find(x => x.id_intermerdiario == 5 && x.nombre == 'OXXO');
         const imgs = yield loadBase64ImgArrayFromDB([
             'banbajio-logo.png',
             'banorte-logo.jpg',
@@ -278,7 +279,8 @@ router.get('/docs/pdf/tarjeton-digital', authorize_1.authorize, (req, res) => __
             'afirme-logo.png',
             'spei-logo.png',
             'antad-logo.jpg',
-            'clubpago-logo.png'
+            'clubpago-logo.png',
+            'Oxxo_Logo.jpg'
         ]);
         const banbajioLogo = imgs[0];
         const banorteLogo = imgs[1];
@@ -307,10 +309,11 @@ router.get('/docs/pdf/tarjeton-digital', authorize_1.authorize, (req, res) => __
         const speiLogo = imgs[24];
         const antadLogo = imgs[25];
         const clubpagoLogo = imgs[26];
+        const oxxoLogo = imgs[27];
         const htmlData = yield hbs.render('views/tarjeton-2024.handlebars', {
             banbajioLogo, banorteLogo, bbienestarLogo, bbvaLogo, bodegaLogo, circlekLogo, cityclubLogo, extraLogo, farmahorroLogo, waldosLogo, walmartLogo, yzaLogo,
             farmguadalajaraLogo, fbienestarLogo, cnsrvlightLogo, merzaLogo, paycashLogo, paynetLogo, samsLogo, santanderLogo, sevenLogo, sorianaLogo, superamaLogo, afirmeLogo, speiLogo,
-            clubpagoLogo, antadLogo,
+            clubpagoLogo, antadLogo, oxxoLogo,
             clientId,
             serverHost,
             payCashInfo,
