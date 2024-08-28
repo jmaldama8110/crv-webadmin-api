@@ -522,7 +522,8 @@ router.get("/clients/hf/person-search", authorize_1.authorize, (req, res) => __a
         }
         let data = yield findClientByKeyword(req.query.keyword);
         const branchId = parseInt(req.query.branchId);
-        res.send(data.recordset);
+        const newData = data.recordset.filter((x) => x.id_oficina_cliente == branchId);
+        res.send(newData);
     }
     catch (e) {
         console.log(e);
@@ -1347,13 +1348,14 @@ function findClientByKeyword(keyword) {
         let pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
         let result = yield pool
             .request()
-            .input("id", mssql_1.default.Int, 0)
-            .input("palabra", mssql_1.default.VarChar, keyword)
-            .input("pagina_inicio", mssql_1.default.Int, 0)
-            .input("numero_registros", mssql_1.default.Int, 0)
-            .input("contador", mssql_1.default.Int, 0)
-            // .execute("CONT_BuscarPersona");
-            .execute("MOV_BuscarPersona");
+            .input("nombre", mssql_1.default.VarChar, keyword)
+            .input("filtro", mssql_1.default.Int, 0)
+            .input("pagina", mssql_1.default.Int, 1)
+            .input("total_registros", mssql_1.default.Int, 100)
+            .input("id_oficina", mssql_1.default.Int, 0)
+            .input("id_opcion", mssql_1.default.Int, 2)
+            .execute("CLIE_ObtenerPersonaCliente");
+        // .execute("MOV_BuscarPersona");
         return result;
     });
 }

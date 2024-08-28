@@ -592,8 +592,8 @@ router.get("/clients/hf/person-search", authorize, async (req, res) => {
 
         let data: any = await findClientByKeyword(req.query.keyword as string);
         const branchId = parseInt(req.query.branchId as string)
-
-        res.send(data.recordset);
+        const newData = data.recordset.filter( (x:any) => x.id_oficina_cliente == branchId )
+        res.send(newData);
 
     }
     catch (e: any) {
@@ -1493,13 +1493,14 @@ async function findClientByKeyword(keyword: string) {
     let pool = await sql.connect(sqlConfig);
     let result = await pool
         .request()
-        .input("id", sql.Int, 0)
-        .input("palabra", sql.VarChar, keyword)
-        .input("pagina_inicio", sql.Int, 0)
-        .input("numero_registros", sql.Int, 0)
-        .input("contador", sql.Int, 0)
-        // .execute("CONT_BuscarPersona");
-        .execute("MOV_BuscarPersona");
+        .input("nombre", sql.VarChar, keyword)
+        .input("filtro", sql.Int, 0)
+        .input("pagina", sql.Int, 1)
+        .input("total_registros", sql.Int, 100)
+        .input("id_oficina", sql.Int, 0)
+        .input("id_opcion", sql.Int, 2)
+        .execute("CLIE_ObtenerPersonaCliente"); 
+        // .execute("MOV_BuscarPersona");
     return result;
 }
 
