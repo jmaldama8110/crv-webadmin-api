@@ -8,7 +8,7 @@ import { create } from 'express-handlebars';
 import { arrayFromStringSize, calculateYearsMonthsFromDates, formatLocalCurrency, formatLocalDate, formatLocalDate2, getRounded } from '../utils/misc';
 import * as Nano from 'nano';
 
-const multer  = require('multer')
+const multer = require('multer')
 const upload = multer();
 
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
@@ -17,10 +17,10 @@ const serverHost = `${process.env.WEB_SERVER_HOST}`;
 
 const router = express.Router();
 
-router.get("/docs/pdf/account-statement", authorize, async (req:any, res) => {
+router.get("/docs/pdf/account-statement", authorize, async (req: any, res) => {
   try {
 
-    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
     // Look up for the contract Id Information Generated ACCOUNT_STATEMENT
     const accStt: any = await db.get(`CONTRACT|${req.query.contractId}`);
     const summary = accStt.rs[0][0];
@@ -301,10 +301,11 @@ router.get('/docs/pdf/tarjeton-digital', authorize, async (req: any, res: any) =
     const clubpagoLogo = imgs[26];
     const oxxoLogo = imgs[27]
 
-    const htmlData = await hbs.render('views/tarjeton-2024.handlebars', {
+    const handleBarFile = typeReference === '2' ? "views/tarjeton-garantia.handlebars" : "views/tarjeton-2024.handlebars";
+    const htmlData = await hbs.render(handleBarFile, {
       banbajioLogo, banorteLogo, bbienestarLogo, bbvaLogo, bodegaLogo, circlekLogo, cityclubLogo, extraLogo, farmahorroLogo, waldosLogo, walmartLogo, yzaLogo,
       farmguadalajaraLogo, fbienestarLogo, cnsrvlightLogo, merzaLogo, paycashLogo, paynetLogo, samsLogo, santanderLogo, sevenLogo, sorianaLogo, superamaLogo, afirmeLogo, speiLogo,
-      clubpagoLogo, antadLogo,oxxoLogo,
+      clubpagoLogo, antadLogo, oxxoLogo,
       clientId,
       serverHost,
       payCashInfo,
@@ -354,7 +355,7 @@ router.get('/docs/html/tarjeton-digital', async (req: any, res: any) => {
       tipo_evento: i.tipo_evento,
       tipo_cliente: i.tipo_cliente
     }))
-    console.log(referencesData);
+
 
     const hbs = create();
 
@@ -434,10 +435,12 @@ router.get('/docs/html/tarjeton-digital', async (req: any, res: any) => {
     const clubpagoLogo = imgs[26];
     const oxxoLogo = imgs[27];
 
-    const htmlData = await hbs.render('views/tarjeton-2024.handlebars', {
+    const handleBarFile = typeReference === '2' ? "views/tarjeton-garantia.handlebars" : "views/tarjeton-2024.handlebars";
+
+    const htmlData = await hbs.render(handleBarFile, {
       banbajioLogo, banorteLogo, bbienestarLogo, bbvaLogo, bodegaLogo, circlekLogo, cityclubLogo, extraLogo, farmahorroLogo, waldosLogo, walmartLogo, yzaLogo,
       farmguadalajaraLogo, fbienestarLogo, cnsrvlightLogo, merzaLogo, paycashLogo, paynetLogo, samsLogo, santanderLogo, sevenLogo, sorianaLogo, superamaLogo, afirmeLogo, speiLogo,
-      clubpagoLogo, antadLogo,oxxoLogo,
+      clubpagoLogo, antadLogo, oxxoLogo,
       clientId,
       serverHost,
       payCashInfo,
@@ -462,7 +465,8 @@ router.get('/docs/html/tarjeton-digital', async (req: any, res: any) => {
     res.status(400).send(error.message);
   }
 
-})
+});
+
 
 
 router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any) => {
@@ -473,7 +477,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
       throw new Error('parameter loanId is missing in URL');
     }
 
-    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
     const loanApp: any = await db.get(req.query.loanId as string);
     if (!loanApp) {
       throw new Error('Loan App does not exist with the id:' + req.query.loanId);
@@ -507,7 +511,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
         relationship: memberData.insurance.relationship,
         percentage: memberData.insurance.percentage,
         phone: [],
-        dob: [] ,
+        dob: [],
         address: {
           post_code: "",
           address_line1: "",
@@ -526,11 +530,11 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
       /// if Benefiary found, replace info
       const beneficiaryFound: any = beneficiaryList.find((item: any) => (item.client_id === x.doc._id))
       if (beneficiaryFound) {
-        const dob = 
-          beneficiaryFound.dob ? 
+        const dob =
+          beneficiaryFound.dob ?
             beneficiaryFound.dob.slice(0, 10).split('-').reverse() :
-            ['','','']
-        
+            ['', '', '']
+
         beneficiaryInfo.name = beneficiaryFound.name
         beneficiaryInfo.dob = dob
         beneficiaryInfo.lastname = beneficiaryFound.lastname
@@ -691,16 +695,16 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
       throw new Error('parameter loanId or dbName are missing in URL');
     }
     const dbName = req.query.dbName as string;
-    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${dbName.replace(/ /g,'').toLowerCase()}` : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${dbName.replace(/ /g, '').toLowerCase()}` : '');
     const loanApp: any = await db.get(req.query.loanId as string);
     if (!loanApp) {
       throw new Error('Loan App does not exist with the id:' + req.query.loanId);
     }
-    
+
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
-    
+
     const keys = loanApp.members.map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
@@ -724,7 +728,7 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
         relationship: memberData.insurance.relationship,
         percentage: memberData.insurance.percentage,
         phone: [],
-        dob: [] ,
+        dob: [],
         address: {
           post_code: "",
           address_line1: "",
@@ -743,11 +747,11 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
       /// if Benefiary found, replace info
       const beneficiaryFound: any = beneficiaryList.find((item: any) => (item.client_id === x.doc._id))
       if (beneficiaryFound) {
-        const dob = 
-          beneficiaryFound.dob ? 
+        const dob =
+          beneficiaryFound.dob ?
             beneficiaryFound.dob.slice(0, 10).split('-').reverse() :
-            ['','','']
-        
+            ['', '', '']
+
         beneficiaryInfo.name = beneficiaryFound.name
         beneficiaryInfo.dob = dob
         beneficiaryInfo.lastname = beneficiaryFound.lastname
@@ -956,9 +960,9 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
         }
       }
 
-      const dob = 
-          x.doc.dob ?
-        x.doc.dob.slice(0, 10).split('-').reverse() : []
+      const dob =
+        x.doc.dob ?
+          x.doc.dob.slice(0, 10).split('-').reverse() : []
       dob.length = 3;
 
       const mobilePhone = x.doc.phones.find((y: any) => y.type === 'Móvil')
@@ -1108,7 +1112,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
       throw new Error('parameter loanId is missing in URL');
     }
 
-    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
     const loanApp: any = await db.get(req.query.loanId as string);
     if (!loanApp) {
       throw new Error('Loan App does not exist with the id:' + req.query.loanId);
@@ -1153,9 +1157,9 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
           fullIntNumber: ''
         }
       }
-      const dob = 
-          x.doc.dob ?
-        x.doc.dob.slice(0, 10).split('-').reverse() : []
+      const dob =
+        x.doc.dob ?
+          x.doc.dob.slice(0, 10).split('-').reverse() : []
       dob.length = 3;
 
       const mobilePhone = x.doc.phones.find((y: any) => y.type === 'Móvil')
@@ -1330,15 +1334,15 @@ async function renderPDf(htmlData: string, fileName: string) {
   return { downloadPath: fileNamePathPdf.replace('./public/', '') }
 }
 
-router.post('/photos/upload', authorize, upload.array('photos', 24), async function (req:any, res:any, next) {
-  try{
+router.post('/photos/upload', authorize, upload.array('photos', 24), async function (req: any, res: any, next) {
+  try {
 
     const newListDocs = [];
-    for( let i=0; i< req.files.length; i++ ){
+    for (let i = 0; i < req.files.length; i++) {
       /// ignores files that are not images PNG or JPEG
-      if( !(req.files[i].mimetype === 'image/png' || 
-          req.files[i].mimetype === 'image/jpeg')
-       ) continue;
+      if (!(req.files[i].mimetype === 'image/png' ||
+        req.files[i].mimetype === 'image/jpeg')
+      ) continue;
 
       const base64str = req.files[i].buffer.toString('base64');
       const item = {
@@ -1349,12 +1353,12 @@ router.post('/photos/upload', authorize, upload.array('photos', 24), async funct
       }
       newListDocs.push(item);
     }
-    const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE?process.env.COUCHDB_NAME_PHOTOSTORE: '');
-    await db.bulk( {docs: newListDocs} );
+    const db = nano.use(process.env.COUCHDB_NAME_PHOTOSTORE ? process.env.COUCHDB_NAME_PHOTOSTORE : '');
+    await db.bulk({ docs: newListDocs });
     res.send({ uploads: newListDocs.length });
   }
-  catch(e:any){
-    res.status(400).send({ error: e.message, note:'try upload less than 24 photo files'});
+  catch (e: any) {
+    res.status(400).send({ error: e.message, note: 'try upload less than 24 photo files' });
   }
 
 });

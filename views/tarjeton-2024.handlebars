@@ -97,7 +97,7 @@
 
         .logo-container { width: 90px; padding: 0.1rem }
          img { width: 100%;} 
-         svg { height: 60px;width: 100%;}
+         svg { height: 30px;width: 100%;}
         .pt-sm { padding-top: 0.5rem; }
         .pd-nm { padding: 1rem; }
         .fw-bold { font-weight: bolder;}
@@ -124,6 +124,14 @@
             padding: 0.7rem;
             text-align: center;
         }
+        .bk-gray-low {
+            background: rgb(223, 223, 223);
+        }
+
+        .bk-gray-med {
+            background: rgb(188, 187, 187);
+        }
+
  
 </style>
 
@@ -146,64 +154,64 @@
                 </td>
                 
             </tr>
-            <tr>
-                <td>ID Cliente</td>
-                <td colspan="2">{{clientId}}</td>
+            <tr class="bk-gray-low">
+                <td class="fw-bold">ID Cliente</td>
+                <td colspan="2" class="fw-bold">{{clientId}}</td>
                 
             </tr>
-            <tr>
-                <td>Nombre Cliente</td>
-                <td colspan="2">{{payCashInfo.nombre_cliente}}</td>
+            <tr class="bk-gray-med">
+                <td class="fw-bold">Nombre Cliente</td>
+                <td colspan="2" class="fw-bold">{{payCashInfo.nombre_cliente}}</td>
                 
             </tr>
-            <tr>
-                <td>Tipo Depósito</td>
-                <td colspan="2">{{payCashInfo.tipo_evento}}</td>
+            <tr class="bk-gray-low">
+                <td class="fw-bold">Tipo Depósito</td>
+                <td colspan="2" class="fw-bold">{{payCashInfo.tipo_evento}}</td>
             </tr>
             <tr>
-                <td>BANCO</td>
-                <td>No. SERVICIO</td>
-                <td>REFERENCIA GRUPO</td>
+                <td class="text-center"><b>BANCO</b></td>
+                <td class="text-center"><b>No. SERVICIO</b></td>
+                <td class="text-center"><b>REFERENCIA GRUPO</b></td>
             </tr>
             <tr>
                 <td> <div class="bank-logo-container"><img src="data:{{bbienestarLogo.mimetype}};base64,{{bbienestarLogo.base64str}}"/></div></td>
-                <td>{{bbienestarInfo.no_cuenta}}</td>
-                <td>{{bbienestarInfo.referencia}}</td>
+                <td class="text-center fw-bold">{{bbienestarInfo.no_cuenta}}</td>
+                <td class="text-center fw-bold">{{bbienestarInfo.referencia}}</td>
             </tr>
             <tr>
                 <td><div class="bank-logo-container"><img src="data:{{bbvaLogo.mimetype}};base64,{{bbvaLogo.base64str}}"/></div></td>
-                <td>{{bbvaInfo.no_cuenta}}</td>
-                <td>{{bbvaInfo.referencia}}</td>
+                <td class="text-center fw-bold">{{bbvaInfo.no_cuenta}}</td>
+                <td class="text-center fw-bold">{{bbvaInfo.referencia}}</td>
             </tr>
             <tr>
                 <td><div class="bank-logo-container"><img src="data:{{fbienestarLogo.mimetype}};base64,{{fbienestarLogo.base64str}}"/></div></td>
-                <td>{{fbienestarInfo.no_cuenta}}</td>
-                <td>{{fbienestarInfo.referencia}}</td>
+                <td class="text-center fw-bold">{{fbienestarInfo.no_cuenta}}</td>
+                <td class="text-center fw-bold">{{fbienestarInfo.referencia}}</td>
             </tr>
             <tr>
                 <td><div class="bank-logo-container"><img src="data:{{banbajioLogo.mimetype}};base64,{{banbajioLogo.base64str}}"/></div></td>
-                <td>{{bbajioInfo.no_cuenta}}</td>
-                <td>{{bbajioInfo.referencia}}</td>
+                <td class="text-center fw-bold">{{bbajioInfo.no_cuenta}}</td>
+                <td class="text-center fw-bold">{{bbajioInfo.referencia}}</td>
             </tr>
             <tr>
                 <td><div class="bank-logo-container"><img src="data:{{santanderLogo.mimetype}};base64,{{santanderLogo.base64str}}"/></div></td>
-                <td>{{santaderInfo.no_cuenta}}</td>
-                <td>{{santaderInfo.referencia}}</td>
+                <td class="text-center fw-bold">{{santaderInfo.no_cuenta}}</td>
+                <td class="text-center fw-bold">{{santaderInfo.referencia}}</td>
             </tr>
             <tr>
                 <td><div class="bank-logo-container"><img src="data:{{afirmeLogo.mimetype}};base64,{{afirmeLogo.base64str}}"/></div></td>
-                <td>{{afirmeInfo.no_cuenta}}</td>
-                <td>{{afirmeInfo.referencia}}</td>
+                <td class="text-center fw-bold">{{afirmeInfo.no_cuenta}}</td>
+                <td class="text-center fw-bold">{{afirmeInfo.referencia}}</td>
             </tr>
             <tr>
                 <td><div class="bank-logo-container"><img src="data:{{banorteLogo.mimetype}};base64,{{banorteLogo.base64str}}"/></div></td>
-                <td>{{banorteInfo.no_cuenta}}</td>
-                <td>{{banorteInfo.referencia}}</td>
+                <td class="text-center fw-bold">{{banorteInfo.no_cuenta}}</td>
+                <td class="text-center fw-bold">{{banorteInfo.referencia}}</td>
             </tr>
             <tr>
                 <td><div class="bank-logo-container"><img src="data:{{speiLogo.mimetype}};base64,{{speiLogo.base64str}}"/></div></td>
-                <td>BANCO STP</td>
-                <td class="text-center"><span class="fs-sm">CLABE INTERBANCARIA</span><br/>{{clubpagoInfo.no_cuenta}}</td>
+                <td class="text-center fw-bold">BANCO STP</td>
+                <td class="text-center fw-bold"><span class="fs-sm">CLABE INTERBANCARIA</span><br/>{{clubpagoInfo.no_cuenta}}</td>
 
             </tr>
             <tr>
@@ -239,7 +247,7 @@
             </tr>
 
             <tr>
-                <td> <div class="bank-logo-container"><img src="data:{{clubpagoLogo.mimetype}};base64,{{clubpagoLogo.base64str}}"/></div></td>
+                <td><div class="bank-logo-container"><img src="data:{{clubpagoLogo.mimetype}};base64,{{clubpagoLogo.base64str}}"/></div></td>
                 <td colspan="2">
                     <div class="card-reference">
                         <svg id="barcodeClubpago"></svg>
@@ -273,7 +281,7 @@
                 <td> <div class="bank-logo-container"><img src="data:{{oxxoLogo.mimetype}};base64,{{oxxoLogo.base64str}}"/></div></td>
                 <td colspan="2">
                     <div class="card-reference">
-                        <svg id="barcodeAntad"></svg>
+                        <svg id="barcodeOxxo"></svg>
                         <h4>{{oxxoInfo.referencia}}</h4>
                         <p class="fs-sm">Escribir la referencia en caso de fallo del codigo.</p>
                     </div>
@@ -352,7 +360,6 @@
             </tr>
           </table>
 
-
     </div>
 
     <script>
@@ -360,6 +367,7 @@
         JsBarcode("#barcodeClubpago", {{clubpagoInfo.referencia}},{ fontSize: 24, displayValue: false });
         JsBarcode("#barcodePaynet", {{paynetInfo.referencia}},{ fontSize: 24, displayValue: false });
         JsBarcode("#barcodeAntad", {{antadInfo.referencia}},{ fontSize: 24, displayValue: false });
+        JsBarcode("#barcodeOxxo", {{oxxoInfo.referencia}},{ fontSize: 24, displayValue: false });
         JsBarcode("#barcodeConserva", {{conservaInfo.referencia}},{ fontSize: 24,displayValue: false });
     </script>
 </body>
