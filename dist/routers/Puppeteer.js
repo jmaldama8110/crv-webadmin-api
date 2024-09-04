@@ -310,7 +310,8 @@ router.get('/docs/pdf/tarjeton-digital', authorize_1.authorize, (req, res) => __
         const antadLogo = imgs[25];
         const clubpagoLogo = imgs[26];
         const oxxoLogo = imgs[27];
-        const htmlData = yield hbs.render('views/tarjeton-2024.handlebars', {
+        const handleBarFile = typeReference === '2' ? "views/tarjeton-garantia.handlebars" : "views/tarjeton-2024.handlebars";
+        const htmlData = yield hbs.render(handleBarFile, {
             banbajioLogo, banorteLogo, bbienestarLogo, bbvaLogo, bodegaLogo, circlekLogo, cityclubLogo, extraLogo, farmahorroLogo, waldosLogo, walmartLogo, yzaLogo,
             farmguadalajaraLogo, fbienestarLogo, cnsrvlightLogo, merzaLogo, paycashLogo, paynetLogo, samsLogo, santanderLogo, sevenLogo, sorianaLogo, superamaLogo, afirmeLogo, speiLogo,
             clubpagoLogo, antadLogo, oxxoLogo,
@@ -355,7 +356,6 @@ router.get('/docs/html/tarjeton-digital', (req, res) => __awaiter(void 0, void 0
             tipo_evento: i.tipo_evento,
             tipo_cliente: i.tipo_cliente
         }));
-        console.log(referencesData);
         const hbs = (0, express_handlebars_1.create)();
         const bbienestarInfo = referencesData.find(x => x.id_intermerdiario == 1 && x.nombre == "BANSEFI");
         const banorteInfo = referencesData.find(x => x.id_intermerdiario == 15 && x.nombre == 'BANORTE');
@@ -428,7 +428,8 @@ router.get('/docs/html/tarjeton-digital', (req, res) => __awaiter(void 0, void 0
         const antadLogo = imgs[25];
         const clubpagoLogo = imgs[26];
         const oxxoLogo = imgs[27];
-        const htmlData = yield hbs.render('views/tarjeton-2024.handlebars', {
+        const handleBarFile = typeReference === '2' ? "views/tarjeton-garantia.handlebars" : "views/tarjeton-2024.handlebars";
+        const htmlData = yield hbs.render(handleBarFile, {
             banbajioLogo, banorteLogo, bbienestarLogo, bbvaLogo, bodegaLogo, circlekLogo, cityclubLogo, extraLogo, farmahorroLogo, waldosLogo, walmartLogo, yzaLogo,
             farmguadalajaraLogo, fbienestarLogo, cnsrvlightLogo, merzaLogo, paycashLogo, paynetLogo, samsLogo, santanderLogo, sevenLogo, sorianaLogo, superamaLogo, afirmeLogo, speiLogo,
             clubpagoLogo, antadLogo, oxxoLogo,
@@ -468,7 +469,8 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
         if (!loanApp.members) {
             throw new Error('No members found at the loan application!');
         }
-        const keys = loanApp.members.map((x) => (x.client_id));
+        const keys = loanApp.members.map((x) => (x.client_id))
+            .filter((y) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE');
         const clientsQuery = yield db.fetch({ keys: keys });
         /// get bulk info on beneficiaries
         const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
@@ -663,7 +665,8 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
         if (!loanApp.members) {
             throw new Error('No members found at the loan application!');
         }
-        const keys = loanApp.members.map((x) => (x.client_id));
+        const keys = loanApp.members.map((x) => (x.client_id))
+            .filter((y) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE');
         const clientsQuery = yield db.fetch({ keys: keys });
         /// get bulk info on beneficiaries
         const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
