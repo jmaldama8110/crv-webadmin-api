@@ -469,8 +469,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
         if (!loanApp.members) {
             throw new Error('No members found at the loan application!');
         }
-        const keys = loanApp.members.map((x) => (x.client_id))
-            .filter((y) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE');
+        const keys = loanApp.members.filter((y) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x) => (x.client_id));
         const clientsQuery = yield db.fetch({ keys: keys });
         /// get bulk info on beneficiaries
         const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
@@ -665,8 +664,7 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
         if (!loanApp.members) {
             throw new Error('No members found at the loan application!');
         }
-        const keys = loanApp.members.map((x) => (x.client_id))
-            .filter((y) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE');
+        const keys = loanApp.members.filter((y) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x) => (x.client_id));
         const clientsQuery = yield db.fetch({ keys: keys });
         /// get bulk info on beneficiaries
         const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });

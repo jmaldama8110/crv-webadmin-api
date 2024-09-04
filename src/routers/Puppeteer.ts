@@ -486,8 +486,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
-    const keys = loanApp.members.map((x: any) => (x.client_id))
-                                .filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE');
+    const keys = loanApp.members.filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
     /// get bulk info on beneficiaries
@@ -704,8 +703,7 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
       throw new Error('No members found at the loan application!')
     }
 
-    const keys = loanApp.members.map((x: any) => (x.client_id))
-                                .filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE');
+    const keys = loanApp.members.filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
     /// get bulk info on beneficiaries
