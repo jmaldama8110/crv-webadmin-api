@@ -498,7 +498,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
     }
     const newClientsList: any = clientsQuery.rows.filter((r: any) => !r.error)
     const clientsData = newClientsList.map((x: any) => {
-
+      
       const memberData = loanApp.members.find((y: any) => y.client_id === x.doc._id)
       const loanCycle = parseInt(memberData.loan_cycle) + 1
       const memberLoanAmount = memberData.apply_amount;
@@ -562,13 +562,16 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
 
 
       const homeAddress = x.doc.address.find((y: any) => y.type === 'DOMICILIO');
-      const bisAddress = x.doc.address.find((y: any) => y.type === 'NEGOCIO');
+      let bisAddress = x.doc.address.find((y: any) => y.type === 'NEGOCIO');
       let bisAddressSame = 'No';
       if (bisAddress) { // evaluates first bisAddress exists, since object may not exits
         if (!!bisAddress.bis_address_same) {
           bisAddressSame = bisAddress.bis_address_same ? 'Si' : 'No';
         }
 
+      } else 
+      { /// in case bisAddress is null
+        bisAddress = homeAddress
       }
       homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number === 'SN' ? '' : homeAddress.exterior_number}`
       homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number === 'SN' ? '' : homeAddress.interior_number}`

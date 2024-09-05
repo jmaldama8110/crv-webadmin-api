@@ -535,12 +535,15 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize_1.authorize, (req, res) => 
             /// telefono del Beneficiario, en el telefono de REFERENCIA
             const otherPhone = beneficiaryInfo.phone;
             const homeAddress = x.doc.address.find((y) => y.type === 'DOMICILIO');
-            const bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
+            let bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
             let bisAddressSame = 'No';
             if (bisAddress) { // evaluates first bisAddress exists, since object may not exits
                 if (!!bisAddress.bis_address_same) {
                     bisAddressSame = bisAddress.bis_address_same ? 'Si' : 'No';
                 }
+            }
+            else { /// in case bisAddress is null
+                bisAddress = homeAddress;
             }
             homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number === 'SN' ? '' : homeAddress.exterior_number}`;
             homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number === 'SN' ? '' : homeAddress.interior_number}`;
