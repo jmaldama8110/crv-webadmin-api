@@ -8,17 +8,17 @@
 
 <style>
          body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Tahoma, "Trebuchet MS", sans-serif;
             max-width: 800px;
             margin: auto;
-            font-size: 6px;
+            font-size: 9px;
          }
          * {
             margin: 0;
          }
          p {
             padding: 0;
-            line-height: 0.5rem;
+            line-height: 0.8rem;
          }
          div {
             margin-bottom: 5px;
@@ -75,6 +75,7 @@
          .wd260 { width: 260px;}
          .wd280 { width: 280px;}
          .wd300 { width: 300px;}
+         .wd310 { width: 310px;}
          .wd320 { width: 320px;}
          .wd340 { width: 340px;}
          .wd360 { width: 360px;}
@@ -169,7 +170,8 @@
          }
          .cross {
             font-weight: 800;
-            font-size: 9px;
+            font-size: 14px;
+            
          }
         .full-border { border: 1px solid black; }
             .ml-sm { margin-left: 0.5rem }
@@ -206,24 +208,24 @@
             <h3 class="wd360 bk-black pp-md">DATOS PERSONALES SIN ABREVIATURA</h3>
             
             <div class="flex-content">
-                <p class="wd50 fw-bold">APELLIDO (S)</p>
+                <p class="wd70 fw-bold">APELLIDO (S)</p>
                 <p class="wd140 border-bottom">&nbsp;{{this.lastname}}</p>
                 <p class="wd140 border-bottom">&nbsp;{{this.second_lastname}}</p>
             </div>
             <div class="flex-content">
-                <p class="wd50">&nbsp;</p>
+                <p class="wd70">&nbsp;</p>
                 <p class="wd140 fs-xsm fw-bold">PATERNO</p>
                 <p class="wd140 fs-xsm fw-bold">MATERNO</p>
     
             </div>
             <div class="flex-content">
-                <p class="wd50 fw-bold">NOMBRE (S)</p>
+                <p class="wd60 fw-bold">NOMBRE (S)</p>
                 <p class="wd300 border-bottom">{{this.name}}</p>
             </div>
             
             <div class="flex-content">
-                <p class="wd70 fw-bold">CLAVE DE ELECTOR</p>
-                <p class="wd260 border-bottom">{{this.claveIne}}</p>
+                <p class="wd100 fw-bold">CLAVE DE ELECTOR</p>
+                <p class="wd240 border-bottom">{{this.claveIne}}</p>
             </div>
             <div class="flex-content">
                 <p class="wd180 border-bottom ">{{this.curp}}</p>
@@ -243,26 +245,24 @@
                 <p class="wd180 lh-sm fw-bold">ID DE FAMILIA PROSPERA <br/> (Sólo para las que aplique)</p>
             </div>
             <div class="flex-content">
-                <p class="wd80 lh-sm fw-bold">FECHA DE NACIMIENTO</p>
+                <p class="wd120 lh-sm fw-bold">FECHA DE NACIMIENTO</p>
                 <p class="wd120 border-bottom vertical-bottom">{{this.dob.[0]}}-{{this.dob.[1]}}-{{this.dob.[2]}}</p>
-                <p class="wd140 border-bottom vertical-bottom">{{this.countryAndProvince}}</p>
+                <p class="wd120 border-bottom vertical-bottom">{{this.countryAndProvince}}</p>
             </div>
             <div class="flex-content">
-                <p class="wd80 "></p>
+                <p class="wd120 "></p>
                 <p class="wd120  fw-bold">DÍA MES AÑO</p>
-                <p class="wd140  fw-bold">PAIS Y ENTIDAD DE NACIMIENTO</p>
+                <p class="wd120  fw-bold">PAIS Y ENTIDAD DE NACIMIENTO</p>
             </div>
 
             <div class="flex-content">
-                <div class="wd260">
-                    <p class="fw-bold lh-sm">¿USTED O FAMILIAR SUYO DESEMPEÑA UN CARGO PÚBLICO O LO TUVO EN LOS ÚLTIMOS 12 MESES A LA FECHA?</p>
+                <div class="wd280">
+                    <p class="fw-bold lh-sm">¿USTED O FAMILIAR SUYO DESEMPEÑA UN CARGO PÚBLICO O LO TUVO EN LOS ÚLTIMOS 12 MESES A LA FECHA?<span class="border-bottom fw-bold">&nbsp;&nbsp;{{this.isClientPppYesNo}}&nbsp;&nbsp;</span> </p>
                 </div>
-                <div>
-                    <p class="border-bottom fw-bold">&nbsp;&nbsp;{{this.isClientPppYesNo}}&nbsp;&nbsp;</p>
-                </div>
+
             </div>
             <div class="flex-content">
-                <p class="wd80 fw-bold">NOMBRE DEL FAMILIAR:</p>
+                <p class="wd120 fw-bold">NOMBRE DEL FAMILIAR:</p>
                 <p class="wd240 border-bottom">&nbsp;{{this.pPpClientName}}</p>
             </div>
             <p class="fw-bold">¿DESDE QUE FECHA, EN QUE DEPENDENCIA Y BAJO QUE CARGO?</p>
@@ -270,15 +270,15 @@
             
             <h3>DATOS DEL DOMICILIO</h3>            
             <div class="flex-content">
-                <p class="wd20 fw-bold">CASA</p>
+                <p class="wd30 fw-bold">CASA</p>
                 <p class="wd30"><span class="cross">{{this.homeOwnershipOwned}}</span>P</p>
                 <p class="wd30"><span class="cross">{{this.homeOwnershipRented}}</span>R</p>
                 <p class="wd30"><span class="cross">{{this.homeOwnershipRelative}}</span>F</p>
-                <p class="wd90 fw-bold">TIEMPO HABITANDO EN ELLA</p>
-                <p class="wd30 border-bottom txt-center">&nbsp;&nbsp;{{this.homeYearsMonths.[0]}}&nbsp;&nbsp;</p>
+                <p class="wd140 fw-bold">TIEMPO HABITANDO EN ELLA</p>
+                <p class="wd20 border-bottom txt-center">&nbsp;&nbsp;{{this.homeYearsMonths.[0]}}&nbsp;&nbsp;</p>
                 <p class="wd30 fw-bold">AÑOS</p>
-                <p class="wd30 border-bottom txt-center">&nbsp;&nbsp;{{this.homeYearsMonths.[1]}}&nbsp;&nbsp;</p>
-                <p class="wd30 fw-bold">MESES</p>
+                <p class="wd20 border-bottom txt-center">&nbsp;&nbsp;{{this.homeYearsMonths.[1]}}&nbsp;&nbsp;</p>
+                <p class="wd20 fw-bold">MESES</p>
 
             </div>
         </div> 
@@ -293,7 +293,7 @@
             <div class="flex-content">
                 <p class="wd20 fw-bold">NUEVA</p>
                 <p class="wd40 border-bottom txt-center">&nbsp;{{this.isNewLoan}}</p>
-                <p class="wd100 fw-bold">NUM. CICLO DE CONTINUIDAD</p>
+                <p class="wd160 fw-bold">NUM. CICLO DE CONTINUIDAD</p>
                 <p class="wd100 border-bottom">&nbsp;{{this.loan_cycle}}</p>
             </div>
             <div class="flex-content">
@@ -302,7 +302,7 @@
                 <p class="wd40"><span class="cross">{{this.isFemale}}</span>M</p>
             </div>
             <div class="flex-content">
-                <p class="wd80 fw-bold">FECHA DE LA SOLICITUD</p>
+                <p class="wd120 fw-bold">FECHA DE LA SOLICITUD</p>
                 <p class="wd100 border-bottom vertical-top">&nbsp;{{this.apply_at.[0]}}-{{this.apply_at.[1]}}-{{this.apply_at.[2]}}</p>
             </div>
             <div class="flex-content">
@@ -320,7 +320,7 @@
                 <p class="wd60 fs-xsm"><span class="cross">{{this.hasNinguno}}</span>NINGUNO</p>
             </div>
             <div class="flex-content">
-                <p class="wd40 fw-bold">PROFESIóN</p>
+                <p class="wd60 fw-bold">PROFESIóN</p>
                 <p class="wd320 border-bottom">&nbsp;{{this.profession}}</p>
             </div>
             <div class="flex-content">
@@ -330,32 +330,32 @@
                 <p class="wd80 border-bottom">{{this.notMxNationality}}</p>
             </div>
             <div class="flex-content mb-md">
-                <p class="wd60 fw-bold">N° DEPENDIENTES:</p>
+                <p class="wd100 fw-bold">N° DEPENDIENTES:</p>
                 <p class="wd40 border-bottom">&nbsp;{{this.economicDependants}}</p>
             </div>
                 <div class="flex-content">
-                    <p class="wd140"><b>¿HABLA USTED ALGUNA LENGUA INDIGENA?</b></p>
+                    <p class="wd220"><b>¿HABLA USTED ALGUNA LENGUA INDIGENA?</b></p>
                     <p class="fw-bold">Si</p>
                     <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.speaksDialectYes}}</span></p>
                     <p class="fw-bold">No</p>
                     <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.speaksDialectNo}}</span></p>
                 </div>
                 <div class="flex-content">
-                    <p class="wd140"><b>¿PADECE USTED ALGUNA DISCAPACIDAD?</b></p>
+                    <p class="wd220"><b>¿PADECE USTED ALGUNA DISCAPACIDAD?</b></p>
                     <p class="fw-bold">Si</p>
                     <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.hasDisableYes}}</span></p>
                     <p class="fw-bold">No</p>
                     <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.hasDisableNo}}</span></p>
                 </div>
                 <div class="flex-content">
-                    <p class="wd140"><b>¿CUENTA USTED CON ACCESO A INTERNET?</b></p>
+                    <p class="wd220"><b>¿CUENTA USTED CON ACCESO A INTERNET?</b></p>
                     <p class="fw-bold">Si</p>
                     <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.internetAccessYes}}</span></p>
                     <p class="fw-bold">No</p>
                     <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.internetAccessNo}}</span></p>
                 </div>
                 <div class="flex-content">
-                    <p class="wd140"><b>¿ES USTED USUARIA DE REDES SOCIALES?</b></p>
+                    <p class="wd220"><b>¿ES USTED USUARIA DE REDES SOCIALES?</b></p>
                     <p class="fw-bold">Si</p>
                     <p class="wd40 border-bottom">&nbsp;<span class="cross">{{this.usesSocialMediaYes}}</span></p>
                     <p class="fw-bold">No</p>
@@ -413,25 +413,25 @@
         <p class="wd40 fw-bold">E-MAIL:</p>
         <p class="wd100 border-bottom">&nbsp;{{this.email}}</p>
         <p class="wd20 border-bottom">&nbsp;</p>
-        <p class="wd80 fw-bold">ROL EN EL HOGAR</p>
+        <p class="wd100 fw-bold">ROL EN EL HOGAR</p>
         <p class="wd60 fw-bold"><span class="cross">{{this.isRolHogarJefe}}</span>JEFE</p>
         <p class="wd60 fw-bold"><span class="cross">{{this.isRolHogarEsposo}}</span>ESPOS@</p>
         <p class="wd60 fw-bold"><span class="cross">{{this.isRolHogarHijo}}</span>HIJ@</p>
         <p class="wd60 fw-bold"><span class="cross">{{this.isRolHogarOtro}}</span>OTRO:</p>
     </div>
     <div class="flex-content">
-        <p class="wd100 fw-bold">REFERENCIAS DEL DOMICILIO</p>
+        <p class="wd150 fw-bold">REFERENCIAS DEL DOMICILIO</p>
         <p class="wd600 border-bottom">&nbsp;{{this.homeAddress.street_reference}}</p>
     </div>
     <h3 class="wd50p">DIRECCIÓN DEL NEGOCIO</h3>
     <div class="flex-content">
-        <p class="wd90 fw-bold">DIRECCIÓN DEL HOGAR</p>
+        <p class="wd120 fw-bold">DIRECCIÓN DEL HOGAR</p>
         <div class="square vertical-centered">{{this.bisAddressSame}}</div>
         <p>&nbsp;&nbsp;</p>
         <p class="wd220 fw-bold">MISMO DOMICILIO DEL HOGAR DEL CLIENTE</p>
     </div>
     <div class="flex-content">
-        <p class="wd90 fw-bold">DIRECCIÓN DEL NEGOCIO</p>
+        <p class="wd120 fw-bold">DIRECCIÓN DEL NEGOCIO</p>
         <p class="wd140 border-bottom">&nbsp;{{this.bisAddressRoad}}</p>
         <p>&nbsp;&nbsp;&nbsp;</p>
         <p class="wd200 border-bottom">&nbsp;{{this.bisAddress.address_line1}}</p>
@@ -443,7 +443,7 @@
         <p class="wd50 border-bottom">&nbsp;{{this.bisAddress.fullIntNumber}}</p>
     </div>
     <div class="flex-content">
-        <p class="wd90 fw-bold">&nbsp;</p>
+        <p class="wd120 fw-bold">&nbsp;</p>
         <p class="wd140 fw-bold">TIPO DE VIALIDAD</p>
         <p>&nbsp;&nbsp;&nbsp;</p>
         <p class="wd200 fw-bold">NOMBRE O NÚMERO DE LA VIALIDAD</p>
@@ -478,9 +478,9 @@
         <p class="wd180 fw-bold">PAÍS</p>
     </div>
     <div class="flex-content">
-        <p class="wd80 fw-bold">TELEFONO DE NEGOCIO</p>
+        <p class="wd120 fw-bold">TELEFONO DE NEGOCIO</p>
         <p class="wd80 border-bottom">&nbsp;{{this.bisDataPhone}}</p>
-        <p class="wd80 fw-bold">&nbsp;&nbsp;TIPO DE NEGOCIO</p>
+        <p class="wd100 fw-bold">&nbsp;&nbsp;TIPO DE NEGOCIO</p>
         <p class="wd80 fw-bold">FIJO (&nbsp;&nbsp;&nbsp;)</p>
         <p class="wd80 fw-bold">SEMIFIJO (&nbsp;&nbsp;&nbsp;)</p>
         <p class="wd80 fw-bold">AMBULANTE (&nbsp;&nbsp;&nbsp;)</p>
@@ -488,8 +488,8 @@
 
     {{!-- SALTO DE LINEA AQUI --}}
     <div>
-        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        
         
     </div>
     <div class="wd700 txt-right pagebreak">Página 1 de 2</div>
@@ -505,13 +505,13 @@
     
     
         <div class="flex-content">
-            <p class="wd120 fw-bold">OCUPACIÓN / ACTIVIDAD ECONOMICA:</p>
+            <p class="wd200 fw-bold">OCUPACIÓN / ACTIVIDAD ECONOMICA:</p>
             <p class="wd500 border-bottom">&nbsp; {{this.occupation}} / {{this.economicActivity}}</p>
         </div>
         <div class="flex-content">
-            <p class="wd120 fw-bold">TIEMPO EN ESTA ACTIVIDAD</p>            
+            <p class="wd140 fw-bold">TIEMPO EN ESTA ACTIVIDAD</p>            
             <p class="wd200 border-bottom">&nbsp;{{this.bisYearsMonths.[0]}} AÑOS y {{this.bisYearsMonths.[1]}} MESES</p>
-            <p class="wd120 fw-bold">MONTO DE CRÉDITO QUE SOLICITA $</p>            
+            <p class="wd180 fw-bold">MONTO DE CRÉDITO QUE SOLICITA:</p>            
             <p class="wd200 border-bottom">&nbsp;{{this.memberLoanAmount}}</p>
         </div>
         <div class="flex-content">
@@ -524,17 +524,17 @@
             MANIFIESTO QUE PREVIAMENTE AL LLENADO DE ESTE FORMATO TUVE A LA VISTA, SE ME HIZO ENTREGA Y LA DEBIDA EXPLICACIÓN DEL CONTENIDO Y ALCANCE DEL AVISO DE PRIVACIDAD DE CONSULTORES DE SERVICIOS VARIOS S.A. DE C.V. SOFOM E.N.R. EL TRATAMIENTO DE MIS DATOS PERSONALES, FINANCIEROS Y PATRIMONIALES, Y DECLARO BAJO PROTESTA DE DECIR VERDAD QUE LOS DATOS QUE PROPORCIONO EN ESTE ACTO SON LEGÍTIMOS, Y ASÍ MISMO QUE ACTÚO A NOMBRE Y CUENTA PROPIA. TAMPOCO CUENTO CON PROVEEDORES DE RECURSOS, NI PROPIETARIOS REALES EN LA PRESENTE OPERACIÓN.
         </p>
         <div class="flex-content">
-            <p class="wd160 fw-bold">AUTORIZO EL USO DE MIS DATOS PERSONALES</p>
+            <p class="wd220 fw-bold">AUTORIZO EL USO DE MIS DATOS PERSONALES</p>
             <p class="wd100 border-bottom">&nbsp;</p>
-            <p class="wd160 fw-bold">NO AUTORIZO EL USO DE MIS DATOS PERSONALES</p>
+            <p class="wd240 fw-bold">NO AUTORIZO EL USO DE MIS DATOS PERSONALES</p>
             <p class="wd100 border-bottom">&nbsp;</p>
         </div>
         <div class="flex-content">
-            <p class="wd100 fw-bold">OBSERVACIONES GENERALES</p>    
+            <p class="wd140 fw-bold">OBSERVACIONES GENERALES</p>    
             <p class="wd500 border-bottom">&nbsp;</p>
         </div>
         <div class="flex-content mb-md">
-            <p class="wd100 fw-bold">NOMBRE DE CLIENTE:</p>            
+            <p class="wd120 fw-bold">NOMBRE DE CLIENTE:</p>            
             <p class="wd300 border-bottom">&nbsp;{{this.name}} {{this.lastname}} {{this.second_lastname}}</p>
             <p class="wd30 fw-bold">FIRMA:</p>            
             <p class="wd300 border-bottom">&nbsp;</p>
@@ -560,20 +560,20 @@
         </div>
 
         <div class="flex-content">
-            <p class="wd200 fw-bold">DESIGNO COMO BENEFICIARIO DEL FONDO DE CONTINGENCIA A :</p>
-            <p class="wd120 border-bottom">&nbsp;{{this.beneficiaryInfo.name}}</p>
-            <p>&nbsp;&nbsp;&nbsp;</p>
+            <p class="wd310 fw-bold">DESIGNO COMO BENEFICIARIO DEL FONDO DE CONTINGENCIA A :</p>
             <p class="wd120 border-bottom">&nbsp;{{this.beneficiaryInfo.lastname}}</p>
             <p>&nbsp;&nbsp;&nbsp;</p>
-            <p class="wd160 border-bottom">&nbsp;{{this.beneficiaryInfo.second_lastname}}</p>
+            <p class="wd120 border-bottom">&nbsp;{{this.beneficiaryInfo.second_lastname}}</p>
+            <p>&nbsp;&nbsp;&nbsp;</p>
+            <p class="wd140 border-bottom">&nbsp;{{this.beneficiaryInfo.name}}</p>
         </div>
         <div class="flex-content">
-            <p class="wd200 fw-bold">&nbsp;</p>
+            <p class="wd310 fw-bold">&nbsp;</p>
             <p class="wd120 ">APELLIDO PATERNO</p>
             <p>&nbsp;&nbsp;&nbsp;</p>
             <p class="wd120 ">APELLIDO MATERNO</p>
             <p>&nbsp;&nbsp;&nbsp;</p>
-            <p class="wd160 lh-sm">NOMBRE COMPLETO (sin abreviaturas,</p>
+            <p class="wd140 lh-sm">NOMBRE COMPLETO (sin abreviaturas,</p>
         </div>
 
     <div class="flex-content">
@@ -631,17 +631,17 @@
     </div>
 
     <div class="flex-content">
-        <p class="wd40 fw-bold">FECHA NAC.:</p>
+        <p class="wd60 fw-bold">FECHA NAC.:</p>
         <p class="wd160 border-bottom">&nbsp;</p>
-        <p class="wd60 fw-bold">PARENTESCO:</p>
+        <p class="wd70 fw-bold">PARENTESCO:</p>
         <p class="wd160 border-bottom">&nbsp;{{this.beneficiaryInfo.relationship}}</p>
-        <p class="wd40 fw-bold">PORCENTAJE:</p>
+        <p class="wd70 fw-bold">PORCENTAJE:</p>
         <p class="wd20 border-bottom txt-right">&nbsp;{{this.beneficiaryInfo.percentage}}</p>
         <p class="fw-bold">% (En caso de haber cambiado)</p>
     </div>
 
     <div class="flex-content">
-        <p class="wd70 fw-bold">NOMBRE DEL CLIENTE:</p>
+        <p class="wd120 fw-bold">NOMBRE DEL CLIENTE:</p>
         <p class="wd450 border-bottom">&nbsp;{{this.name}} {{this.lastname}} {{this.second_lastname}}</p>
         <p class="wd20 fw-bold">FIRMA:</p>
         <p class="wd100 border-bottom">&nbsp;</p>
@@ -652,13 +652,13 @@
     </p>
     
     <div class="flex-content">
-        <p class="wd40 fw-bold">Nombre:</p>
+        <p class="wd50 fw-bold">Nombre:</p>
         <p class="wd450 border-bottom">&nbsp;{{this.name}} {{this.lastname}} {{this.second_lastname}}</p>
-        <p class="wd50 fw-bold">Fecha Consulta:</p>
+        <p class="wd80 fw-bold">Fecha Consulta:</p>
         <p class="wd120 border-bottom">&nbsp;</p>
     </div>
     <div class="flex-content">
-        <p class="wd40 fw-bold">Dirección:</p>
+        <p class="wd50 fw-bold">Dirección:</p>
         <p class="wd700 border-bottom">&nbsp;{{this.homeAddress.address_line1}}, # {{this.homeAddress.fullExtNumber}}, # Int: {{this.homeAddress.fullIntNumber}}, {{this.homeAddress.colony.[1]}}, {{this.homeAddress.city.[1]}}, {{this.homeAddress.municipality.[1]}} - {{this.homeAddress.province.[1]}}, {{this.homeAddress.country.[1]}}</p>
     </div>
     <p class="txt-justify fw-bold">

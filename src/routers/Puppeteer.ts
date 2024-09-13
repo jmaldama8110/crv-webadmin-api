@@ -913,7 +913,7 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
 
   try {
 
-    if (!req.query.loanId || req.query.dbName) {
+    if (!req.query.loanId || !req.query.dbName) {
       throw new Error('parameter loanId or dbName are missing in URL');
     }
     const db = nano.use(req.query.dbName as string);
@@ -961,7 +961,6 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
           fullIntNumber: ''
         }
       }
-
       const dob =
         x.doc.dob ?
           x.doc.dob.slice(0, 10).split('-').reverse() : []
@@ -1090,7 +1089,6 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
         loginUser
       }
     })
-
     const hbs = create();
     const htmlData = await hbs.render('views/solicitud-grupo-tactiva.handlebars', {
       serverHost,
