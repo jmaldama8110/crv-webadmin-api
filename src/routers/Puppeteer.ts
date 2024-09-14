@@ -323,7 +323,7 @@ router.get('/docs/pdf/tarjeton-digital', authorize, async (req: any, res: any) =
       oxxoInfo
     });
 
-    const result = await renderPDf(htmlData, 'tarjeton-pago');
+    const result = await renderPDf(htmlData, 'tarjeton-2024');
     res.send({ ...result });
   }
   catch (error: any) {
