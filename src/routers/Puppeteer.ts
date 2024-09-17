@@ -1007,9 +1007,10 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
       bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number}`
 
       /// FALSE PLD check when this field is empty
-      const isClientPppYesNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'Si' : 'No';
+      const isClientPppYes = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'x' : '';
+      const isClientPppNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? '' : 'x';
       const pPpClientName = x.doc.spld.familiar_desempenia_funcion_publica_cargo ?
-        `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paternos} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : ''
+        `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paterno} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : ''
 
 
       return {
@@ -1084,7 +1085,7 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
         keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
         hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
         previousExperience: x.doc.business_data.previous_loan_experience,
-        isClientPppYesNo, pPpClientName,
+        isClientPppYes,isClientPppNo, pPpClientName,
         beneficiaryInfo,
         loginUser
       }
@@ -1203,9 +1204,10 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
       bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number}`
 
       /// FALSE PLD check when this field is empty
-      const isClientPppYesNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'Si' : 'No';
+      const isClientPppYes = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'x' : '';
+      const isClientPppNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? '' : 'x';
       const pPpClientName = x.doc.spld.familiar_desempenia_funcion_publica_cargo ?
-        `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paternos} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : ''
+        `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paterno} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : ''
 
 
       return {
@@ -1280,7 +1282,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
         keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
         hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
         previousExperience: x.doc.business_data.previous_loan_experience,
-        isClientPppYesNo, pPpClientName,
+        isClientPppYes,isClientPppNo, pPpClientName,
         beneficiaryInfo,
         loginUser
       }
