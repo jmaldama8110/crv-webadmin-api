@@ -925,8 +925,7 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
-    const keys = loanApp.members.map((x: any) => (x.client_id));
-
+    const keys = loanApp.members.filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
     const beneficiaryQuery = await db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 })
@@ -1122,8 +1121,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
-    const keys = loanApp.members.map((x: any) => (x.client_id));
-
+    const keys = loanApp.members.filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
     const beneficiaryQuery = await db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 })

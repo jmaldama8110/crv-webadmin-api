@@ -328,7 +328,7 @@ export async function createClientHF(data:any) {
         const addressHF = addAddressClientHF(clientCouch.address, dataHF[3]);
         const phonesHF = addPhones(dataHF[4]);
         const personData = dataHF[0][0];
-
+        console.log(personData);
         clientCouch["id_cliente"] = dataHF[0][0].id;
         clientCouch["phones"] = phonesHF;
         // Guardar sólo los ids.
