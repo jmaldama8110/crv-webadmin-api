@@ -331,7 +331,7 @@ router.get('/docs/pdf/tarjeton-digital', authorize_1.authorize, (req, res) => __
             conservaInfo,
             oxxoInfo
         });
-        const result = yield renderPDf(htmlData, 'tarjeton-pago');
+        const result = yield renderPDf(htmlData, 'tarjeton-2024');
         res.send(Object.assign({}, result));
     }
     catch (error) {
@@ -851,7 +851,7 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
 }));
 router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!req.query.loanId || req.query.dbName) {
+        if (!req.query.loanId || !req.query.dbName) {
             throw new Error('parameter loanId or dbName are missing in URL');
         }
         const db = nano.use(req.query.dbName);
@@ -862,7 +862,7 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
         if (!loanApp.members) {
             throw new Error('No members found at the loan application!');
         }
-        const keys = loanApp.members.map((x) => (x.client_id));
+        const keys = loanApp.members.filter((y) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x) => (x.client_id));
         const clientsQuery = yield db.fetch({ keys: keys });
         const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
         const beneficiaryList = beneficiaryQuery.docs.filter((item) => item.relation_type === "beneficiary");
@@ -932,9 +932,10 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
             bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number}`;
             bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number}`;
             /// FALSE PLD check when this field is empty
-            const isClientPppYesNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'Si' : 'No';
+            const isClientPppYes = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'x' : '';
+            const isClientPppNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? '' : 'x';
             const pPpClientName = x.doc.spld.familiar_desempenia_funcion_publica_cargo ?
-                `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paternos} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : '';
+                `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paterno} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : '';
             return {
                 name: x.doc.name,
                 lastname: x.doc.lastname,
@@ -1007,7 +1008,7 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
                 keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
                 hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
                 previousExperience: x.doc.business_data.previous_loan_experience,
-                isClientPppYesNo, pPpClientName,
+                isClientPppYes, isClientPppNo, pPpClientName,
                 beneficiaryInfo,
                 loginUser
             };
@@ -1037,7 +1038,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
         if (!loanApp.members) {
             throw new Error('No members found at the loan application!');
         }
-        const keys = loanApp.members.map((x) => (x.client_id));
+        const keys = loanApp.members.filter((y) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x) => (x.client_id));
         const clientsQuery = yield db.fetch({ keys: keys });
         const beneficiaryQuery = yield db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 });
         const beneficiaryList = beneficiaryQuery.docs.filter((item) => item.relation_type === "beneficiary");
@@ -1107,9 +1108,10 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
             bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number}`;
             bisAddress.fullIntNumber = `${bisAddress.int_number ? bisAddress.int_number : ''} ${bisAddress.interior_number}`;
             /// FALSE PLD check when this field is empty
-            const isClientPppYesNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'Si' : 'No';
+            const isClientPppYes = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? 'x' : '';
+            const isClientPppNo = x.doc.spld.familiar_desempenia_funcion_publica_cargo ? '' : 'x';
             const pPpClientName = x.doc.spld.familiar_desempenia_funcion_publica_cargo ?
-                `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paternos} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : '';
+                `${x.doc.spld.familiar_desempenia_funcion_publica_nombre} ${x.doc.spld.familiar_desempenia_funcion_publica_paterno} ${x.doc.spld.familiar_desempenia_funcion_publica_materno}` : '';
             return {
                 name: x.doc.name,
                 lastname: x.doc.lastname,
@@ -1182,7 +1184,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
                 keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
                 hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
                 previousExperience: x.doc.business_data.previous_loan_experience,
-                isClientPppYesNo, pPpClientName,
+                isClientPppYes, isClientPppNo, pPpClientName,
                 beneficiaryInfo,
                 loginUser
             };
