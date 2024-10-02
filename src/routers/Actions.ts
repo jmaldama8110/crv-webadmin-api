@@ -419,7 +419,7 @@ router.get('/db_update_loans_contracts', authorize, async (req, res) => {
         }
         const dbList = await findDbs();
         for(let x=0; x < dbList.length; x++){
-            console.log('Updating LoanApp status for',dbList[x])
+            // console.log('Updating LoanApp status for',dbList[x])
             await updateLoanAppStatus(dbList[x])
         }
         res.send('Ok')
@@ -455,7 +455,7 @@ export async function updateLoanAppStatus(dbName: string) {
         /// only updates when newStatus is not equal current Status
         if (newStatus) {
             const statusChanged = !(loanAppDoc.estatus === newStatus.estatus && loanAppDoc.sub_estatus === newStatus.sub_estatus)
-            console.log(`${idSolicitud} (${statusChanged}), ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus} => ${newStatus?.estatus}/${newStatus?.sub_estatus}`);
+            // console.log(`${idSolicitud} (${statusChanged}), ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus} => ${newStatus?.estatus}/${newStatus?.sub_estatus}`);
 
             if (statusChanged && !loanAppDoc.renovation) {
                 // renovation flag must be FALSE
@@ -484,7 +484,7 @@ export async function updateLoanAppStatus(dbName: string) {
     /// run the bulk update
     /**1. UPDATE all LOANAPP_DOC docs status/substatus */
     await db.bulk({ docs: toBeUpdated });
-    console.log(`Updated: ${toBeUpdated.length}, Nothing to do: ${queryActions.docs.length - toBeUpdated.length}`)
+    // console.log(`Updated: ${toBeUpdated.length}, Nothing to do: ${queryActions.docs.length - toBeUpdated.length}`)
 
     /**2. UPDATE all CONTRACT from HF data*/
     const queryContracts = await db.find({
@@ -499,7 +499,7 @@ export async function updateLoanAppStatus(dbName: string) {
         const contractDoc: any = queryContracts.docs[w];
         const dataFromHF: any = await getContractInfo(contractDoc.idContrato);
         if (dataFromHF[0][0]) {
-            console.log(`${contractDoc.idContrato} updated.`)
+            // console.log(`${contractDoc.idContrato} updated.`)
             dataToBeUpdated.push({
                 ...contractDoc,
                 ...dataFromHF[0][0],
@@ -537,7 +537,7 @@ export async function updateLoanAppStatus(dbName: string) {
                     couchdb_type: "CONTRACT",
                 }
                 newContractsToCreate.push(newContract);
-                console.log(`${newContract.idContract}, created.`);
+                // console.log(`${newContract.idContract}, created.`);
             }
         }
 
