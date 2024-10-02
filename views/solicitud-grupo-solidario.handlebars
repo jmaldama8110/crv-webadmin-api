@@ -100,6 +100,10 @@
          .wd100p {width: 100%;}
          
         .fw-bold { font-weight: bolder;}
+        .max-ht{
+            max-height: 1.8rem;
+            overflow: hidden;
+        }
         .border-top { border-top: 1px solid black; }
         .border-bottom { border-bottom: 1px solid black; }
          h3, .bk-black{
@@ -536,9 +540,9 @@
         <div class="wd160"> <p>{{this.bisAddress.address_line1}}</p></div>
         <div class="wd50"> <p>{{this.bisAddress.fullExtNumber}}</p></div>
         <div class="wd50"> <p>{{this.bisAddress.fullIntNumber}}</p></div>
-        <div class="wd140"> <p>{{this.bisAddress.colony.[1]}}</p></div>
+        <div class="wd140 max-ht"> <p>{{this.bisAddress.colony.[1]}}</p></div>
         <div class="wd80"> <p>{{this.bisAddress.municipality.[1]}}</p></div>
-        <div class="wd80"> <p>{{this.bisAddress.city.[1]}}</p></div>
+        <div class="wd80 max-ht"> <p>{{this.bisAddress.city.[1]}}</p></div>
         <div class="wd60"> <p>{{this.bisAddress.post_code}}</p></div>
         <div class="wd60"> <p>{{this.bisAddress.province.[1]}}</p></div>
         <div class="wd60"> <p>{{this.bisAddress.country.[1]}}</p></div>
