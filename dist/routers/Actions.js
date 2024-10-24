@@ -437,7 +437,7 @@ router.get('/db_update_loans_contracts', authorize_1.authorize, (req, res) => __
         }
         const dbList = yield (0, getHFBranches_1.findDbs)();
         for (let x = 0; x < dbList.length; x++) {
-            console.log('Updating LoanApp status for', dbList[x]);
+            // console.log('Updating LoanApp status for',dbList[x])
             yield updateLoanAppStatus(dbList[x]);
         }
         res.send('Ok');
@@ -466,7 +466,7 @@ function updateLoanAppStatus(dbName) {
             /// only updates when newStatus is not equal current Status
             if (newStatus) {
                 const statusChanged = !(loanAppDoc.estatus === newStatus.estatus && loanAppDoc.sub_estatus === newStatus.sub_estatus);
-                console.log(`${idSolicitud} (${statusChanged}), ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus} => ${newStatus === null || newStatus === void 0 ? void 0 : newStatus.estatus}/${newStatus === null || newStatus === void 0 ? void 0 : newStatus.sub_estatus}`);
+                // console.log(`${idSolicitud} (${statusChanged}), ${loanAppDoc.estatus}/${loanAppDoc.sub_estatus} => ${newStatus?.estatus}/${newStatus?.sub_estatus}`);
                 if (statusChanged && !loanAppDoc.renovation) {
                     // renovation flag must be FALSE
                     /// only when changed excepting ACEPTADO/PRESTAMO FINALIZADO
@@ -487,7 +487,7 @@ function updateLoanAppStatus(dbName) {
         /// run the bulk update
         /**1. UPDATE all LOANAPP_DOC docs status/substatus */
         yield db.bulk({ docs: toBeUpdated });
-        console.log(`Updated: ${toBeUpdated.length}, Nothing to do: ${queryActions.docs.length - toBeUpdated.length}`);
+        // console.log(`Updated: ${toBeUpdated.length}, Nothing to do: ${queryActions.docs.length - toBeUpdated.length}`)
         /**2. UPDATE all CONTRACT from HF data*/
         const queryContracts = yield db.find({
             selector: {
@@ -499,7 +499,7 @@ function updateLoanAppStatus(dbName) {
             const contractDoc = queryContracts.docs[w];
             const dataFromHF = yield (0, HfServer_1.getContractInfo)(contractDoc.idContrato);
             if (dataFromHF[0][0]) {
-                console.log(`${contractDoc.idContrato} updated.`);
+                // console.log(`${contractDoc.idContrato} updated.`)
                 dataToBeUpdated.push(Object.assign(Object.assign(Object.assign({}, contractDoc), dataFromHF[0][0]), { updated_by: `${process.env.COUCHDB_USER}`, updated_at: new Date().toISOString() }));
             }
             else {
@@ -518,7 +518,7 @@ function updateLoanAppStatus(dbName) {
                 if (!contractExists) {
                     const newContract = Object.assign(Object.assign({}, contractData[0][x]), { _id: Date.now().toString(), client_id: clientIdsToUpdate[i]._id, created_by: `${process.env.COUCHDB_USER}`, created_at: new Date().toISOString(), branch: clientIdsToUpdate[i].branch, couchdb_type: "CONTRACT" });
                     newContractsToCreate.push(newContract);
-                    console.log(`${newContract.idContract}, created.`);
+                    // console.log(`${newContract.idContract}, created.`);
                 }
             }
         }
@@ -546,47 +546,65 @@ function getCurrentLoanStatus(idSolicitud) {
         return undefined;
     });
 }
-router.get('/actions/fix/09042024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/actions/fix_23_Oct_2024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!req.query.loanAppId) {
-            throw new Error('No id');
-        }
-        let loanAppId = req.query.loanAppId;
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const queryActions = yield db.find({
-            selector: {
-                couchdb_type: "LOANAPP_GROUP"
-            },
-            limit: 10000
-        });
-        //// Extraemos todos los LoanApp y evaluamos si el client_id esta vacio
-        const loanappGrpList = queryActions.docs.map((i) => {
-            return Object.assign(Object.assign({}, i), { mustBeUpdated: !!(i.members.find((w) => !w.client_id)) });
-        });
-        const newListLoans = loanappGrpList.filter((i) => i._id === loanAppId);
-        /// Iteramos y ejecutamos un update en cada LoanApp que requiere
-        for (let d = 0; d < newListLoans.length; d++) {
-            if (newListLoans[d].mustBeUpdated) {
-                for (let s = 0; s < newListLoans[d].members.length; s++) {
-                    const clientsQuery = yield db.find({
-                        selector: {
-                            couchdb_type: "CLIENT",
-                            id_cliente: newListLoans[d].members[s].id_cliente
-                        }
-                    });
-                    const clientDoc = clientsQuery.docs.find((k) => k.id_cliente == newListLoans[d].members[s].id_cliente);
-                    newListLoans[d].members[s].client_id = clientDoc._id;
-                }
-                /// once the client_id field is populated, update LOANAPP_GROUP document
-                const loanAppGrpObject = newListLoans[d];
-                delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
-                yield db.insert(Object.assign({}, loanAppGrpObject));
-            }
-        }
-        res.send(newListLoans);
+        const dbName = (process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
+        const itemsToFix = yield getClientWithDuplicateBisAddress(dbName);
+        res.send(itemsToFix);
     }
     catch (e) {
         console.log(e);
         res.status(400).send(e.message);
     }
 }));
+router.post('/actions/fix_24_Oct_2024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const dbName = (process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
+        const db = nano.use(dbName);
+        const bodyData = req.body;
+        const keys = bodyData.map(item => item.client_id);
+        const clientsRows = yield db.fetch({ keys });
+        const clientsToUpdate = [];
+        clientsRows.rows.forEach((item) => {
+            if (!item.error) {
+                /// limpiamos el arreglo
+                const tmp = {};
+                item.doc.address.forEach((add) => tmp[add.type] = add);
+                const newAddressArray = Object.values(tmp);
+                /////
+                clientsToUpdate.push(Object.assign(Object.assign({}, item.doc), { address: newAddressArray // reemplazamos con el nuevo arreglo
+                 }));
+            }
+        });
+        yield db.bulk({ docs: clientsToUpdate });
+        res.send({ updated: clientsToUpdate.length });
+    }
+    catch (e) {
+        console.log(e);
+        res.status(400).send(e.message);
+    }
+}));
+function getClientWithDuplicateBisAddress(dbName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const db = nano.use(dbName);
+        const queryActions = yield db.find({
+            selector: {
+                couchdb_type: "CLIENT"
+            }, limit: 100000
+        });
+        const clientWithDuplicateAddress = [];
+        for (let i = 0; i < queryActions.docs.length; i++) {
+            const clientData = queryActions.docs[i];
+            if (clientData.address) {
+                const addressCount = clientData.address.filter((add) => add.type === 'NEGOCIO');
+                if (addressCount.length > 1) {
+                    clientWithDuplicateAddress.push({
+                        db: dbName,
+                        client_id: clientData._id
+                    });
+                }
+            }
+        }
+        return clientWithDuplicateAddress;
+    });
+}

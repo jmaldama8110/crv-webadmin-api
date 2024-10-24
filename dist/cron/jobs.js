@@ -15,13 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const node_cron_1 = __importDefault(require("node-cron"));
 const Actions_1 = require("../routers/Actions");
 const getHFBranches_1 = require("../utils/getHFBranches");
-node_cron_1.default.schedule('* 23 * * *', () => __awaiter(void 0, void 0, void 0, function* () {
+node_cron_1.default.schedule('* 6 * * *', () => __awaiter(void 0, void 0, void 0, function* () {
     // se ejecutara a las 23 horas de cada dia
     try {
         const dbList = yield (0, getHFBranches_1.findDbs)();
         console.log('NODE-CRON started... ');
         for (let x = 0; x < dbList.length; x++) {
-            console.log('Updating LoanApp status for', dbList[x]);
+            // console.log('Updating LoanApp status for',dbList[x])
             yield (0, Actions_1.updateLoanAppStatus)(dbList[x]);
         }
     }
