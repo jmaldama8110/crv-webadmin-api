@@ -321,13 +321,14 @@ function processClientDataRS(data: any) {
         })
     }
 
-    const address = [];
+    let address = [];
     let email = ''
     for (let i = 0; i < data.recordsets[3].length; i++) {
         const add = data.recordsets[3][i]
         if (add.correo_electronico) {
             email = add.correo_electronico;
         }
+
         address.push({
             _id: add.id,
             type: add.tipo.trim(),
@@ -352,6 +353,16 @@ function processClientDataRS(data: any) {
             email
         })
     }
+
+    /// limpia el arreglo de direcciones para dejar solo uno por cada TYPE
+    const map:any = {}; // valor temporal para reemplazar el objeto iterado, con el ultimo
+    address.forEach( (add:any) => map[add.type] = add )
+    address = Object.values(map);
+    //////////////
+    
+      
+
+
     const phones = [];
     for (let l = 0; l < data.recordsets[4].length; l++) {
 

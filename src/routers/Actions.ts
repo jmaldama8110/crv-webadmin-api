@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { query } from 'express';
 import Action from '../model/Action';
 import { authorize } from '../middleware/authorize';
 import { LoanAppGroup } from '../model/LoanAppGroup';
@@ -66,7 +66,7 @@ router.get('/actions/validate', authorize, async (req: any, res) => {
                         let client: any;
                         const _id = row.client_id;
                         client = await ClientDoc.findOne({ _id });
-                        
+
                         if (client === undefined) {
                             info.client_id = _id;
                             RSP_Result = await ActionDoc.generarErrorRSP('Client new is not found: ' + row.client_id, info);
@@ -414,11 +414,11 @@ export const clientDataDef: any = {
 
 router.get('/db_update_loans_contracts', authorize, async (req, res) => {
     try {
-        if( !req.query.branchId){
+        if (!req.query.branchId) {
             throw new Error('No branch Id provided')
         }
         const dbList = await findDbs();
-        for(let x=0; x < dbList.length; x++){
+        for (let x = 0; x < dbList.length; x++) {
             // console.log('Updating LoanApp status for',dbList[x])
             await updateLoanAppStatus(dbList[x])
         }
@@ -574,62 +574,12 @@ async function getCurrentLoanStatus(idSolicitud: number) {
 
 
 
-router.get('/actions/fix/09042024', authorize, async (req, res) => {
+router.get('/actions/fix_23_Oct_2024', authorize, async (req: any, res) => {
     try {
 
-        if (!req.query.loanAppId) {
-            throw new Error('No id');
-        }
-
-        let loanAppId = req.query.loanAppId as string;
-
-        const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
-        const queryActions = await db.find({
-            selector: {
-                couchdb_type: "LOANAPP_GROUP"
-            },
-            limit: 10000
-        });
-
-        //// Extraemos todos los LoanApp y evaluamos si el client_id esta vacio
-        const loanappGrpList: any = queryActions.docs.map((i: any) => {
-
-            return {
-                ...i,
-                mustBeUpdated: !!(i.members.find((w: any) => !w.client_id))
-            }
-        });
-
-        const newListLoans = loanappGrpList.filter((i: any) => i._id === loanAppId)
-        /// Iteramos y ejecutamos un update en cada LoanApp que requiere
-
-        for (let d = 0; d < newListLoans.length; d++) {
-
-            if (newListLoans[d].mustBeUpdated) {
-                for (let s = 0; s < newListLoans[d].members.length; s++) {
-
-                    const clientsQuery: any = await db.find({
-                        selector: {
-                            couchdb_type: "CLIENT",
-                            id_cliente: newListLoans[d].members[s].id_cliente
-                        }
-                    })
-
-                    const clientDoc = clientsQuery.docs.find((k: any) => k.id_cliente == newListLoans[d].members[s].id_cliente);
-                    newListLoans[d].members[s].client_id = clientDoc._id
-
-
-                }
-
-                /// once the client_id field is populated, update LOANAPP_GROUP document
-                const loanAppGrpObject = newListLoans[d];
-                delete loanAppGrpObject.mustBeUpdated; // remove auxiliary fields
-                await db.insert({ ...loanAppGrpObject });
-            }
-        }
-
-
-        res.send(newListLoans);
+        const dbName = (process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
+        const itemsToFix: [] = await getClientWithDuplicateBisAddress(dbName)
+        res.send(itemsToFix);
     }
     catch (e: any) {
         console.log(e);
@@ -637,7 +587,60 @@ router.get('/actions/fix/09042024', authorize, async (req, res) => {
     }
 });
 
+router.post('/actions/fix_24_Oct_2024', authorize, async (req: any, res) => {
+    try {
+        const dbName = (process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
+        const db = nano.use(dbName);
+        const bodyData: any[] = req.body;
+        const keys = bodyData.map(item => item.client_id);
+        const clientsRows = await db.fetch({ keys })
+        const clientsToUpdate: any = []
+        clientsRows.rows.forEach((item: any) => {
+            if (!item.error) {
+                /// limpiamos el arreglo
+                const tmp: any = {};
+                item.doc.address.forEach((add: any) => tmp[add.type] = add)
+                const newAddressArray = Object.values(tmp);
+                /////
+                clientsToUpdate.push({
+                    ...item.doc,
+                    address: newAddressArray // reemplazamos con el nuevo arreglo
+                })
+            }
+        });
+        await db.bulk({ docs: clientsToUpdate })
+        res.send({ updated: clientsToUpdate.length })
+    }
+    catch (e: any) {
+        console.log(e);
+        res.status(400).send(e.message);
+    }
+})
+async function getClientWithDuplicateBisAddress(dbName: string) {
+    const db = nano.use(dbName);
+    const queryActions = await db.find({
+        selector: {
+            couchdb_type: "CLIENT"
+        }, limit: 100000
+    });
 
+    const clientWithDuplicateAddress: any = []
+    for (let i = 0; i < queryActions.docs.length; i++) {
+        const clientData: any = queryActions.docs[i];
+
+        if (clientData.address) {
+            const addressCount = clientData.address.filter((add: any) => add.type === 'NEGOCIO')
+            if (addressCount.length > 1) {
+                clientWithDuplicateAddress.push({
+                    db: dbName,
+                    client_id: clientData._id
+                });
+            }
+        }
+    }
+
+    return clientWithDuplicateAddress;
+}
 
 
 export { router as ActionsRouter }

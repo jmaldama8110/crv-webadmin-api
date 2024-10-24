@@ -525,7 +525,8 @@ async function assignMontoloanHF(data:any) {
         cleanAllTables();
 
         return result.recordsets;
-    } catch (err:any) {
+    }
+    catch (err:any) {
         console.log(err)
         console.log(err.message)
         throw new Error(err);
