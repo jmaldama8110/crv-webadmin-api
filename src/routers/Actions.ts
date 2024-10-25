@@ -578,14 +578,45 @@ router.get('/actions/fix_23_Oct_2024', authorize, async (req: any, res) => {
     try {
 
         const dbName = (process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
-        const itemsToFix: [] = await getClientWithDuplicateBisAddress(dbName)
-        res.send(itemsToFix);
+        const dbList = await findDbs();
+
+        for(let x=0; x < dbList.length; x++){
+            const itemsToFix: [] = await getClientWithDuplicateBisAddress(dbName);
+            const res:any = await updateClientsWithDuplicateBisAddres(itemsToFix, dbName);
+            console.log("UPDATE...",res);
+        }
+
+        res.send('Ok');
     }
     catch (e: any) {
         console.log(e);
         res.status(400).send(e.message);
     }
 });
+
+async function updateClientsWithDuplicateBisAddres( items:any[],dbName:string){
+
+    const db = nano.use(dbName);
+    const keys = items.map(item => item.client_id);
+    const clientsRows = await db.fetch({ keys })
+    const clientsToUpdate: any = []
+    clientsRows.rows.forEach((item: any) => {
+        if (!item.error) {
+            /// limpiamos el arreglo
+            const tmp: any = {};
+            item.doc.address.forEach((add: any) => tmp[add.type] = add)
+            const newAddressArray = Object.values(tmp);
+            /////
+            clientsToUpdate.push({
+                ...item.doc,
+                address: newAddressArray // reemplazamos con el nuevo arreglo
+            })
+        }
+    });
+    await db.bulk({ docs: clientsToUpdate })
+    return { count: clientsToUpdate.length, db: dbName }
+
+}
 
 router.post('/actions/fix_24_Oct_2024', authorize, async (req: any, res) => {
     try {
