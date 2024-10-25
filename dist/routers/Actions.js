@@ -548,15 +548,40 @@ function getCurrentLoanStatus(idSolicitud) {
 }
 router.get('/actions/fix_23_Oct_2024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const dbName = (process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
-        const itemsToFix = yield getClientWithDuplicateBisAddress(dbName);
-        res.send(itemsToFix);
+        const dbList = yield (0, getHFBranches_1.findDbs)();
+        for (let x = 0; x < dbList.length; x++) {
+            const itemsToFix = yield getClientWithDuplicateBisAddress(dbList[x]);
+            if (itemsToFix.length > 0)
+                yield updateClientsWithDuplicateBisAddres(itemsToFix, dbList[x]);
+        }
+        res.send('Ok');
     }
     catch (e) {
         console.log(e);
         res.status(400).send(e.message);
     }
 }));
+function updateClientsWithDuplicateBisAddres(items, dbName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const db = nano.use(dbName);
+        const keys = items.map(item => item.client_id);
+        const clientsRows = yield db.fetch({ keys });
+        const clientsToUpdate = [];
+        clientsRows.rows.forEach((item) => {
+            if (!item.error) {
+                /// limpiamos el arreglo
+                const tmp = {};
+                item.doc.address.forEach((add) => tmp[add.type] = add);
+                const newAddressArray = Object.values(tmp);
+                /////
+                clientsToUpdate.push(Object.assign(Object.assign({}, item.doc), { address: newAddressArray // reemplazamos con el nuevo arreglo
+                 }));
+            }
+        });
+        yield db.bulk({ docs: clientsToUpdate });
+        console.log(dbName);
+    });
+}
 router.post('/actions/fix_24_Oct_2024', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const dbName = (process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
@@ -605,6 +630,7 @@ function getClientWithDuplicateBisAddress(dbName) {
                 }
             }
         }
+        console.log(dbName, `client rows: ${clientWithDuplicateAddress.length}`);
         return clientWithDuplicateAddress;
     });
 }

@@ -65,7 +65,7 @@ function findDbs() {
         // Recupera la lista de BD de Sucursales solamente, quitando la global
         const dblist = yield nano.db.list();
         const newlist = dblist.filter((db) => (db.includes("cnsrv-promotor")))
-            .filter((x) => (x != 'cnsrv-promotor'));
+            .filter((x) => ((x != 'cnsrv-promotor' && x != 'cnsrv-promotor-')));
         return newlist;
     });
 }

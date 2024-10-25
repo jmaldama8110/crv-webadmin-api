@@ -577,13 +577,14 @@ async function getCurrentLoanStatus(idSolicitud: number) {
 router.get('/actions/fix_23_Oct_2024', authorize, async (req: any, res) => {
     try {
 
-        const dbName = (process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
         const dbList = await findDbs();
 
         for(let x=0; x < dbList.length; x++){
-            const itemsToFix: [] = await getClientWithDuplicateBisAddress(dbName);
-            const res:any = await updateClientsWithDuplicateBisAddres(itemsToFix, dbName);
-            console.log("UPDATE...",res);
+            const itemsToFix: [] = await getClientWithDuplicateBisAddress(dbList[x]);
+
+            if( itemsToFix.length > 0)
+                await updateClientsWithDuplicateBisAddres(itemsToFix, dbList[x]);
+            
         }
 
         res.send('Ok');
@@ -614,7 +615,8 @@ async function updateClientsWithDuplicateBisAddres( items:any[],dbName:string){
         }
     });
     await db.bulk({ docs: clientsToUpdate })
-    return { count: clientsToUpdate.length, db: dbName }
+
+    console.log(dbName)
 
 }
 
@@ -648,6 +650,7 @@ router.post('/actions/fix_24_Oct_2024', authorize, async (req: any, res) => {
     }
 })
 async function getClientWithDuplicateBisAddress(dbName: string) {
+    
     const db = nano.use(dbName);
     const queryActions = await db.find({
         selector: {
@@ -669,7 +672,7 @@ async function getClientWithDuplicateBisAddress(dbName: string) {
             }
         }
     }
-
+    console.log(dbName,`client rows: ${clientWithDuplicateAddress.length}`)
     return clientWithDuplicateAddress;
 }
 

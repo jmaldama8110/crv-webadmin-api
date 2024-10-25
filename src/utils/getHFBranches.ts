@@ -32,7 +32,7 @@ export async function findDbs( ){
   // Recupera la lista de BD de Sucursales solamente, quitando la global
   const dblist = await nano.db.list();
   const newlist = dblist.filter( (db:string) => (db.includes("cnsrv-promotor")) )
-                        .filter( (x:string) => (x != 'cnsrv-promotor'))
+                        .filter( (x:string) => ( (x != 'cnsrv-promotor' && x != 'cnsrv-promotor-' )  ) )
   return newlist;
 
 }
