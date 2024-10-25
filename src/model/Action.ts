@@ -660,7 +660,6 @@ export default class Action extends DocumentCollection {
                     exterior_number: "AA",
                     interior_number: "BB",
                     ownership_type: [1,"PROPIA"],
-                    bis_address_same: false,
                     street_reference: "reference",
                     road:[
                         5,
