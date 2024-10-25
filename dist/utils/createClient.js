@@ -408,7 +408,7 @@ const addIdentities = (body) => {
 const addAddressClientHF = (addressMongo, addressHF) => {
     const address = [];
     const domicilio = addressMongo.find((item) => (item.type === 'DOMICILIO'));
-    // console.log('domicilio', domicilio);
+    const negocio = addressMongo.find((item) => (item.type === 'NEGOCIO'));
     for (let i = 0; i < addressHF.length; i++) {
         const add = addressHF[i];
         if (add.tipo.trim() === 'DOMICILIO') {
@@ -425,7 +425,7 @@ const addAddressClientHF = (addressMongo, addressHF) => {
             add.direccion = domicilio.address_line1;
             add.codigo_postal = domicilio.post_code;
         }
-        address.push({
+        let item = {
             _id: add.id,
             type: add.tipo.trim(),
             country: [!(add.id_pais.toString()).includes('COUNTRY') ? `COUNTRY|${add.id_pais}` : add.id_pais, add.nombre_pais],
@@ -444,9 +444,17 @@ const addAddressClientHF = (addressMongo, addressHF) => {
             residence_since: add.tiempo_habitado_inicio,
             residence_to: add.tiempo_habitado_final,
             road: [add.vialidad, add.etiqueta_vialidad]
-        });
+        };
+        if (item.type === 'NEGOCIO') {
+            item.bis_address_same = negocio.bis_address_same;
+        }
+        address.push(item);
     }
-    return address;
+    // limpiamos el arreglo para dejar solo una direccion por cada tipo
+    const tmp = {};
+    address.forEach((add) => tmp[add.type] = add);
+    const newAddressArray = Object.values(tmp);
+    return newAddressArray;
 };
 const addPhones = (body) => {
     const phones = [];

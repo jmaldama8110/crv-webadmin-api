@@ -7,17 +7,17 @@ import { getDates, getId } from './createPerson';
 
 const Funct = new Functions();
 
-export async function createClientHF(data:any) {
+export async function createClientHF(data: any) {
     let ClientDoc = new Client({ branch: data.branch });
 
     try {
         const { _id } = data;
-        const clientCouch:any = await ClientDoc.findOne({ _id });
+        const clientCouch: any = await ClientDoc.findOne({ _id });
         if (!clientCouch) return new Error('Client not found in Couch');
-        if((clientCouch.id_persona ?? 0) == 0)
+        if ((clientCouch.id_persona ?? 0) == 0)
             return new Error('Model Client does not have id_persona or it is 0');
         const dataSort = await sortDataClient(clientCouch);
-        if(!dataSort) return new Error('Error sort data client');
+        if (!dataSort) return new Error('Error sort data client');
 
         const pool = await sql.connect(sqlConfig);
         const value = dataSort["CLIENTE"][0].id_cliente == 0 ? 1 : 2;
@@ -42,8 +42,8 @@ export async function createClientHF(data:any) {
         UDT_CONT_Telefonos.rows.length = 0;
         UDT_CONT_Empresa.rows.add(
             dataSort["NEGOCIO"][0].id,
-            dataSort["NEGOCIO"][0].nombre.slice(0,80),
-            dataSort["NEGOCIO"][0].rfc.slice(0,13),
+            dataSort["NEGOCIO"][0].nombre.slice(0, 80),
+            dataSort["NEGOCIO"][0].rfc.slice(0, 13),
             '',
             0,
             dataSort["NEGOCIO"][0].id_actividad_economica,
@@ -103,7 +103,7 @@ export async function createClientHF(data:any) {
             dataSort["TELEFONO"][0].sms
         )
 
-        const empresa:any = await pool.request()
+        const empresa: any = await pool.request()
             .input('tablaEmpresa', UDT_CONT_Empresa)
             .input('tablaDirecciones', UDT_CONT_Direcciones)
             .input('tablaOficinas', UDT_CONT_Oficinas)
@@ -175,7 +175,7 @@ export async function createClientHF(data:any) {
             Funct.validateInt(clientCouch.data_company[0]["id_empleado"]),
             dataSort["PERSONA"][0].id,
             id_oficina,
-            dataSort["NEGOCIO"][0].nombre_oficina.slice(0,50), /// obligatorio menos de 50
+            dataSort["NEGOCIO"][0].nombre_oficina.slice(0, 50), /// obligatorio menos de 50
             dataSort["NEGOCIO"][0].nombre_puesto,
             dataSort["NEGOCIO"][0].departamento,
             id_empresa,
@@ -239,8 +239,8 @@ export async function createClientHF(data:any) {
             dataSort["INDIVIDUAL"][0].vivienda_bano,
             dataSort["INDIVIDUAL"][0].vivienda_letrina,
             dataSort["INDIVIDUAL"][0].vivienda_block,
-            dataSort["INDIVIDUAL"][0].longitud_titular ? dataSort["INDIVIDUAL"][0].longitud_titular.toString(): "",
-            dataSort["INDIVIDUAL"][0].latitud_titular ? dataSort["INDIVIDUAL"][0].latitud_titular.toString(): ""
+            dataSort["INDIVIDUAL"][0].longitud_titular ? dataSort["INDIVIDUAL"][0].longitud_titular.toString() : "",
+            dataSort["INDIVIDUAL"][0].latitud_titular ? dataSort["INDIVIDUAL"][0].latitud_titular.toString() : ""
         );
 
         UDT_CLIE_Solicitud.rows.add(0, null, null, null, null, null, null);
@@ -301,34 +301,34 @@ export async function createClientHF(data:any) {
             .input('info_firma_electronica', UDT_CONT_FirmaElectronica)
             .input('id_opcion', sql.Int, 0)
             .input('uid', sql.Int, 0)
-            .input('_id_client', sql.BigInt, _id.slice(0,13))
+            .input('_id_client', sql.BigInt, _id.slice(0, 13))
             .execute('MOV_insertarInformacionClienteV2')
 
-        if(!result) return new Error('Error create client')
+        if (!result) return new Error('Error create client')
 
         cleanAllTables();
 
-        if(result.recordset[0].mensaje.trim().toUpperCase() === "VALIDATE")
+        if (result.recordset[0].mensaje.trim().toUpperCase() === "VALIDATE")
             return new Error(result.recordset[0].evento);
 
-        if(result.recordset[0].mensaje.trim().toUpperCase() === "ERROR")
+        if (result.recordset[0].mensaje.trim().toUpperCase() === "ERROR")
             return new Error("Consultar Log de HF");
 
         const idClientCreated = result.recordset[0].id_cliente;
-            console.log('Id Client',idClientCreated)
+        console.log('Id Client', idClientCreated)
 
-        if(Funct.ConvertInt(idClientCreated) == 0)
+        if (Funct.ConvertInt(idClientCreated) == 0)
             return new Error("Cliente obtenido con id 0");
 
         //Creado el cliente agregamos sus datos del hf
-        const dataHF:any = await getClientHFById(idClientCreated);
+        const dataHF: any = await getClientHFById(idClientCreated);
 
         const identificationsHF = addIdentities(dataHF[1]);
-        const ife_details:any = [{ ...dataHF[2][dataHF[2].length - 1] }]; // TODO CAMBIAR A ARREGLO
+        const ife_details: any = [{ ...dataHF[2][dataHF[2].length - 1] }]; // TODO CAMBIAR A ARREGLO
         const addressHF = addAddressClientHF(clientCouch.address, dataHF[3]);
         const phonesHF = addPhones(dataHF[4]);
         const personData = dataHF[0][0];
-        
+
         clientCouch["id_cliente"] = dataHF[0][0].id;
         clientCouch["phones"] = phonesHF;
         // Guardar sólo los ids.
@@ -347,16 +347,16 @@ export async function createClientHF(data:any) {
 
         return result.recordsets;
         //#endregion
-    } catch (error:any) {
+    } catch (error: any) {
         console.log(error);
         return new Error(error.stack);
     }
 }
 
 
-function sortDataClient(client:any) {
+function sortDataClient(client: any) {
     const IS_CREATE = client.id_cliente == 0;
-    let clientHF:any = {};
+    let clientHF: any = {};
     const phones = client.phones;
     const addresses = client.address;
     let id = 0;
@@ -374,23 +374,22 @@ function sortDataClient(client:any) {
     const phonePerson = phones[0];
     const phoneBusiness = phones[1] ? phones[1] : phones[0];
 
-    if(phones.length > 0)
-    {
-            (clientHF.TELEFONO).push(
-                {
-                    id: IS_CREATE ? 0 : Funct.validateInt(phoneBusiness._id),
-                    idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
-                    extension: "",
-                    tipo_telefono: phoneBusiness ? phoneBusiness.type ? phoneBusiness.type : " " : " ",
-                    compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : " " : " ",
-                    sms: 0
-                }
-        )        
+    if (phones.length > 0) {
+        (clientHF.TELEFONO).push(
+            {
+                id: IS_CREATE ? 0 : Funct.validateInt(phoneBusiness._id),
+                idcel_telefono: phoneBusiness ? phoneBusiness.phone ? phoneBusiness.phone : phonePerson.phone : phonePerson.phone,
+                extension: "",
+                tipo_telefono: phoneBusiness ? phoneBusiness.type ? phoneBusiness.type : " " : " ",
+                compania: phoneBusiness ? phoneBusiness.company ? phoneBusiness.company : " " : " ",
+                sms: 0
+            }
+        )
     }
-    
+
 
     const business_data = client.business_data;
-    addresses.forEach((campo:any) => {
+    addresses.forEach((campo: any) => {
         if (campo.type === 'NEGOCIO') {
             clientHF.NEGOCIO = [
                 {
@@ -441,13 +440,13 @@ function sortDataClient(client:any) {
             id_oficial_credito: 0
         }
     ]
-    const prospera = client.identities.filter((id:any) => id.tipo_id == 'PROSPERA' && id.status.trim().toUpperCase() == "ACTIVO");
+    const prospera = client.identities.filter((id: any) => id.tipo_id == 'PROSPERA' && id.status.trim().toUpperCase() == "ACTIVO");
     clientHF.IDENTIFICACIONES = [
         {
             id: IS_CREATE ? 0 : (prospera.length < 1 ? 0 : Funct.validateInt(prospera[0]._id)),
             id_entidad: IS_CREATE ? 0 : client.id_persona,
             tipo_identificacion: "PROSPERA",
-            id_numero:  (prospera.length < 1 ? '' : prospera[0].numero_id ?? '')
+            id_numero: (prospera.length < 1 ? '' : prospera[0].numero_id ?? '')
         }
     ]
 
@@ -483,7 +482,7 @@ function sortDataClient(client:any) {
             id_ocupacion: business_data.ocupation[0],
             id_profesion: business_data.profession[0],
             id_tipo_red_social: client.prefered_social[0],
-            usuario_red_social:client.user_social,
+            usuario_red_social: client.user_social,
             econ_renta: business_data.expense_rent,
             vivienda_piso: client.household_floor,
             vivienda_techo_losa: client.household_roof,
@@ -525,7 +524,7 @@ function sortDataClient(client:any) {
     return clientHF;
 }
 
-async function getClientHFById(externalId:number) {
+async function getClientHFById(externalId: number) {
     try {
         let pool = await sql.connect(sqlConfig);
         let result = await pool
@@ -541,7 +540,7 @@ async function getClientHFById(externalId:number) {
 }
 
 
-const addIdentities = (body:any) => {
+const addIdentities = (body: any) => {
     const identities = []
     for (let i = 0; i < body.length; i++) {
         const itemIdentity = body[i];
@@ -560,11 +559,12 @@ const addIdentities = (body:any) => {
 }
 
 
-const addAddressClientHF = (addressMongo:any, addressHF:any) => {
-    const address = []
-    const domicilio = addressMongo.find((item:any) => (item.type === 'DOMICILIO'));
+const addAddressClientHF = (addressMongo: any, addressHF: any) => {
 
-    // console.log('domicilio', domicilio);
+    const address = []
+    const domicilio = addressMongo.find((item: any) => (item.type === 'DOMICILIO'));
+    const negocio = addressMongo.find((item: any) => (item.type === 'NEGOCIO'));
+
     for (let i = 0; i < addressHF.length; i++) {
         const add = addressHF[i];
 
@@ -582,18 +582,15 @@ const addAddressClientHF = (addressMongo:any, addressHF:any) => {
             add.direccion = domicilio.address_line1;
             add.codigo_postal = domicilio.post_code;
         }
-
-        address.push({
+        let item: any =
+        {
             _id: add.id,
             type: add.tipo.trim(),
-
             country: [!(add.id_pais.toString()).includes('COUNTRY') ? `COUNTRY|${add.id_pais}` : add.id_pais, add.nombre_pais],
-
             province: [!(add.id_estado.toString()).includes('PROVINCE') ? `PROVINCE|${add.id_estado}` : add.id_estado, add.nombre_estado],
             municipality: [!(add.id_municipio.toString()).includes('MUNICIPALITY') ? `MUNICIPALITY|${add.id_municipio}` : add.id_municipio, add.nombre_municipio],
             city: [!(add.id_ciudad_localidad.toString()).includes('CITY') ? `CITY|${add.id_ciudad_localidad}` : add.id_ciudad_localidad, add.nombre_ciudad_localidad],
             colony: [!(add.id_asentamiento.toString()).includes('NEIGHBORHOOD') ? `NEIGHBORHOOD|${add.id_asentamiento}` : add.id_asentamiento, add.nombre_asentamiento],
-
             address_line1: add.direccion,
             exterior_number: add.numero_exterior.trim(),
             interior_number: add.numero_interior.trim(),
@@ -605,13 +602,22 @@ const addAddressClientHF = (addressMongo:any, addressHF:any) => {
             residence_since: add.tiempo_habitado_inicio,
             residence_to: add.tiempo_habitado_final,
             road: [add.vialidad, add.etiqueta_vialidad]
-        })
-    }
+        }
 
-    return address;
+        if (item.type === 'NEGOCIO') {
+            item.bis_address_same = negocio.bis_address_same
+        }
+
+        address.push(item)
+    }
+    // limpiamos el arreglo para dejar solo una direccion por cada tipo
+    const tmp: any = {};
+    address.forEach((add: any) => tmp[add.type] = add)
+    const newAddressArray = Object.values(tmp);
+    return newAddressArray;
 }
 
-const addPhones = (body:any) => {
+const addPhones = (body: any) => {
     const phones = []
     for (let i = 0; i < body.length; i++) {
         const phone = body[i]
