@@ -515,6 +515,7 @@ class Action extends DocumentCollection_1.DocumentCollection {
                         exterior_number: "AA",
                         interior_number: "BB",
                         ownership_type: [1, "PROPIA"],
+                        bis_address_same: false,
                         street_reference: "reference",
                         road: [
                             5,
@@ -523,7 +524,7 @@ class Action extends DocumentCollection_1.DocumentCollection {
                     },
                     {
                         _id: "1679723842324",
-                        type: "DOMICILIO",
+                        type: "NEGOCIO",
                         address_line1: "CALLE 25",
                         country: [
                             "COUNTRY|1",
@@ -550,6 +551,7 @@ class Action extends DocumentCollection_1.DocumentCollection {
                         int_number: 10,
                         exterior_number: "AA",
                         interior_number: "BB",
+                        bis_address_same: false,
                         ownership_type: [1, "PROPIA"],
                         street_reference: "reference",
                         road: [
