@@ -880,6 +880,7 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
                 second_lastname: '',
                 relationship: memberData.insurance.relationship,
                 percentage: memberData.insurance.percentage,
+                dob: '',
                 address: {
                     post_code: "",
                     address_line1: "",
@@ -915,6 +916,7 @@ router.get('/docs/html/conserva-t-activa', (req, res) => __awaiter(void 0, void 
                 beneficiaryInfo.second_lastname = beneficiaryFound.second_lastname;
                 beneficiaryInfo.percentage = beneficiaryFound.percentage;
                 beneficiaryInfo.relationship = beneficiaryFound.relationship;
+                beneficiaryInfo.dob = beneficiaryFound.dob ? (0, misc_1.formatLocalDate2)(beneficiaryFound.dob) : '';
                 beneficiaryInfo.address.post_code = beneficiaryFound.address.post_code;
                 beneficiaryInfo.address.address_line1 = beneficiaryFound.address.address_line1;
                 beneficiaryInfo.address.street_reference = beneficiaryFound.street_reference;
@@ -1056,6 +1058,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
                 second_lastname: '',
                 relationship: memberData.insurance.relationship,
                 percentage: memberData.insurance.percentage,
+                dob: "",
                 address: {
                     post_code: "",
                     address_line1: "",
@@ -1091,6 +1094,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
                 beneficiaryInfo.second_lastname = beneficiaryFound.second_lastname;
                 beneficiaryInfo.percentage = beneficiaryFound.percentage;
                 beneficiaryInfo.relationship = beneficiaryFound.relationship;
+                beneficiaryInfo.dob = beneficiaryFound.dob ? (0, misc_1.formatLocalDate2)(beneficiaryFound.dob) : '';
                 beneficiaryInfo.address.post_code = beneficiaryFound.address.post_code;
                 beneficiaryInfo.address.address_line1 = beneficiaryFound.address.address_line1;
                 beneficiaryInfo.address.street_reference = beneficiaryFound.street_reference;

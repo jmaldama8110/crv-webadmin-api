@@ -946,6 +946,7 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
         second_lastname: '',
         relationship: memberData.insurance.relationship,
         percentage: memberData.insurance.percentage,
+        dob: '',
         address: {
           post_code: "",
           address_line1: "",
@@ -986,6 +987,7 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
         beneficiaryInfo.second_lastname = beneficiaryFound.second_lastname
         beneficiaryInfo.percentage = beneficiaryFound.percentage
         beneficiaryInfo.relationship = beneficiaryFound.relationship
+        beneficiaryInfo.dob = beneficiaryFound.dob ? formatLocalDate2(beneficiaryFound.dob) : ''
         beneficiaryInfo.address.post_code = beneficiaryFound.address.post_code
         beneficiaryInfo.address.address_line1 = beneficiaryFound.address.address_line1
         beneficiaryInfo.address.street_reference = beneficiaryFound.street_reference
@@ -1142,6 +1144,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
         second_lastname: '',
         relationship: memberData.insurance.relationship,
         percentage: memberData.insurance.percentage,
+        dob: "",
         address: {
           post_code: "",
           address_line1: "",
@@ -1182,6 +1185,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
         beneficiaryInfo.second_lastname = beneficiaryFound.second_lastname
         beneficiaryInfo.percentage = beneficiaryFound.percentage
         beneficiaryInfo.relationship = beneficiaryFound.relationship
+        beneficiaryInfo.dob = beneficiaryFound.dob ? formatLocalDate2(beneficiaryFound.dob) : ''
         beneficiaryInfo.address.post_code = beneficiaryFound.address.post_code
         beneficiaryInfo.address.address_line1 = beneficiaryFound.address.address_line1
         beneficiaryInfo.address.street_reference = beneficiaryFound.street_reference
