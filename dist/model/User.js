@@ -50,12 +50,12 @@ class User {
             let userFindRes = yield pool
                 .request()
                 .input("id", mssql_1.default.VarChar, user)
-                .query("select * from ADMI_Usuarios WHERE ADMI_Usuarios.correo = @id");
+                .query("select * from ADMI_Usuarios WHERE ADMI_Usuarios.correo = @id AND activo = 1 AND deleted = 0;");
             if (!userFindRes.rowsAffected[0]) {
                 userFindRes = yield pool
                     .request()
                     .input("id", mssql_1.default.VarChar, user)
-                    .query("select * from ADMI_Usuarios WHERE ADMI_Usuarios.login = @id");
+                    .query("select * from ADMI_Usuarios WHERE ADMI_Usuarios.login = @id AND activo = 1 AND deleted = 0;");
             }
             if (!userFindRes.rowsAffected[0]) {
                 throw new Error("Bad credentials HF");
