@@ -7,9 +7,9 @@ const sqlConfig: SQL.config = {
     server: process.env.SQL_SERVER_NAME ? process.env.SQL_SERVER_NAME: '',
     port: process.env.SQL_SERVER_PORT ? parseInt(process.env.SQL_SERVER_PORT) : 0,
     pool: {
-        max: 10,
+        max: 100,
         min: 0,
-        idleTimeoutMillis: 3000000,
+        idleTimeoutMillis: 30000,
     },
     options: {
         encrypt: false, // for azure
