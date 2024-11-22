@@ -1423,8 +1423,9 @@ function searchGroupLoanByName(groupName, branchId) {
                 idTipoCliente: i.idTipoCliente,
                 TipoCliente: i.TipoCliente
             }));
-            const data = newRes.filter((x) => x.estatus != 'RECHAZADO');
-            return data;
+            const onlyFinished_or_Active = newRes.filter((i) => (i.estatus == 'ACEPTADO' && i.sub_estatus == 'PRESTAMO ACTIVO') ||
+                (i.estatus == 'ACEPTADO' && i.sub_estatus == 'PRESTAMO FINALIZADO'));
+            return onlyFinished_or_Active;
         }
         catch (err) {
             throw new Error(err);

@@ -1567,8 +1567,10 @@ async function searchGroupLoanByName(groupName: string, branchId: number) {
             idTipoCliente: i.idTipoCliente,
             TipoCliente: i.TipoCliente
         }))
-        const data = newRes.filter( (x:any) => x.estatus !='RECHAZADO')
-        return data;
+
+        const onlyFinished_or_Active = newRes.filter( (i:any) => (i.estatus =='ACEPTADO' && i.sub_estatus =='PRESTAMO ACTIVO')||
+                                                            (i.estatus =='ACEPTADO' && i.sub_estatus =='PRESTAMO FINALIZADO') )
+        return onlyFinished_or_Active;
 
     } catch (err: any) {
         throw new Error(err);
