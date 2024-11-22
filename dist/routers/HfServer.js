@@ -1423,7 +1423,8 @@ function searchGroupLoanByName(groupName, branchId) {
                 idTipoCliente: i.idTipoCliente,
                 TipoCliente: i.TipoCliente
             }));
-            return newRes;
+            const data = newRes.filter((x) => x.estatus != 'RECHAZADO');
+            return data;
         }
         catch (err) {
             throw new Error(err);

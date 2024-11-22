@@ -1567,8 +1567,8 @@ async function searchGroupLoanByName(groupName: string, branchId: number) {
             idTipoCliente: i.idTipoCliente,
             TipoCliente: i.TipoCliente
         }))
-
-        return newRes;
+        const data = newRes.filter( (x:any) => x.estatus !='RECHAZADO')
+        return data;
 
     } catch (err: any) {
         throw new Error(err);
