@@ -8,6 +8,7 @@ import { ActionsRouter } from "./routers/Actions";
 import { verifyDocRouter } from './routers/VerifyDocument';
 import { puppeteerRouter } from "./routers/Puppeteer";
 import { sendEmailRouter } from "./routers/Email";
+import { QueryRouter } from "./routers/Queries";
 import './cron/jobs';
 
 
@@ -37,6 +38,7 @@ app.use(ActionsRouter)
 app.use(verifyDocRouter);
 app.use(puppeteerRouter);
 app.use(sendEmailRouter);
+app.use(QueryRouter);
 
 app.listen(port, ()=>{
   console.log('Secure server 🔑 is up and running 🚀...at ' + port)

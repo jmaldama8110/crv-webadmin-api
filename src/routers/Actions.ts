@@ -1,4 +1,4 @@
-import express, { query } from 'express';
+import express from 'express';
 import Action from '../model/Action';
 import { authorize } from '../middleware/authorize';
 import { LoanAppGroup } from '../model/LoanAppGroup';

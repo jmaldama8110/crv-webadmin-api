@@ -12,6 +12,7 @@ const Actions_1 = require("./routers/Actions");
 const VerifyDocument_1 = require("./routers/VerifyDocument");
 const Puppeteer_1 = require("./routers/Puppeteer");
 const Email_1 = require("./routers/Email");
+const Queries_1 = require("./routers/Queries");
 require("./cron/jobs");
 /** Handlebars initialization */
 const express_handlebars_1 = require("express-handlebars");
@@ -34,6 +35,7 @@ app.use(Actions_1.ActionsRouter);
 app.use(VerifyDocument_1.verifyDocRouter);
 app.use(Puppeteer_1.puppeteerRouter);
 app.use(Email_1.sendEmailRouter);
+app.use(Queries_1.QueryRouter);
 app.listen(port, () => {
     console.log('Secure server 🔑 is up and running 🚀...at ' + port);
 });
