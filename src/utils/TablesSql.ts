@@ -167,6 +167,7 @@ UDT_CLIE_Solicitud.columns.add('id_solicitud_nueva', SQL.Int, { nullable: true }
 UDT_CLIE_DatoBancario.columns.add('id', SQL.Int, { nullable: true });
 UDT_CLIE_DatoBancario.columns.add('id_cliente', SQL.Int, { nullable: true });
 UDT_CLIE_DatoBancario.columns.add('id_banco', SQL.Int, { nullable: true });
+UDT_CLIE_DatoBancario.columns.add('id_banco_spei', SQL.Int, { nullable: true });
 UDT_CLIE_DatoBancario.columns.add('clave_banco', SQL.VarChar(50), { nullable: true });
 UDT_CLIE_DatoBancario.columns.add('nombre_banco', SQL.VarChar(100), { nullable: true });
 UDT_CLIE_DatoBancario.columns.add('id_tipo_cuenta', SQL.Int, { nullable: true });

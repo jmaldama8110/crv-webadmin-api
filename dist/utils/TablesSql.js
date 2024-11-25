@@ -162,6 +162,7 @@ exports.UDT_CLIE_Solicitud.columns.add('id_solicitud_nueva', mssql_1.default.Int
 exports.UDT_CLIE_DatoBancario.columns.add('id', mssql_1.default.Int, { nullable: true });
 exports.UDT_CLIE_DatoBancario.columns.add('id_cliente', mssql_1.default.Int, { nullable: true });
 exports.UDT_CLIE_DatoBancario.columns.add('id_banco', mssql_1.default.Int, { nullable: true });
+exports.UDT_CLIE_DatoBancario.columns.add('id_banco_spei', mssql_1.default.Int, { nullable: true });
 exports.UDT_CLIE_DatoBancario.columns.add('clave_banco', mssql_1.default.VarChar(50), { nullable: true });
 exports.UDT_CLIE_DatoBancario.columns.add('nombre_banco', mssql_1.default.VarChar(100), { nullable: true });
 exports.UDT_CLIE_DatoBancario.columns.add('id_tipo_cuenta', mssql_1.default.Int, { nullable: true });
