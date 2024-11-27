@@ -360,14 +360,12 @@ function processClientDataRS(data: any) {
     address = Object.values(map);
     //////////////
     
-      
-
 
     const phones = [];
     for (let l = 0; l < data.recordsets[4].length; l++) {
 
         const phoneAdd = data.recordsets[4][l]
-        if (phoneAdd.idcel_telefono.trim()) {
+        if ( phoneAdd.idcel_telefono.trim() ) {
             phones.push({
                 _id: phoneAdd.id,
                 phone: phoneAdd.idcel_telefono.trim(),
