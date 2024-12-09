@@ -43,6 +43,7 @@
          .txt-justify{ text-align: justify;}
          .fs-lg{ font-size: 18px;}
          .fs-sm{ font-size: 12px;}
+         .fs-xsm{ font-size: 8px;}
          .wd15 { width: 15px;}
          .wd20 { width: 20px;}
          .wd25 { width: 25px;}
@@ -537,15 +538,15 @@
     </div>
     <p>En caso de que el negocio se ubique en otra direccion, indiquela:</p>
     <div class="flex-content">
-        <div class="wd160"> <p>{{this.bisAddress.address_line1}}</p></div>
-        <div class="wd50"> <p>{{this.bisAddress.fullExtNumber}}</p></div>
-        <div class="wd50"> <p>{{this.bisAddress.fullIntNumber}}</p></div>
-        <div class="wd140 max-ht"> <p>{{this.bisAddress.colony.[1]}}</p></div>
-        <div class="wd80"> <p>{{this.bisAddress.municipality.[1]}}</p></div>
-        <div class="wd80 max-ht"> <p>{{this.bisAddress.city.[1]}}</p></div>
-        <div class="wd60"> <p>{{this.bisAddress.post_code}}</p></div>
-        <div class="wd60"> <p>{{this.bisAddress.province.[1]}}</p></div>
-        <div class="wd60"> <p>{{this.bisAddress.country.[1]}}</p></div>
+        <div class="wd160 fs-xsm"> <p>{{this.bisAddress.address_line1}}</p></div>
+        <div class="wd50 fs-xsm"> <p>{{this.bisAddress.fullExtNumber}}</p></div>
+        <div class="wd50 fs-xsm"> <p>{{this.bisAddress.fullIntNumber}}</p></div>
+        <div class="wd140 max-ht fs-xsm"> <p>{{this.bisAddress.colony.[1]}}</p></div>
+        <div class="wd80 fs-xsm"> <p>{{this.bisAddress.municipality.[1]}}</p></div>
+        <div class="wd80 max-ht fs-xsm"> <p>{{this.bisAddress.city.[1]}}</p></div>
+        <div class="wd60 fs-xsm"> <p>{{this.bisAddress.post_code}}</p></div>
+        <div class="wd60 fs-xsm"> <p>{{this.bisAddress.province.[1]}}</p></div>
+        <div class="wd60 fs-xsm"> <p>{{this.bisAddress.country.[1]}}</p></div>
     </div>
     <div class="flex-content">
         <div class="wd160"> <p class="border-top">NOMBRE DE LA CALLE</p></div>
@@ -806,14 +807,14 @@
     </div>
     <div class="flex-content">
         <div class="wd80"><p><b>DIRECCION:</b></p></div>
-        <div class="wd160 border-bottom"><p>{{address.address_line1}}</p></div>
-        <div class="wd80 border-bottom"><p>{{address.fullExtNumber}}</p></div>
-        <div class="wd80 border-bottom"><p>{{address.fullIntNumber}}</p></div>
-        <div class="wd80 border-bottom"><p>{{address.colony}}</p></div>
-        <div class="wd80 border-bottom"><p>{{address.municipality}}</p></div>
-        <div class="wd50 border-bottom"><p>{{address.post_code}}</p></div>
-        <div class="wd60 border-bottom"><p>{{address.province}}</p></div>
-        <div class="wd60 border-bottom"><p>{{address.country}}</p></div>
+        <div class="wd160 border-bottom fs-xsm"><p>{{address.address_line1}}</p></div>
+        <div class="wd80 border-bottom fs-xsm"><p>{{address.fullExtNumber}}</p></div>
+        <div class="wd80 border-bottom fs-xsm"><p>{{address.fullIntNumber}}</p></div>
+        <div class="wd80 border-bottom fs-xsm"><p>{{address.colony}}</p></div>
+        <div class="wd80 border-bottom fs-xsm"><p>{{address.municipality}}</p></div>
+        <div class="wd50 border-bottom fs-xsm"><p>{{address.post_code}}</p></div>
+        <div class="wd60 border-bottom fs-xsm"><p>{{address.province}}</p></div>
+        <div class="wd60 border-bottom fs-xsm"><p>{{address.country}}</p></div>
     </div>
     {{/with}}
     <div class="flex-content">
@@ -867,14 +868,14 @@
         <div><b>DIRECCIÓN</b></div>
         <div>
             <div class="flex-content">
-                <div class="wd200 border-bottom"><p>{{this.homeAddress.address_line1}}</p></div>
-                <div class="wd80 border-bottom"><p>{{this.homeAddress.fullExtNumber}}</p></div>
-                <div class="wd80 border-bottom"><p>{{this.homeAddress.fullIntNumber}}</p></div>
-                <div class="wd80 border-bottom"><p>{{this.homeAddress.colony.[1]}}</p></div>
-                <div class="wd80 border-bottom"><p>{{this.homeAddress.municipality.[1]}}</p></div>
-                <div class="wd50 border-bottom"><p>{{this.homeAddress.post_code}}</p></div>
-                <div class="wd60 border-bottom"><p>{{this.homeAddress.province.[1]}}</p></div>
-                <div class="wd60 border-bottom"><p>{{this.homeAddress.country.[1]}}</p></div>
+                <div class="wd200 border-bottom fs-xsm"><p>{{this.homeAddress.address_line1}}</p></div>
+                <div class="wd80 border-bottom fs-xsm"><p>{{this.homeAddress.fullExtNumber}}</p></div>
+                <div class="wd80 border-bottom fs-xsm"><p>{{this.homeAddress.fullIntNumber}}</p></div>
+                <div class="wd80 border-bottom fs-xsm"><p>{{this.homeAddress.colony.[1]}}</p></div>
+                <div class="wd80 border-bottom fs-xsm"><p>{{this.homeAddress.municipality.[1]}}</p></div>
+                <div class="wd50 border-bottom fs-xsm"><p>{{this.homeAddress.post_code}}</p></div>
+                <div class="wd60 border-bottom fs-xsm"><p>{{this.homeAddress.province.[1]}}</p></div>
+                <div class="wd60 border-bottom fs-xsm"><p>{{this.homeAddress.country.[1]}}</p></div>
             </div>
             <div class="flex-content">
                 <div class="wd200"><p>NOMBRE DE LA CALLE</p></div>
