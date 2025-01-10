@@ -72,7 +72,7 @@ export const calculateYearsMonthsFromDates = ( dateSince:Date, dateFrom: Date ) 
 
     if( monthsDiff < 0){
         yearsDiff = yearsDiff - 1;
-        monthsDiff = monthsDiff + dateSince.getMonth();
+        monthsDiff = monthsDiff + 12;
     }
     return [yearsDiff, monthsDiff];
 }

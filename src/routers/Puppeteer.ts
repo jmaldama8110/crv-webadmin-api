@@ -609,7 +609,6 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
         monthSaleDic: x.doc.business_data.bis_quality_sales_monthly.month_sale_dic
 
       }
-
       return {
         name: x.doc.name,
         lastname: x.doc.lastname,
@@ -653,7 +652,10 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
         occupation: !x.doc.business_data.ocupation ? 'NO ESPECIFICADO' : x.doc.business_data.ocupation[1],
         numberEmployees: x.doc.business_data.number_employees,
         loanDestination: x.doc.business_data.loan_destination ? x.doc.business_data.loan_destination[1] : 'NO ESPECIFICADO',
-        bisYearsMonths: calculateYearsMonthsFromDates(new Date(!!x.doc.business_data.business_start_date ? x.doc.business_data.business_start_date : new Date()), new Date()),
+        bisYearsMonths: calculateYearsMonthsFromDates(
+          new Date( !!x.doc.business_data.business_start_date ? 
+                      x.doc.business_data.business_start_date : new Date()),
+                      new Date()    ),
         homeYearsMonths: calculateYearsMonthsFromDates(new Date(!!homeAddress.residence_since ? homeAddress.residence_since : new Date()), new Date()),
         homeOwnershipRented: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 2 ? 'X' : '') : '',
         homeOwnershipOwned: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 1 ? 'X' : '') : '',
