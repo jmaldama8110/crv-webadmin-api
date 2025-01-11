@@ -55,7 +55,7 @@ router.post("/db_all_docs", authorize, async (req, res) => {
     res.status(400).send(e.message);
   }
 });
-router.post('/db_restore', authorize, async (req,res) =>{
+router.post('/db_restore', authorize, async (req:any,res) =>{
 
     try{
     
@@ -65,10 +65,15 @@ router.post('/db_restore', authorize, async (req,res) =>{
     const filePath = path.join(__dirname,req.body.fileName as string);
     console.log(filePath);
     const data:any = JSON.parse(fs.readFileSync(filePath, "utf8") );
+    
+    const newData = data.map( (w:any) => ( 
+      !!w.branch ? {...w,branch:req.user.branch }: { ...w }
+    ))
+    
     let nano = Nano.default(req.body.target);
     const db = nano.use(req.body.db_name);
-    await db.bulk({docs: data});
-    res.send({count: data.length})
+    await db.bulk({docs: newData});
+    res.send({count: newData.length})
     
   }
   catch(e:any){

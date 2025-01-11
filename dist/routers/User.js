@@ -88,10 +88,11 @@ router.post('/db_restore', authorize_1.authorize, (req, res) => __awaiter(void 0
         const filePath = path_1.default.join(__dirname, req.body.fileName);
         console.log(filePath);
         const data = JSON.parse(fs_1.default.readFileSync(filePath, "utf8"));
+        const newData = data.map((w) => (!!w.branch ? Object.assign(Object.assign({}, w), { branch: req.user.branch }) : Object.assign({}, w)));
         let nano = Nano.default(req.body.target);
         const db = nano.use(req.body.db_name);
-        yield db.bulk({ docs: data });
-        res.send({ count: data.length });
+        yield db.bulk({ docs: newData });
+        res.send({ count: newData.length });
     }
     catch (e) {
         console.log(e);
