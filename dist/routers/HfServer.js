@@ -1131,16 +1131,6 @@ function getContractInfo(idContract) {
     });
 }
 exports.getContractInfo = getContractInfo;
-function createReference(typeReference, idClient) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
-        const result = yield pool.request()
-            .input('tipoEvento', mssql_1.default.Int, typeReference)
-            .input('id_cliente', mssql_1.default.Int, idClient)
-            .execute('MARE_ObtenerReferenciaIntermediario');
-        return result.recordset;
-    });
-}
 router.get('/clients/hf/loanapps', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (!(req.query.branchId && req.query.applicationId)) {
@@ -1324,15 +1314,27 @@ router.get('/clients/createReference', authorize_1.authorize, (req, res) => __aw
         //      typeReference: 2 -> id: Garantía Líquida por id_cliente
         //      typeReference: 3 -> id: Pago de moratorios por id_cliente
         //      typeReference: 6 -> id: Pago de crédito por id_contrato
-        const { typeReference, contractId, clientId } = req.query;
-        const id = typeReference === '2' ? clientId : contractId;
-        const sqlRes = yield createReference(typeReference, parseInt(id));
+        const typeReference = parseInt(req.query.typeReference);
+        const contractId = parseInt(req.query.contractId);
+        const clientId = parseInt(req.query.clientId);
+        const id = typeReference == 2 ? clientId : contractId;
+        const sqlRes = yield createReference(typeReference, id);
         res.status(200).send(sqlRes);
     }
     catch (error) {
         res.status(401).send(error.message);
     }
 }));
+function createReference(typeReference, idClient) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);
+        const result = yield pool.request()
+            .input('tipoEvento', mssql_1.default.Int, typeReference)
+            .input('id_cliente', mssql_1.default.Int, idClient)
+            .execute('MARE_ObtenerReferenciaIntermediario');
+        return result.recordset;
+    });
+}
 function findClientByCurp(curp) {
     return __awaiter(this, void 0, void 0, function* () {
         let pool = yield mssql_1.default.connect(connSQL_1.sqlConfig);

@@ -1255,15 +1255,6 @@ export async function getContractInfo(idContract: number) {
     `);
     return result.recordsets
 }
-async function createReference(typeReference: string, idClient: number) {
-    const pool = await sql.connect(sqlConfig);
-    const result = await pool.request()
-        .input('tipoEvento', sql.Int, typeReference)
-        .input('id_cliente', sql.Int, idClient)
-        .execute('MARE_ObtenerReferenciaIntermediario');
-
-    return result.recordset;
-}
 
 
 router.get('/clients/hf/loanapps', authorize, async (req, res) => {
@@ -1472,15 +1463,28 @@ router.get('/clients/createReference', authorize, async (req, res) => {
         //      typeReference: 3 -> id: Pago de moratorios por id_cliente
         //      typeReference: 6 -> id: Pago de crédito por id_contrato
 
-        const { typeReference, contractId, clientId } = req.query;
-        const id = typeReference === '2' ? clientId as string : contractId as string;
-        const sqlRes = await createReference(typeReference as string, parseInt(id));
+        const typeReference:number = parseInt(req.query.typeReference as string);
+        const contractId:number = parseInt(req.query.contractId as string);
+        const clientId:number = parseInt(req.query.clientId as string);
+
+        const id = typeReference == 2 ? clientId : contractId;
+        const sqlRes = await createReference(typeReference, id);
 
         res.status(200).send(sqlRes);
     } catch (error: any) {
         res.status(401).send(error.message);
     }
 })
+
+async function createReference(typeReference: number, idClient: number) {
+    const pool = await sql.connect(sqlConfig);
+    const result = await pool.request()
+        .input('tipoEvento', sql.Int, typeReference)
+        .input('id_cliente', sql.Int, idClient)
+        .execute('MARE_ObtenerReferenciaIntermediario');
+
+    return result.recordset;
+}
 
 
 
