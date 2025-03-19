@@ -43,10 +43,10 @@ const authorize = (req, res, next) => __awaiter(void 0, void 0, void 0, function
     try {
         const token = req.header('Authorization').replace('Bearer ', '');
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET_KEY ? process.env.JWT_SECRET_KEY : '');
-        const expiresAt = new Date(decoded.sync_info.sync_expiration);
-        if (expiresAt.getTime() < new Date().getTime()) {
-            throw new Error('Token has expired');
-        }
+        // const expiresAt = new Date(decoded.sync_info.sync_expiration);
+        // if( expiresAt.getTime() < new Date().getTime() ) {
+        //     throw new Error('Token has expired');
+        // }
         /// uses default DB
         const db = nano.use(process.env.COUCHDB_NAME ? process.env.COUCHDB_NAME : '');
         yield db.createIndex({ index: { fields: ["couchdb_type", "token"] } });

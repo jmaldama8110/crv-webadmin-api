@@ -733,7 +733,25 @@ router.post('/catalog', authorize, async (req:any, res) => {
         res.status(401).send(e.message);
     }
 });
+ router.get('/catalogs/sync_neighborhood', authorize, async (req:any, res:any) =>{
+    
+    try {
 
+        await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD',req.user.branch, 'CITY', 'ciudad_localidad');
+        await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY',req.user.branch, 'MUNICIPALITY', 'municipio');
+        await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY',req.user.branch, 'PROVINCE', 'estado');
+        await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE',req.user.branch, 'COUNTRY', 'pais');
+        await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY',req.user.branch);
+        
+        res.status(201).send('Done!');
+
+    }
+    catch(e){
+
+        console.log(e + '');
+        res.status(400).send(e + '')
+    }
+ })
 
 router.get('/catalogs/sync', authorize, async (req:any, res) => {
     try {
@@ -772,6 +790,7 @@ router.get('/catalogs/sync', authorize, async (req:any, res) => {
         await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE',req.user.branch, 'COUNTRY', 'pais');
         await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY',req.user.branch);
 
+        
         res.status(201).send('Done!');
     }
     catch (error) {

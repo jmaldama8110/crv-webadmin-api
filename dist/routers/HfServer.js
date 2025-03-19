@@ -651,6 +651,20 @@ router.post('/catalog', authorize_1.authorize, (req, res) => __awaiter(void 0, v
         res.status(401).send(e.message);
     }
 }));
+router.get('/catalogs/sync_neighborhood', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', req.user.branch, 'CITY', 'ciudad_localidad');
+        yield updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', req.user.branch, 'MUNICIPALITY', 'municipio');
+        yield updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', req.user.branch, 'PROVINCE', 'estado');
+        yield updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', req.user.branch, 'COUNTRY', 'pais');
+        yield updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY', req.user.branch);
+        res.status(201).send('Done!');
+    }
+    catch (e) {
+        console.log(e + '');
+        res.status(400).send(e + '');
+    }
+}));
 router.get('/catalogs/sync', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch, true);
