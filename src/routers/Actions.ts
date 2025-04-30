@@ -682,6 +682,7 @@ async function getClientWithDuplicateBisAddress(dbName: string) {
  * 
  */
 
+// se puede ejecutar para limpiar nombre de grupos duplicados, de ser necesario
 router.get("/actions/group_names_duplicity", authorize, async (req: any, res: any) => {
 
     try {
@@ -700,6 +701,7 @@ router.get("/actions/group_names_duplicity", authorize, async (req: any, res: an
             
             const data = queryActions.docs.map( (i:any)=>({
                 _id: i._id,
+                _rev: i._rev,
                 group_name: i.group_name,
                 id_cliente: i.id_cliente
             }));
@@ -710,14 +712,16 @@ router.get("/actions/group_names_duplicity", authorize, async (req: any, res: an
                 originalCount: data.length,
                 dups: cleanRes.trashList.length,
                 cleanList: cleanRes.cleanList.length
-            })
-            
+            });
+
+            if( cleanRes.trashList.length ){
+                console.log(`cleaning...${dbName}..${cleanRes.trashList.length}...`);
+                await db.bulk( { docs: cleanRes.trashList })
+            }
 
         }
-        
-        console.log(results);
-        
-        res.send('Ok');
+    
+        res.send({ ...results });
     }
     catch (e: any) {
         res.send(e.message);
@@ -733,7 +737,10 @@ function cleanArrays( data:any[]){
 
         // Si NO tiene la propiedad id_cliente, lo manda directo a eliminar
         if (!item.hasOwnProperty('id_cliente')) {
-            trashList.push(item);
+            trashList.push({
+                ...item,
+                _deleted: true
+            });
             continue;
         }
 
@@ -746,7 +753,10 @@ function cleanArrays( data:any[]){
             // Ya existe, aumentar contador y mandar al trashList
             const existing = groupMap.get(key);
             existing.duplicates += 1;
-            trashList.push(item);
+            trashList.push({
+                ...item,
+                _deleted: true
+            });
         }
     }
     

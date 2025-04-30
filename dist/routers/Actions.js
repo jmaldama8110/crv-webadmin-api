@@ -639,6 +639,7 @@ function getClientWithDuplicateBisAddress(dbName) {
  * LA DUPLICIDAD DE GRUPOS CON NOMBRES DUPLICADOS
  *
  */
+// se puede ejecutar para limpiar nombre de grupos duplicados, de ser necesario
 router.get("/actions/group_names_duplicity", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const dbList = yield (0, getHFBranches_1.findDbs)();
@@ -653,6 +654,7 @@ router.get("/actions/group_names_duplicity", authorize_1.authorize, (req, res) =
             });
             const data = queryActions.docs.map((i) => ({
                 _id: i._id,
+                _rev: i._rev,
                 group_name: i.group_name,
                 id_cliente: i.id_cliente
             }));
@@ -663,9 +665,12 @@ router.get("/actions/group_names_duplicity", authorize_1.authorize, (req, res) =
                 dups: cleanRes.trashList.length,
                 cleanList: cleanRes.cleanList.length
             });
+            if (cleanRes.trashList.length) {
+                console.log(`cleaning...${dbName}..${cleanRes.trashList.length}...`);
+                yield db.bulk({ docs: cleanRes.trashList });
+            }
         }
-        console.log(results);
-        res.send('Ok');
+        res.send(Object.assign({}, results));
     }
     catch (e) {
         res.send(e.message);
@@ -677,7 +682,7 @@ function cleanArrays(data) {
     for (const item of data) {
         // Si NO tiene la propiedad id_cliente, lo manda directo a eliminar
         if (!item.hasOwnProperty('id_cliente')) {
-            trashList.push(item);
+            trashList.push(Object.assign(Object.assign({}, item), { _deleted: true }));
             continue;
         }
         const key = item.group_name;
@@ -689,7 +694,7 @@ function cleanArrays(data) {
             // Ya existe, aumentar contador y mandar al trashList
             const existing = groupMap.get(key);
             existing.duplicates += 1;
-            trashList.push(item);
+            trashList.push(Object.assign(Object.assign({}, item), { _deleted: true }));
         }
     }
     const cleanList = Array.from(groupMap.values());
