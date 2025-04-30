@@ -734,12 +734,15 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
             /// telefono del Beneficiario, en el telefono de REFERENCIA
             const otherPhone = beneficiaryInfo.phone;
             const homeAddress = x.doc.address.find((y) => y.type === 'DOMICILIO');
-            const bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
+            let bisAddress = x.doc.address.find((y) => y.type === 'NEGOCIO');
             let bisAddressSame = 'No';
             if (bisAddress) { // evaluates first bisAddress exists, since object may not exits
                 if (!!bisAddress.bis_address_same) {
                     bisAddressSame = bisAddress.bis_address_same ? 'Si' : 'No';
                 }
+            }
+            else { /// in case bisAddress is null
+                bisAddress = homeAddress;
             }
             homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number === 'SN' ? '' : homeAddress.exterior_number}`;
             homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number === 'SN' ? '' : homeAddress.interior_number}`;
@@ -818,7 +821,8 @@ router.get('/docs/html/mujeres-de-palabra', (req, res) => __awaiter(void 0, void
                 occupation: !x.doc.business_data.ocupation ? 'NO ESPECIFICADO' : x.doc.business_data.ocupation[1],
                 numberEmployees: x.doc.business_data.number_employees,
                 loanDestination: x.doc.business_data.loan_destination ? x.doc.business_data.loan_destination[1] : 'NO ESPECIFICADO',
-                bisYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!x.doc.business_data.business_start_date ? x.doc.business_data.business_start_date : new Date()), new Date()),
+                bisYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!x.doc.business_data.business_start_date ?
+                    x.doc.business_data.business_start_date : new Date()), new Date()),
                 homeYearsMonths: (0, misc_1.calculateYearsMonthsFromDates)(new Date(!!homeAddress.residence_since ? homeAddress.residence_since : new Date()), new Date()),
                 homeOwnershipRented: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 2 ? 'X' : '') : '',
                 homeOwnershipOwned: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 1 ? 'X' : '') : '',
@@ -1210,8 +1214,8 @@ router.get('/docs/pdf/conserva-t-activa', authorize_1.authorize, (req, res) => _
 function renderPDf(htmlData, fileName) {
     return __awaiter(this, void 0, void 0, function* () {
         const serverEnv = process.env.SERVER_ENV || 'development';
-        const browser = (serverEnv === 'development') ? yield puppeteer_1.default.launch({ headless: 'new' }) :
-            yield puppeteer_1.default.launch({ headless: 'new', executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        const browser = (serverEnv === 'development') ? yield puppeteer_1.default.launch({ headless: true }) :
+            yield puppeteer_1.default.launch({ headless: true, executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         const page = yield browser.newPage();
         yield page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
         //To reflect CSS used for screens instead of print

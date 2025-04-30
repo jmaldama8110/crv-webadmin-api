@@ -66,14 +66,20 @@ router.post('/db_restore', authorize, async (req:any,res) =>{
     console.log(filePath);
     const data:any = JSON.parse(fs.readFileSync(filePath, "utf8") );
     
-    const newData = data.map( (w:any) => ( 
-      !!w.branch ? {...w,branch:req.user.branch }: { ...w }
-    ))
+    /** ESTA PARTE ES UNICAMENTE CUANDO QUIERO ASEGURAR 
+     * LA SUCURSAL DEL USUARIO LOGUEADO CORRESPONDA 
+     * A LA SUCURSAL TARGET (destino)
+     */
+    // const newData = data.map( (w:any) => ( 
+    //   !!w.branch ? 
+    //     {...w,branch:req.user.branch } :
+    //     { ...w }
+    // ))
     
     let nano = Nano.default(req.body.target);
     const db = nano.use(req.body.db_name);
-    await db.bulk({docs: newData});
-    res.send({count: newData.length})
+    await db.bulk({docs: data});
+    res.send({count: data.length})
     
   }
   catch(e:any){

@@ -486,7 +486,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
-    const keys = loanApp.members.filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
+    const keys = loanApp.members.filter((y: any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
     /// get bulk info on beneficiaries
@@ -497,8 +497,9 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
       fullName: req.user ? `${req.user.name} ${req.user.lastname} ${req.user.second_lastname}` : '__________________________________________________________________'
     }
     const newClientsList: any = clientsQuery.rows.filter((r: any) => !r.error)
+
     const clientsData = newClientsList.map((x: any) => {
-      
+
       const memberData = loanApp.members.find((y: any) => y.client_id === x.doc._id)
       const loanCycle = parseInt(memberData.loan_cycle) + 1
       const memberLoanAmount = memberData.apply_amount;
@@ -569,8 +570,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
           bisAddressSame = bisAddress.bis_address_same ? 'Si' : 'No';
         }
 
-      } else 
-      { /// in case bisAddress is null
+      } else { /// in case bisAddress is null
         bisAddress = homeAddress
       }
       homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number === 'SN' ? '' : homeAddress.exterior_number}`
@@ -653,9 +653,9 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
         numberEmployees: x.doc.business_data.number_employees,
         loanDestination: x.doc.business_data.loan_destination ? x.doc.business_data.loan_destination[1] : 'NO ESPECIFICADO',
         bisYearsMonths: calculateYearsMonthsFromDates(
-          new Date( !!x.doc.business_data.business_start_date ? 
-                      x.doc.business_data.business_start_date : new Date()),
-                      new Date()    ),
+          new Date(!!x.doc.business_data.business_start_date ?
+            x.doc.business_data.business_start_date : new Date()),
+          new Date()),
         homeYearsMonths: calculateYearsMonthsFromDates(new Date(!!homeAddress.residence_since ? homeAddress.residence_since : new Date()), new Date()),
         homeOwnershipRented: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 2 ? 'X' : '') : '',
         homeOwnershipOwned: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 1 ? 'X' : '') : '',
@@ -674,6 +674,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
       }
     })
 
+
     const hbs = create();
     const htmlData = await hbs.render('views/solicitud-grupo-solidario.handlebars', {
       serverHost,
@@ -681,6 +682,7 @@ router.get('/docs/pdf/mujeres-de-palabra', authorize, async (req: any, res: any)
     });
     const result = await renderPDf(htmlData, `solicitud_grupo_solidario`);
     res.send({ ...result });
+
 
   }
   catch (error: any) {
@@ -707,8 +709,7 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
-
-    const keys = loanApp.members.filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
+    const keys = loanApp.members.filter((y: any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
     /// get bulk info on beneficiaries
@@ -782,16 +783,18 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
       /// telefono del Beneficiario, en el telefono de REFERENCIA
       const otherPhone = beneficiaryInfo.phone
 
+
       const homeAddress = x.doc.address.find((y: any) => y.type === 'DOMICILIO');
-      const bisAddress = x.doc.address.find((y: any) => y.type === 'NEGOCIO');
+      let bisAddress = x.doc.address.find((y: any) => y.type === 'NEGOCIO');
       let bisAddressSame = 'No';
       if (bisAddress) { // evaluates first bisAddress exists, since object may not exits
         if (!!bisAddress.bis_address_same) {
           bisAddressSame = bisAddress.bis_address_same ? 'Si' : 'No';
         }
 
+      } else { /// in case bisAddress is null
+        bisAddress = homeAddress
       }
-      
       homeAddress.fullExtNumber = `${homeAddress.ext_number ? homeAddress.ext_number : ''} ${homeAddress.exterior_number === 'SN' ? '' : homeAddress.exterior_number}`
       homeAddress.fullIntNumber = `${homeAddress.int_number ? homeAddress.int_number : ''} ${homeAddress.interior_number === 'SN' ? '' : homeAddress.interior_number}`
       bisAddress.fullExtNumber = `${bisAddress.ext_number ? bisAddress.ext_number : ''} ${bisAddress.exterior_number === 'SN' ? '' : bisAddress.exterior_number}`
@@ -828,7 +831,6 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
         monthSaleDic: x.doc.business_data.bis_quality_sales_monthly.month_sale_dic
 
       }
-
       return {
         name: x.doc.name,
         lastname: x.doc.lastname,
@@ -872,7 +874,10 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
         occupation: !x.doc.business_data.ocupation ? 'NO ESPECIFICADO' : x.doc.business_data.ocupation[1],
         numberEmployees: x.doc.business_data.number_employees,
         loanDestination: x.doc.business_data.loan_destination ? x.doc.business_data.loan_destination[1] : 'NO ESPECIFICADO',
-        bisYearsMonths: calculateYearsMonthsFromDates(new Date(!!x.doc.business_data.business_start_date ? x.doc.business_data.business_start_date : new Date()), new Date()),
+        bisYearsMonths: calculateYearsMonthsFromDates(
+          new Date(!!x.doc.business_data.business_start_date ?
+            x.doc.business_data.business_start_date : new Date()),
+          new Date()),
         homeYearsMonths: calculateYearsMonthsFromDates(new Date(!!homeAddress.residence_since ? homeAddress.residence_since : new Date()), new Date()),
         homeOwnershipRented: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 2 ? 'X' : '') : '',
         homeOwnershipOwned: homeAddress.ownership_type ? (homeAddress.ownership_type[0] == 1 ? 'X' : '') : '',
@@ -890,7 +895,6 @@ router.get('/docs/html/mujeres-de-palabra', async (req: any, res: any) => {
         loginUser
       }
     })
-
 
 
     const hbs = create();
@@ -927,7 +931,7 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
-    const keys = loanApp.members.filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
+    const keys = loanApp.members.filter((y: any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
     const beneficiaryQuery = await db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 })
@@ -1088,7 +1092,7 @@ router.get('/docs/html/conserva-t-activa', async (req: any, res: any) => {
         keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
         hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
         previousExperience: x.doc.business_data.previous_loan_experience,
-        isClientPppYes,isClientPppNo, pPpClientName,
+        isClientPppYes, isClientPppNo, pPpClientName,
         beneficiaryInfo,
         loginUser
       }
@@ -1125,7 +1129,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
     if (!loanApp.members) {
       throw new Error('No members found at the loan application!')
     }
-    const keys = loanApp.members.filter( (y:any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
+    const keys = loanApp.members.filter((y: any) => y.estatus === 'TRAMITE' && y.sub_estatus === 'NUEVO TRAMITE').map((x: any) => (x.client_id));
     const clientsQuery = await db.fetch({ keys: keys })
 
     const beneficiaryQuery = await db.find({ selector: { couchdb_type: "RELATED-PEOPLE" }, limit: 10000 })
@@ -1286,7 +1290,7 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
         keepsAccountingRecords: x.doc.business_data.keeps_accounting_records ? 'Si' : 'No',
         hasPreviousExperience: x.doc.business_data.has_previous_experience ? 'Si' : 'No',
         previousExperience: x.doc.business_data.previous_loan_experience,
-        isClientPppYes,isClientPppNo, pPpClientName,
+        isClientPppYes, isClientPppNo, pPpClientName,
         beneficiaryInfo,
         loginUser
       }
@@ -1313,31 +1317,31 @@ router.get('/docs/pdf/conserva-t-activa', authorize, async (req: any, res: any) 
 
 async function renderPDf(htmlData: string, fileName: string) {
 
-  const serverEnv = process.env.SERVER_ENV || 'development'
+    const serverEnv = process.env.SERVER_ENV || 'development'
 
+    const browser = (serverEnv === 'development') ? await puppeteer.launch({ headless: true}) :
+      await puppeteer.launch({ headless: true, executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
+    const page = await browser.newPage();
+    await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
 
-  const browser = (serverEnv === 'development') ? await puppeteer.launch({ headless: 'new' }) :
-    await puppeteer.launch({ headless: 'new', executablePath: '/usr/bin/chromium-browser', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    //To reflect CSS used for screens instead of print
+    await page.emulateMediaType('print');
+    const fileNamePathPdf = `./public/pdfs/${fileName}${Date.now().toString()}.pdf`
 
-  const page = await browser.newPage();
-  await page.setContent(htmlData, { waitUntil: ['domcontentloaded', 'load', "networkidle0"] });
+    const pdf = await page.pdf({
+      path: fileNamePathPdf,
+      margin: { top: '20px', right: '30px', bottom: '20px', left: '30px' },
+      printBackground: true,
+      format: 'Letter',
+    });
+    // Close the browser instance
+    await browser.close();
+    // fs.unlinkSync(fileNamePathPdf);
+    // res.send(pdf.toString('base64'));
+    return { downloadPath: fileNamePathPdf.replace('./public/', '') }
+ 
 
-  //To reflect CSS used for screens instead of print
-  await page.emulateMediaType('print');
-  const fileNamePathPdf = `./public/pdfs/${fileName}${Date.now().toString()}.pdf`
-
-  const pdf = await page.pdf({
-    path: fileNamePathPdf,
-    margin: { top: '20px', right: '30px', bottom: '20px', left: '30px' },
-    printBackground: true,
-    format: 'Letter',
-  });
-  // Close the browser instance
-  await browser.close();
-  // fs.unlinkSync(fileNamePathPdf);
-  // res.send(pdf.toString('base64'));
-  return { downloadPath: fileNamePathPdf.replace('./public/', '') }
 }
 
 router.post('/photos/upload', authorize, upload.array('photos', 24), async function (req: any, res: any, next) {

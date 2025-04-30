@@ -634,3 +634,64 @@ function getClientWithDuplicateBisAddress(dbName) {
         return clientWithDuplicateAddress;
     });
 }
+/**
+ * ESTA PARTE LA AGREGO PARA RESOLVER
+ * LA DUPLICIDAD DE GRUPOS CON NOMBRES DUPLICADOS
+ *
+ */
+router.get("/actions/group_names_duplicity", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const dbList = yield (0, getHFBranches_1.findDbs)();
+        const results = [];
+        for (let index = 0; index < dbList.length; index++) {
+            const dbName = dbList[index];
+            const db = nano.use(dbName);
+            const queryActions = yield db.find({
+                selector: {
+                    couchdb_type: "GROUP"
+                }, limit: 100000
+            });
+            const data = queryActions.docs.map((i) => ({
+                _id: i._id,
+                group_name: i.group_name,
+                id_cliente: i.id_cliente
+            }));
+            const cleanRes = cleanArrays(data);
+            results.push({
+                dbName,
+                originalCount: data.length,
+                dups: cleanRes.trashList.length,
+                cleanList: cleanRes.cleanList.length
+            });
+        }
+        console.log(results);
+        res.send('Ok');
+    }
+    catch (e) {
+        res.send(e.message);
+    }
+}));
+function cleanArrays(data) {
+    const groupMap = new Map();
+    const trashList = [];
+    for (const item of data) {
+        // Si NO tiene la propiedad id_cliente, lo manda directo a eliminar
+        if (!item.hasOwnProperty('id_cliente')) {
+            trashList.push(item);
+            continue;
+        }
+        const key = item.group_name;
+        if (!groupMap.has(key)) {
+            // Primer registro de este grupo
+            groupMap.set(key, Object.assign(Object.assign({}, item), { duplicates: 1 }));
+        }
+        else {
+            // Ya existe, aumentar contador y mandar al trashList
+            const existing = groupMap.get(key);
+            existing.duplicates += 1;
+            trashList.push(item);
+        }
+    }
+    const cleanList = Array.from(groupMap.values());
+    return { cleanList, trashList };
+}

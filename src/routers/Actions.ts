@@ -579,12 +579,12 @@ router.get('/actions/fix_23_Oct_2024', authorize, async (req: any, res) => {
 
         const dbList = await findDbs();
 
-        for(let x=0; x < dbList.length; x++){
+        for (let x = 0; x < dbList.length; x++) {
             const itemsToFix: [] = await getClientWithDuplicateBisAddress(dbList[x]);
 
-            if( itemsToFix.length > 0)
+            if (itemsToFix.length > 0)
                 await updateClientsWithDuplicateBisAddres(itemsToFix, dbList[x]);
-            
+
         }
 
         res.send('Ok');
@@ -595,7 +595,7 @@ router.get('/actions/fix_23_Oct_2024', authorize, async (req: any, res) => {
     }
 });
 
-async function updateClientsWithDuplicateBisAddres( items:any[],dbName:string){
+async function updateClientsWithDuplicateBisAddres(items: any[], dbName: string) {
 
     const db = nano.use(dbName);
     const keys = items.map(item => item.client_id);
@@ -650,7 +650,7 @@ router.post('/actions/fix_24_Oct_2024', authorize, async (req: any, res) => {
     }
 })
 async function getClientWithDuplicateBisAddress(dbName: string) {
-    
+
     const db = nano.use(dbName);
     const queryActions = await db.find({
         selector: {
@@ -672,9 +672,86 @@ async function getClientWithDuplicateBisAddress(dbName: string) {
             }
         }
     }
-    console.log(dbName,`client rows: ${clientWithDuplicateAddress.length}`)
+    console.log(dbName, `client rows: ${clientWithDuplicateAddress.length}`)
     return clientWithDuplicateAddress;
 }
 
+/**
+ * ESTA PARTE LA AGREGO PARA RESOLVER 
+ * LA DUPLICIDAD DE GRUPOS CON NOMBRES DUPLICADOS
+ * 
+ */
+
+router.get("/actions/group_names_duplicity", authorize, async (req: any, res: any) => {
+
+    try {
+        const dbList = await findDbs();
+        const results = [];
+
+        for (let index = 0; index < dbList.length; index++) {
+            const dbName = dbList[index];
+            const db = nano.use(dbName);
+
+            const queryActions = await db.find({
+                selector: {
+                    couchdb_type: "GROUP"
+                }, limit: 100000
+            });
+            
+            const data = queryActions.docs.map( (i:any)=>({
+                _id: i._id,
+                group_name: i.group_name,
+                id_cliente: i.id_cliente
+            }));
+
+            const cleanRes = cleanArrays(data);
+            results.push( {
+                dbName,
+                originalCount: data.length,
+                dups: cleanRes.trashList.length,
+                cleanList: cleanRes.cleanList.length
+            })
+            
+
+        }
+        
+        console.log(results);
+        
+        res.send('Ok');
+    }
+    catch (e: any) {
+        res.send(e.message);
+    }
+})
+
+function cleanArrays( data:any[]){
+    
+    const groupMap = new Map();
+    const trashList:any[] = [];
+    
+    for (const item of data) {
+
+        // Si NO tiene la propiedad id_cliente, lo manda directo a eliminar
+        if (!item.hasOwnProperty('id_cliente')) {
+            trashList.push(item);
+            continue;
+        }
+
+        const key = item.group_name;
+    
+        if (!groupMap.has(key)) {
+            // Primer registro de este grupo
+            groupMap.set(key, { ...item, duplicates: 1 });
+        } else {
+            // Ya existe, aumentar contador y mandar al trashList
+            const existing = groupMap.get(key);
+            existing.duplicates += 1;
+            trashList.push(item);
+        }
+    }
+    
+    const cleanList = Array.from(groupMap.values());
+    return { cleanList, trashList }    
+}
 
 export { router as ActionsRouter }
