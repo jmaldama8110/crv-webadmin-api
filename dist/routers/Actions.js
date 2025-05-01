@@ -670,7 +670,7 @@ router.get("/actions/group_names_duplicity", authorize_1.authorize, (req, res) =
                 yield db.bulk({ docs: cleanRes.trashList });
             }
         }
-        res.send(Object.assign({}, results));
+        res.send(results);
     }
     catch (e) {
         res.send(e.message);

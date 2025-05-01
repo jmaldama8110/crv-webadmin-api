@@ -721,7 +721,7 @@ router.get("/actions/group_names_duplicity", authorize, async (req: any, res: an
 
         }
     
-        res.send({ ...results });
+        res.send(results);
     }
     catch (e: any) {
         res.send(e.message);
