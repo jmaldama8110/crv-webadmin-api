@@ -430,12 +430,12 @@ exports.clientDataDef = {
     },
     comprobante_domicilio_pics: [],
 };
-router.get('/db_update_loans_contracts', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/db_update_loans_contracts', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!req.query.branchId) {
-            throw new Error('No branch Id provided');
+        if (!req.body.dbList) {
+            throw new Error('No DB List provided in request body');
         }
-        const dbList = yield (0, getHFBranches_1.findDbs)();
+        const dbList = req.body.dbList;
         for (let x = 0; x < dbList.length; x++) {
             // console.log('Updating LoanApp status for',dbList[x])
             yield updateLoanAppStatus(dbList[x]);
@@ -459,10 +459,17 @@ function updateLoanAppStatus(dbName) {
         //// cuando el estatus de LOANAPP esta en Nuevo tramite y cambia a ACEPTADO/PRESTAMO ACTIVO
         /// Se debe importar el contrato de este LOAN.
         const clientIdsToUpdate = []; // here we add all clients/group uniquely, so perform sigle get balance from HF
+        /** Stores all TRAMITE / NUEVO TRAMITE and renovation = TRUE, must be eliminated */
+        const loansNuevoTramiteToEliminate = [];
         for (let i = 0; i < queryActions.docs.length; i++) {
             const loanAppDoc = queryActions.docs[i];
             const idSolicitud = parseInt(loanAppDoc.id_solicitud);
             const newStatus = yield getCurrentLoanStatus(idSolicitud);
+            if (loanAppDoc.estatus === 'TRAMITE' &&
+                loanAppDoc.sub_estatus === 'NUEVO TRAMITE' &&
+                !!loanAppDoc.renovation) {
+                loansNuevoTramiteToEliminate.push({ _id: loanAppDoc._id, _rev: loanAppDoc._rev });
+            }
             /// only updates when newStatus is not equal current Status
             if (newStatus) {
                 const statusChanged = !(loanAppDoc.estatus === newStatus.estatus && loanAppDoc.sub_estatus === newStatus.sub_estatus);
@@ -525,6 +532,9 @@ function updateLoanAppStatus(dbName) {
         yield db.bulk({ docs: newContractsToCreate });
         console.log(`Created contracts: ${newContractsToCreate.length}`);
         /*** create contracts for */
+        /** WIPES all TRAMITE / NUEVO TRAMITE and renovation = TRUE, must be eliminated */
+        yield db.bulk({ docs: loansNuevoTramiteToEliminate });
+        console.log(`Eliminated Nuevo Tramite: ${loansNuevoTramiteToEliminate.length}`);
         return queryActions.docs.length;
     });
 }
@@ -640,9 +650,14 @@ function getClientWithDuplicateBisAddress(dbName) {
  *
  */
 // se puede ejecutar para limpiar nombre de grupos duplicados, de ser necesario
-router.get("/actions/group_names_duplicity", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/actions/group_names_duplicity", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // wipeAll, flag to tell API to delete records
+    // dbList, string array with target DB name.
     try {
-        const dbList = yield (0, getHFBranches_1.findDbs)();
+        if (!req.body.dbList) {
+            throw new Error('No dbList or wipeAll parameter provided in body request');
+        }
+        const dbList = req.body.dbList;
         const results = [];
         for (let index = 0; index < dbList.length; index++) {
             const dbName = dbList[index];
@@ -661,11 +676,11 @@ router.get("/actions/group_names_duplicity", authorize_1.authorize, (req, res) =
             const cleanRes = cleanArrays(data);
             results.push({
                 dbName,
+                dups: cleanRes.trashList,
                 originalCount: data.length,
-                dups: cleanRes.trashList.length,
                 cleanList: cleanRes.cleanList.length
             });
-            if (cleanRes.trashList.length) {
+            if (cleanRes.trashList.length && !!req.body.wipeAll) {
                 console.log(`cleaning...${dbName}..${cleanRes.trashList.length}...`);
                 yield db.bulk({ docs: cleanRes.trashList });
             }

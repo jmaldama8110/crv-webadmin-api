@@ -412,12 +412,12 @@ export const clientDataDef: any = {
 }
 
 
-router.get('/db_update_loans_contracts', authorize, async (req, res) => {
+router.post('/db_update_loans_contracts', authorize, async (req, res) => {
     try {
-        if (!req.query.branchId) {
-            throw new Error('No branch Id provided')
+        if (!req.body.dbList) {
+            throw new Error('No DB List provided in request body')
         }
-        const dbList = await findDbs();
+        const dbList = req.body.dbList;
         for (let x = 0; x < dbList.length; x++) {
             // console.log('Updating LoanApp status for',dbList[x])
             await updateLoanAppStatus(dbList[x])
@@ -447,10 +447,19 @@ export async function updateLoanAppStatus(dbName: string) {
         branch: [number, string]
     }[] = []; // here we add all clients/group uniquely, so perform sigle get balance from HF
 
+    /** Stores all TRAMITE / NUEVO TRAMITE and renovation = TRUE, must be eliminated */
+    const loansNuevoTramiteToEliminate:{ _id: string, _rev: string }[] = []
+
     for (let i = 0; i < queryActions.docs.length; i++) {
         const loanAppDoc: any = queryActions.docs[i];
         const idSolicitud = parseInt(loanAppDoc.id_solicitud);
         const newStatus = await getCurrentLoanStatus(idSolicitud);
+
+        if( loanAppDoc.estatus ==='TRAMITE' && 
+            loanAppDoc.sub_estatus ==='NUEVO TRAMITE' &&
+            !!loanAppDoc.renovation){
+                loansNuevoTramiteToEliminate.push({ _id: loanAppDoc._id, _rev: loanAppDoc._rev })
+        }
 
         /// only updates when newStatus is not equal current Status
         if (newStatus) {
@@ -544,9 +553,11 @@ export async function updateLoanAppStatus(dbName: string) {
     }
     await db.bulk({ docs: newContractsToCreate });
     console.log(`Created contracts: ${newContractsToCreate.length}`);
-
     /*** create contracts for */
 
+    /** WIPES all TRAMITE / NUEVO TRAMITE and renovation = TRUE, must be eliminated */
+    await db.bulk({ docs: loansNuevoTramiteToEliminate });
+    console.log(`Eliminated Nuevo Tramite: ${loansNuevoTramiteToEliminate.length}`);
     return queryActions.docs.length;
 
 }
@@ -683,10 +694,15 @@ async function getClientWithDuplicateBisAddress(dbName: string) {
  */
 
 // se puede ejecutar para limpiar nombre de grupos duplicados, de ser necesario
-router.get("/actions/group_names_duplicity", authorize, async (req: any, res: any) => {
-
+router.post("/actions/group_names_duplicity", authorize, async (req: any, res: any) => {
+    // wipeAll, flag to tell API to delete records
+    // dbList, string array with target DB name.
     try {
-        const dbList = await findDbs();
+        if(  !req.body.dbList ){
+            throw new Error('No dbList or wipeAll parameter provided in body request')
+        }
+    
+        const dbList = req.body.dbList;
         const results = [];
 
         for (let index = 0; index < dbList.length; index++) {
@@ -709,15 +725,16 @@ router.get("/actions/group_names_duplicity", authorize, async (req: any, res: an
             const cleanRes = cleanArrays(data);
             results.push( {
                 dbName,
+                dups: cleanRes.trashList,
                 originalCount: data.length,
-                dups: cleanRes.trashList.length,
                 cleanList: cleanRes.cleanList.length
             });
-
-            if( cleanRes.trashList.length ){
+            
+            if( cleanRes.trashList.length && !!req.body.wipeAll ){
                 console.log(`cleaning...${dbName}..${cleanRes.trashList.length}...`);
                 await db.bulk( { docs: cleanRes.trashList })
             }
+            
 
         }
     
