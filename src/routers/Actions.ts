@@ -448,17 +448,17 @@ export async function updateLoanAppStatus(dbName: string) {
     }[] = []; // here we add all clients/group uniquely, so perform sigle get balance from HF
 
     /** Stores all TRAMITE / NUEVO TRAMITE and renovation = TRUE, must be eliminated */
-    const loansNuevoTramiteToEliminate:{ _id: string, _rev: string }[] = []
+    const loansNuevoTramiteToEliminate: { _id: string, _rev: string }[] = []
 
     for (let i = 0; i < queryActions.docs.length; i++) {
         const loanAppDoc: any = queryActions.docs[i];
         const idSolicitud = parseInt(loanAppDoc.id_solicitud);
         const newStatus = await getCurrentLoanStatus(idSolicitud);
 
-        if( loanAppDoc.estatus ==='TRAMITE' && 
-            loanAppDoc.sub_estatus ==='NUEVO TRAMITE' &&
-            !!loanAppDoc.renovation){
-                loansNuevoTramiteToEliminate.push({ _id: loanAppDoc._id, _rev: loanAppDoc._rev })
+        if (loanAppDoc.estatus === 'TRAMITE' &&
+            loanAppDoc.sub_estatus === 'NUEVO TRAMITE' &&
+            !!loanAppDoc.renovation) {
+            loansNuevoTramiteToEliminate.push({ _id: loanAppDoc._id, _rev: loanAppDoc._rev })
         }
 
         /// only updates when newStatus is not equal current Status
@@ -698,10 +698,10 @@ router.post("/actions/group_names_duplicity", authorize, async (req: any, res: a
     // wipeAll, flag to tell API to delete records
     // dbList, string array with target DB name.
     try {
-        if(  !req.body.dbList ){
+        if (!req.body.dbList) {
             throw new Error('No dbList or wipeAll parameter provided in body request')
         }
-    
+
         const dbList = req.body.dbList;
         const results = [];
 
@@ -714,8 +714,8 @@ router.post("/actions/group_names_duplicity", authorize, async (req: any, res: a
                     couchdb_type: "GROUP"
                 }, limit: 100000
             });
-            
-            const data = queryActions.docs.map( (i:any)=>({
+
+            const data = queryActions.docs.map((i: any) => ({
                 _id: i._id,
                 _rev: i._rev,
                 group_name: i.group_name,
@@ -723,21 +723,21 @@ router.post("/actions/group_names_duplicity", authorize, async (req: any, res: a
             }));
 
             const cleanRes = cleanArrays(data);
-            results.push( {
+            results.push({
                 dbName,
                 dups: cleanRes.trashList,
                 originalCount: data.length,
                 cleanList: cleanRes.cleanList.length
             });
-            
-            if( cleanRes.trashList.length && !!req.body.wipeAll ){
+
+            if (cleanRes.trashList.length && !!req.body.wipeAll) {
                 console.log(`cleaning...${dbName}..${cleanRes.trashList.length}...`);
-                await db.bulk( { docs: cleanRes.trashList })
+                await db.bulk({ docs: cleanRes.trashList })
             }
-            
+
 
         }
-    
+
         res.send(results);
     }
     catch (e: any) {
@@ -745,11 +745,66 @@ router.post("/actions/group_names_duplicity", authorize, async (req: any, res: a
     }
 })
 
-function cleanArrays( data:any[]){
-    
+router.get("/actions/client_with_wrong_lastname", authorize, async (req: any, res: any) => {
+    // wipeAll, flag to tell API to delete records
+    // dbList, string array with target DB name.
+    try {
+
+
+        const dbList = await findDbs();
+        const results = [];
+
+        for (let index = 0; index < dbList.length; index++) {
+            const dbName = dbList[index];
+            const db = nano.use(dbName);
+
+            const queryActions = await db.find({
+                selector: {
+                    couchdb_type: "CLIENT"
+                }, limit: 100000
+            });
+
+
+            const convertedQueryData = queryActions.docs.map((i: any) => ({
+                _id: i._id,
+                _rev: i._rev,
+                name: `${i.name}`,
+                lastname: `${i.lastname}`,
+                second_lastname: `${i.second_lastname}`,
+                id_cliente: i.id_cliente
+            }));
+
+            for (const item of convertedQueryData) {
+                const nameStr = `${item.name} ${item.lastname} ${item.second_lastname}`;
+
+                const regex = /\bS\s*[-\/]?\s*A\b/gi;
+                const coincidencias = nameStr.match(regex);
+                if (coincidencias && coincidencias.length > 0) {
+                    results.push({
+                        dbName,
+                        _id: item._id,
+                        _rev: item._rev,
+                        fullname: nameStr
+                    })
+                }
+
+            }
+
+
+        }
+
+        res.send(results);
+    }
+    catch (e: any) {
+        res.send(e.message);
+    }
+})
+
+function cleanArrays(data: any[]) {
+
     const groupMap = new Map();
-    const trashList:any[] = [];
-    
+    const trashList: any[] = [];
+
     for (const item of data) {
 
         // Si NO tiene la propiedad id_cliente, lo manda directo a eliminar
@@ -762,7 +817,7 @@ function cleanArrays( data:any[]){
         }
 
         const key = item.group_name;
-    
+
         if (!groupMap.has(key)) {
             // Primer registro de este grupo
             groupMap.set(key, { ...item, duplicates: 1 });
@@ -776,9 +831,9 @@ function cleanArrays( data:any[]){
             });
         }
     }
-    
+
     const cleanList = Array.from(groupMap.values());
-    return { cleanList, trashList }    
+    return { cleanList, trashList }
 }
 
 export { router as ActionsRouter }

@@ -691,6 +691,48 @@ router.post("/actions/group_names_duplicity", authorize_1.authorize, (req, res) 
         res.send(e.message);
     }
 }));
+router.get("/actions/client_with_wrong_lastname", authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // wipeAll, flag to tell API to delete records
+    // dbList, string array with target DB name.
+    try {
+        const dbList = yield (0, getHFBranches_1.findDbs)();
+        const results = [];
+        for (let index = 0; index < dbList.length; index++) {
+            const dbName = dbList[index];
+            const db = nano.use(dbName);
+            const queryActions = yield db.find({
+                selector: {
+                    couchdb_type: "CLIENT"
+                }, limit: 100000
+            });
+            const convertedQueryData = queryActions.docs.map((i) => ({
+                _id: i._id,
+                _rev: i._rev,
+                name: `${i.name}`,
+                lastname: `${i.lastname}`,
+                second_lastname: `${i.second_lastname}`,
+                id_cliente: i.id_cliente
+            }));
+            for (const item of convertedQueryData) {
+                const nameStr = `${item.name} ${item.lastname} ${item.second_lastname}`;
+                const regex = /\bS\s*[-\/]?\s*A\b/gi;
+                const coincidencias = nameStr.match(regex);
+                if (coincidencias && coincidencias.length > 0) {
+                    results.push({
+                        dbName,
+                        _id: item._id,
+                        _rev: item._rev,
+                        fullname: nameStr
+                    });
+                }
+            }
+        }
+        res.send(results);
+    }
+    catch (e) {
+        res.send(e.message);
+    }
+}));
 function cleanArrays(data) {
     const groupMap = new Map();
     const trashList = [];
