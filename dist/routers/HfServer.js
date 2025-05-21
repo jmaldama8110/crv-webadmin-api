@@ -42,6 +42,7 @@ const mssql_1 = __importDefault(require("mssql"));
 const connSQL_1 = require("../db/connSQL");
 const Nano = __importStar(require("nano"));
 const Actions_1 = require("./Actions");
+const getHFBranches_1 = require("../utils/getHFBranches");
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 const router = express_1.default.Router();
 exports.hfRouter = router;
@@ -706,7 +707,7 @@ router.get('/catalogs/sync', authorize_1.authorize, (req, res) => __awaiter(void
 }));
 router.get('/products/sync', authorize_1.authorize, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const result = yield productsSync(req.user.branch);
+        const result = yield productsSync();
         res.send(result);
     }
     catch (e) {
@@ -1548,67 +1549,74 @@ router.get("/groups/download", authorize_1.authorize, (req, res) => __awaiter(vo
         res.status(400).send(e.message);
     }
 }));
-function productsSync(branch) {
+function productsSync() {
     return __awaiter(this, void 0, void 0, function* () {
-        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
         const product = yield getProductsWeb();
         if (!product || product.length === 0) {
             throw new Error("Not able to find the product(s)");
         }
-        const productsDestroy = yield db.find({ selector: { couchdb_type: { "$eq": 'PRODUCT' } }, limit: 100000 });
-        const docsEliminate = productsDestroy.docs.map(doc => ({ _deleted: true, _id: doc._id, _rev: doc._rev }));
-        yield db.bulk({ docs: docsEliminate });
-        const rowData = [];
-        const creationDatetime = Date.now().toString();
-        product.forEach((data) => {
-            /// el dato de SQL viene en una lista separada por comas. Una vez split, hay que limpiar la cadena devuelta
-            const freqTypes = data.periodicidades.split(",").map((x) => x.trim());
-            rowData.push({
-                default_frecuency: [
-                    mapIdentifierForFrequency(freqTypes[0]),
-                    freqTypes[0]
-                ],
-                deleted: false,
-                default_mobile_product: false,
-                enabled: true,
-                product_type: "1",
-                product_name: data.nombre,
-                external_id: data.id,
-                min_amount: data.valor_minimo,
-                max_amount: data.valor_maximo,
-                default_amount: data.valor_minimo,
-                step_amount: 1000,
-                min_term: data.periodo_min,
-                max_term: data.periodo_max,
-                default_term: data.periodo_min,
-                min_rate: data.tasa_anual_min.toString(),
-                max_rate: data.tasa_anual_max.toString(),
-                rate: data.tasa_anual_min.toString(),
-                tax: data.impuesto.toString(),
-                years_type: data.tipo_ano,
-                allowed_term_type: freqTypes.map((w, increment) => ({
-                    _id: increment,
-                    identifier: mapIdentifierForTerm(w),
-                    value: mapValueForTerm(w),
-                    year_periods: mapYearPeriodForTerm(w)
-                })),
-                allowed_frequency: freqTypes.map((w, increment) => ({
-                    _id: increment,
-                    identifier: mapIdentifierForFrequency(w),
-                    value: w
-                })),
-                liquid_guarantee: data.garantia_liquida.toString(),
-                GL_financeable: data.garantia_liquida_financiable,
-                requires_insurance: data.requiere_seguro,
-                logo: '',
-                avatar: '',
-                createdAt: creationDatetime,
-                updatedAt: creationDatetime,
-                couchdb_type: 'PRODUCT'
+        const dbList = yield (0, getHFBranches_1.findDbs)();
+        // Aquí almacenamos el resultado del proceso Batch
+        const dbResult = [];
+        for (let i = 0; i < dbList.length; i++) {
+            const dbName = dbList[i];
+            const db = nano.use(dbName);
+            const productsDestroy = yield db.find({ selector: { couchdb_type: { "$eq": 'PRODUCT' } }, limit: 100000 });
+            const docsEliminate = productsDestroy.docs.map(doc => ({ _deleted: true, _id: doc._id, _rev: doc._rev }));
+            yield db.bulk({ docs: docsEliminate });
+            const rowData = [];
+            const creationDatetime = Date.now().toString();
+            product.forEach((data) => {
+                /// el dato de SQL viene en una lista separada por comas. Una vez split, hay que limpiar la cadena devuelta
+                const freqTypes = data.periodicidades.split(",").map((x) => x.trim());
+                rowData.push({
+                    default_frecuency: [
+                        mapIdentifierForFrequency(freqTypes[0]),
+                        freqTypes[0]
+                    ],
+                    deleted: false,
+                    default_mobile_product: false,
+                    enabled: true,
+                    product_type: "1",
+                    product_name: data.nombre,
+                    external_id: data.id,
+                    min_amount: data.valor_minimo,
+                    max_amount: data.valor_maximo,
+                    default_amount: data.valor_minimo,
+                    step_amount: 1000,
+                    min_term: data.periodo_min,
+                    max_term: data.periodo_max,
+                    default_term: data.periodo_min,
+                    min_rate: data.tasa_anual_min.toString(),
+                    max_rate: data.tasa_anual_max.toString(),
+                    rate: data.tasa_anual_min.toString(),
+                    tax: data.impuesto.toString(),
+                    years_type: data.tipo_ano,
+                    allowed_term_type: freqTypes.map((w, increment) => ({
+                        _id: increment,
+                        identifier: mapIdentifierForTerm(w),
+                        value: mapValueForTerm(w),
+                        year_periods: mapYearPeriodForTerm(w)
+                    })),
+                    allowed_frequency: freqTypes.map((w, increment) => ({
+                        _id: increment,
+                        identifier: mapIdentifierForFrequency(w),
+                        value: w
+                    })),
+                    liquid_guarantee: data.garantia_liquida.toString(),
+                    GL_financeable: data.garantia_liquida_financiable,
+                    requires_insurance: data.requiere_seguro,
+                    logo: '',
+                    avatar: '',
+                    createdAt: creationDatetime,
+                    updatedAt: creationDatetime,
+                    couchdb_type: 'PRODUCT'
+                });
             });
-        });
-        yield db.bulk({ docs: rowData });
-        return { docs: rowData.length };
+            yield db.bulk({ docs: rowData });
+            dbResult.push({ dbName, deletedProducts: docsEliminate.length, insertedProducts: rowData.length });
+        }
+        return dbResult;
     });
 }
 exports.productsSync = productsSync;

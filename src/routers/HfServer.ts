@@ -4,6 +4,7 @@ import sql from 'mssql';
 import { sqlConfig } from '../db/connSQL';
 import * as Nano from 'nano';
 import { clientDataDef } from './Actions';
+import { findDbs } from '../utils/getHFBranches';
 
 let nano = Nano.default(`${process.env.COUCHDB_PROTOCOL}://${process.env.COUCHDB_USER}:${process.env.COUCHDB_PASS}@${process.env.COUCHDB_HOST}:${process.env.COUCHDB_PORT}`);
 const router = express.Router();
@@ -57,14 +58,14 @@ router.get('/clients/exists', authorize, async (req: any, res: any) => {
 
 });
 
-router.get('/groups/hf/loanapps', authorize, async (req:any, res) => {
+router.get('/groups/hf/loanapps', authorize, async (req: any, res) => {
     try {
 
         if (!(req.query.branchId && req.query.applicationId)) {
             throw new Error('Query parametrs branchId or groupName are missing!')
         }
         const data: any = await getLoanApplicationById(parseInt(req.query.applicationId as string), parseInt(req.query.branchId as string));
-        const resultObject = await processLoanApplicationByDataRS(data,req.user.branch);
+        const resultObject = await processLoanApplicationByDataRS(data, req.user.branch);
         res.status(200).send(resultObject);
 
 
@@ -85,7 +86,7 @@ export async function getLoanApplicationById(loanAppId: number, branchId: number
 
 }
 
-async function processLoanApplicationByDataRS(data: any, branch:[number,string]) {
+async function processLoanApplicationByDataRS(data: any, branch: [number, string]) {
 
     /**
              * resultsets[0] => Detalle de la solicitud
@@ -152,7 +153,7 @@ async function processLoanApplicationByDataRS(data: any, branch:[number,string])
     })
 
     /// retrieves Product information, that is not provided by HF
-    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
 
     await db.createIndex({ index: { fields: ["couchdb_type"] } });
     const productList = await db.find({ selector: { couchdb_type: "PRODUCT" }, limit: 10000 });
@@ -202,15 +203,15 @@ async function processLoanApplicationByDataRS(data: any, branch:[number,string])
     return { group_data, loan_app }
 }
 
-router.get('/products/hf', authorize, async (req:any, res) => {
+router.get('/products/hf', authorize, async (req: any, res) => {
     try {
         if (!(req.query.branchId && req.query.clientType)) {
             throw new Error('Query parametrs branchId or ClientType are missing!')
         }
 
         const data: any = await getProductsByBranch(parseFloat(req.query.branchId.toString()), parseFloat(req.query.clientType.toString()))
-        
-        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
+
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
         const productsQuery = await db.find({
             selector: {
                 couchdb_type: "PRODUCT"
@@ -355,17 +356,17 @@ function processClientDataRS(data: any) {
     }
 
     /// limpia el arreglo de direcciones para dejar solo uno por cada TYPE
-    const map:any = {}; // valor temporal para reemplazar el objeto iterado, con el ultimo
-    address.forEach( (add:any) => map[add.type] = add )
+    const map: any = {}; // valor temporal para reemplazar el objeto iterado, con el ultimo
+    address.forEach((add: any) => map[add.type] = add)
     address = Object.values(map);
     //////////////
-    
+
 
     const phones = [];
     for (let l = 0; l < data.recordsets[4].length; l++) {
 
         const phoneAdd = data.recordsets[4][l]
-        if ( phoneAdd.idcel_telefono.trim() ) {
+        if (phoneAdd.idcel_telefono.trim()) {
             phones.push({
                 _id: phoneAdd.id,
                 phone: phoneAdd.idcel_telefono.trim(),
@@ -514,7 +515,7 @@ function processClientDataRS(data: any) {
 
     const cicloData = data.recordsets[6]
     const loan_cycle = cicloData.length ? cicloData[0].ciclo : 0
-    
+
     // Default data_company values sets to 0 or emptry strings
     let data_company = [
         {
@@ -528,8 +529,8 @@ function processClientDataRS(data: any) {
         }
     ]
     // evaluates whether an object is not empty, then asign it
-    if( !! data.recordsets[8][0]  ){
-        data_company = [ data.recordsets[8][0] ] // inside brackets
+    if (!!data.recordsets[8][0]) {
+        data_company = [data.recordsets[8][0]] // inside brackets
     }
 
     let data_efirma =
@@ -601,7 +602,7 @@ router.get("/clients/hf/person-search", authorize, async (req, res) => {
 
         let data: any = await findClientByKeyword(req.query.keyword as string);
         const branchId = parseInt(req.query.branchId as string)
-        const newData = data.recordset.filter( (x:any) => x.id_oficina_cliente == branchId )
+        const newData = data.recordset.filter((x: any) => x.id_oficina_cliente == branchId)
         res.send(newData);
 
     }
@@ -627,27 +628,27 @@ router.get('/clients/hf/search', authorize, async (req, res) => {
     }
 })
 
-router.post('/catalog', authorize, async (req:any, res) => {
+router.post('/catalog', authorize, async (req: any, res) => {
 
     try {
         switch (req.body.catalogName) {
             case "CATA_ActividadEconomica":
-                await updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch,true);
+                await updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch, true);
                 break;
             case "CATA_sexo":
-                await updateCatalogFromHF('CATA_sexo', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_sexo', 10000, req.user.branch);
                 break;
             case "CATA_sector":
-                await updateCatalogFromHF('CATA_sector', 10000,req.user.branch)
+                await updateCatalogFromHF('CATA_sector', 10000, req.user.branch)
                 break;
             case "CATA_escolaridad":
-                await updateCatalogFromHF('CATA_escolaridad', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_escolaridad', 10000, req.user.branch);
                 break;
             case "CATA_estadoCivil":
-                await updateCatalogFromHF('CATA_estadoCivil', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_estadoCivil', 10000, req.user.branch);
                 break;
             case "CATA_nacionalidad":
-                await updateCatalogFromHF('CATA_nacionalidad', 10000,req.user.branch, true);
+                await updateCatalogFromHF('CATA_nacionalidad', 10000, req.user.branch, true);
                 break;
             case "CATA_parentesco":
                 await updateCatalogFromHF('CATA_parentesco', 10000, req.user.branch);
@@ -668,55 +669,55 @@ router.post('/catalog', authorize, async (req:any, res) => {
                 await updateCatalogFromHF('CATA_TipoDomicilio', 10000, req.user.branch);
                 break;
             case "CATA_Ciudad_Localidad":
-                await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000, req.user.branch);
                 break;
             case "CATA_destinoCredito":
-                await updateCatalogFromHF('CATA_destinoCredito', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_destinoCredito', 10000, req.user.branch);
                 break;
             case "CATA_ocupacionPLD":
-                await updateCatalogFromHF('CATA_ocupacionPLD', 10000,req.user.branch, true);
+                await updateCatalogFromHF('CATA_ocupacionPLD', 10000, req.user.branch, true);
                 break;
             case "CATA_banco":
-                await updateCatalogFromHF('CATA_banco', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_banco', 10000, req.user.branch);
                 break;
             case "CATA_TipoCuentaBancaria":
-                await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000, req.user.branch);
                 break;
             case "CATA_MotivoBajaCastigado":
-                await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000, req.user.branch);
                 break;
             case "CATA_MotivoBajaCancelacion":
-                await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000, req.user.branch);
                 break;
             case "CATA_MotivoBajaRechazado":
-                await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000, req.user.branch);
                 break;
             case "CATA_rolHogar":
-                await updateCatalogFromHF('CATA_rolHogar', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_rolHogar', 10000, req.user.branch);
                 break;
             case "CATA_ubicacionNegocio":
-                await updateCatalogFromHF('CATA_ubicacionNegocio', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_ubicacionNegocio', 10000, req.user.branch);
                 break;
             case "SPLD_InstrumentoMonetario":
-                await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000,req.user.branch);
+                await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000, req.user.branch);
                 break;
             case "CATA_RedesSociales":
-                await updateCatalogFromHF('CATA_RedesSociales', 10000,req.user.branch);
+                await updateCatalogFromHF('CATA_RedesSociales', 10000, req.user.branch);
                 break;
             case "CATA_asentamiento":
-                await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD',req.user.branch, 'CITY', 'ciudad_localidad');
+                await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', req.user.branch, 'CITY', 'ciudad_localidad');
                 break;
             case "CATA_ciudad_localidad":
-                await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY',req.user.branch, 'MUNICIPALITY', 'municipio');
+                await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', req.user.branch, 'MUNICIPALITY', 'municipio');
                 break;
             case "CATA_municipio":
-                await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY',req.user.branch, 'PROVINCE', 'estado');
+                await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', req.user.branch, 'PROVINCE', 'estado');
                 break;
             case "CATA_estado":
-                await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE',req.user.branch, 'COUNTRY', 'pais');
+                await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', req.user.branch, 'COUNTRY', 'pais');
                 break;
             case "CATA_pais":
-                await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY',req.user.branch);
+                await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY', req.user.branch);
                 break;
             case "CATA_GroupMeetingTime":
 
@@ -733,64 +734,64 @@ router.post('/catalog', authorize, async (req:any, res) => {
         res.status(401).send(e.message);
     }
 });
- router.get('/catalogs/sync_neighborhood', authorize, async (req:any, res:any) =>{
-    
+router.get('/catalogs/sync_neighborhood', authorize, async (req: any, res: any) => {
+
     try {
 
-        await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD',req.user.branch, 'CITY', 'ciudad_localidad');
-        await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY',req.user.branch, 'MUNICIPALITY', 'municipio');
-        await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY',req.user.branch, 'PROVINCE', 'estado');
-        await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE',req.user.branch, 'COUNTRY', 'pais');
-        await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY',req.user.branch);
-        
+        await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', req.user.branch, 'CITY', 'ciudad_localidad');
+        await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', req.user.branch, 'MUNICIPALITY', 'municipio');
+        await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', req.user.branch, 'PROVINCE', 'estado');
+        await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', req.user.branch, 'COUNTRY', 'pais');
+        await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY', req.user.branch);
+
         res.status(201).send('Done!');
 
     }
-    catch(e){
+    catch (e) {
 
         console.log(e + '');
         res.status(400).send(e + '')
     }
- })
+})
 
-router.get('/catalogs/sync', authorize, async (req:any, res) => {
+router.get('/catalogs/sync', authorize, async (req: any, res) => {
     try {
-        await updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch,true)
-        await updateCatalogFromHF('CATA_sexo', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_sector', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_escolaridad', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_estadoCivil', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_nacionalidad', 10000,req.user.branch, true)
+        await updateCatalogFromHF('CATA_ActividadEconomica', 10000, req.user.branch, true)
+        await updateCatalogFromHF('CATA_sexo', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_sector', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_escolaridad', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_estadoCivil', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_nacionalidad', 10000, req.user.branch, true)
 
-        await updateCatalogFromHF('CATA_parentesco', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_profesion', 10000,req.user.branch, true)
-        await updateCatalogFromHF('CATA_TipoRelacion', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_TipoPuesto', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_TipoVialidad', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_TipoDomicilio', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_destinoCredito', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_ocupacionPLD', 10000,req.user.branch, true)
-        await updateCatalogFromHF('CATA_banco', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_parentesco', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_profesion', 10000, req.user.branch, true)
+        await updateCatalogFromHF('CATA_TipoRelacion', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_TipoPuesto', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_TipoVialidad', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_TipoDomicilio', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_Ciudad_Localidad', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_destinoCredito', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_ocupacionPLD', 10000, req.user.branch, true)
+        await updateCatalogFromHF('CATA_banco', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_TipoCuentaBancaria', 10000, req.user.branch)
 
-        await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000,req.user.branch)
+        await updateCatalogFromHF('CATA_MotivoBajaCastigado', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_MotivoBajaCancelacion', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_MotivoBajaRechazado', 10000, req.user.branch)
 
-        await updateCatalogFromHF('CATA_rolHogar', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_ubicacionNegocio', 10000,req.user.branch)
-        await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000,req.user.branch)
-        await updateCatalogFromHF('CATA_RedesSociales', 10000,req.user.branch);
+        await updateCatalogFromHF('CATA_rolHogar', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_ubicacionNegocio', 10000, req.user.branch)
+        await updateCatalogFromHF('SPLD_InstrumentoMonetario', 10000, req.user.branch)
+        await updateCatalogFromHF('CATA_RedesSociales', 10000, req.user.branch);
         await updateCatalogGroupTimes(req.user.branch);
 
-        await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD',req.user.branch, 'CITY', 'ciudad_localidad');
-        await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY',req.user.branch, 'MUNICIPALITY', 'municipio');
-        await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY',req.user.branch, 'PROVINCE', 'estado');
-        await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE',req.user.branch, 'COUNTRY', 'pais');
-        await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY',req.user.branch);
+        await updateCatalogFromHFByRelationship('CATA_asentamiento', 1000, 'NEIGHBORHOOD', req.user.branch, 'CITY', 'ciudad_localidad');
+        await updateCatalogFromHFByRelationship('CATA_ciudad_localidad', 1000, 'CITY', req.user.branch, 'MUNICIPALITY', 'municipio');
+        await updateCatalogFromHFByRelationship('CATA_municipio', 1000, 'MUNICIPALITY', req.user.branch, 'PROVINCE', 'estado');
+        await updateCatalogFromHFByRelationship('CATA_estado', 1000, 'PROVINCE', req.user.branch, 'COUNTRY', 'pais');
+        await updateCatalogFromHFByRelationship('CATA_pais', 1000, 'COUNTRY', req.user.branch);
 
-        
+
         res.status(201).send('Done!');
     }
     catch (error) {
@@ -800,10 +801,10 @@ router.get('/catalogs/sync', authorize, async (req:any, res) => {
 });
 
 
-router.get('/products/sync', authorize, async (req:any, res) => {
+router.get('/products/sync', authorize, async (req: any, res) => {
 
     try {
-        const result = await productsSync(req.user.branch);
+        const result = await productsSync();
         res.send(result);
 
     } catch (e) {
@@ -893,9 +894,9 @@ function mapYearPeriodForTerm(frequencyType: string) {
 
 
 
-async function updateCatalogFromHF(name: string, chunk: number,branch: [number, string], filterActive?: boolean) {
+async function updateCatalogFromHF(name: string, chunk: number, branch: [number, string], filterActive?: boolean) {
     try {
-        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
         await db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
         const docsDestroy = await db.find({ selector: { couchdb_type: "CATALOG", name }, limit: 100000 });
         if (docsDestroy.docs.length > 0) {
@@ -955,9 +956,9 @@ async function updateCatalogFromHF(name: string, chunk: number,branch: [number, 
     }
 }
 
-async function updateCatalogFromHFByRelationship(name: string, chunk: number, shortname: string, branch:[number, string],relationship_name?: string, relationship?: string) {
+async function updateCatalogFromHFByRelationship(name: string, chunk: number, shortname: string, branch: [number, string], relationship_name?: string, relationship?: string) {
     try {
-        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
         await db.createIndex({ index: { fields: ["couchdb_type"] } });
         const docsDestroy = await db.find({ selector: { couchdb_type: shortname }, limit: 100000 });
 
@@ -1034,8 +1035,8 @@ async function updateCatalogFromHFByRelationship(name: string, chunk: number, sh
     }
 }
 
-async function updateCatalogGroupTimes(branch:[number,string]) {
-    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
+async function updateCatalogGroupTimes(branch: [number, string]) {
+    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g, '').toLowerCase()}` : '');
     await db.createIndex({ index: { fields: ["couchdb_type", "name"] } });
     const docsDestroy = await db.find({ selector: { couchdb_type: "CATALOG", name: "CATA_GroupMeetingTime" }, limit: 100000 });
 
@@ -1482,9 +1483,9 @@ router.get('/clients/createReference', authorize, async (req, res) => {
         //      typeReference: 3 -> id: Pago de moratorios por id_cliente
         //      typeReference: 6 -> id: Pago de crédito por id_contrato
 
-        const typeReference:number = parseInt(req.query.typeReference as string);
-        const contractId:number = parseInt(req.query.contractId as string);
-        const clientId:number = parseInt(req.query.clientId as string);
+        const typeReference: number = parseInt(req.query.typeReference as string);
+        const contractId: number = parseInt(req.query.contractId as string);
+        const clientId: number = parseInt(req.query.clientId as string);
 
         const id = typeReference == 2 ? clientId : contractId;
         const sqlRes = await createReference(typeReference, id);
@@ -1531,8 +1532,8 @@ async function findClientByKeyword(keyword: string) {
         .input("total_registros", sql.Int, 100)
         .input("id_oficina", sql.Int, 0)
         .input("id_opcion", sql.Int, 2)
-        .execute("CLIE_ObtenerPersonaCliente"); 
-        // .execute("MOV_BuscarPersona");
+        .execute("CLIE_ObtenerPersonaCliente");
+    // .execute("MOV_BuscarPersona");
     return result;
 }
 
@@ -1589,8 +1590,8 @@ async function searchGroupLoanByName(groupName: string, branchId: number) {
             TipoCliente: i.TipoCliente
         }))
 
-        const onlyFinished_or_Active = newRes.filter( (i:any) => (i.estatus =='ACEPTADO' && i.sub_estatus =='PRESTAMO ACTIVO')||
-                                                            (i.estatus =='ACEPTADO' && i.sub_estatus =='PRESTAMO FINALIZADO') )
+        const onlyFinished_or_Active = newRes.filter((i: any) => (i.estatus == 'ACEPTADO' && i.sub_estatus == 'PRESTAMO ACTIVO') ||
+            (i.estatus == 'ACEPTADO' && i.sub_estatus == 'PRESTAMO FINALIZADO'))
         return onlyFinished_or_Active;
 
     } catch (err: any) {
@@ -1604,14 +1605,14 @@ router.get("/groups/download", authorize, async (req: any, res) => {
         if (!req.query.branchId || !req.query.applicationId || !req.query.idCliente) {
             throw new Error('branch Id, application id or id Cliente params missing');
         }
-        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g,'').toLowerCase()}` : '');
+        const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${req.user.branch[1].replace(/ /g, '').toLowerCase()}` : '');
 
         const idCliente = parseInt(req.query.idCliente as string);
         const idSolicitud = parseInt(req.query.applicationId as string);
         const branchId = parseInt(req.query.branchId as string);
 
         const data = await getLoanApplicationById(idSolicitud, branchId);
-        const resData = await processLoanApplicationByDataRS(data,req.user.branch);
+        const resData = await processLoanApplicationByDataRS(data, req.user.branch);
 
         await db.createIndex({ index: { fields: ["couchdb_type"] } });
         const groupsQuery = await db.find({
@@ -1782,85 +1783,96 @@ router.get("/groups/download", authorize, async (req: any, res) => {
     }
 });
 
-export async function productsSync( branch:[number,string]) {
+export async function productsSync() {
 
-    const db = nano.use(process.env.COUCHDB_NAME ? `${process.env.COUCHDB_NAME}-${branch[1].replace(/ /g,'').toLowerCase()}` : '');
     const product: any = await getProductsWeb();
     if (!product || product.length === 0) {
         throw new Error("Not able to find the product(s)");
     }
-    const productsDestroy = await db.find({ selector: { couchdb_type: { "$eq": 'PRODUCT' } }, limit: 100000 });
+    const dbList = await findDbs()
 
-    const docsEliminate = productsDestroy.docs.map(doc => ({ _deleted: true, _id: doc._id, _rev: doc._rev }))
-    await db.bulk({ docs: docsEliminate })
+    // Aquí almacenamos el resultado del proceso Batch
+    const dbResult: {
+        dbName: string,
+        deletedProducts: number,
+        insertedProducts: number
+    }[] = [];
 
-    const rowData: any = [];
-    const creationDatetime = Date.now().toString();
+    for (let i = 0; i < dbList.length; i++) {
 
-    product.forEach((data: any) => {
+        const dbName = dbList[i];
+        const db = nano.use(dbName);
 
-        /// el dato de SQL viene en una lista separada por comas. Una vez split, hay que limpiar la cadena devuelta
-        const freqTypes = data.periodicidades.split(",").map((x: string) => x.trim());
+        const productsDestroy = await db.find({ selector: { couchdb_type: { "$eq": 'PRODUCT' } }, limit: 100000 });
 
-        rowData.push(
-            {
-                default_frecuency: [
-                    mapIdentifierForFrequency(freqTypes[0]),
-                    freqTypes[0]
-                ],
-                deleted: false,
-                default_mobile_product: false,
-                enabled: true,
-                product_type: "1",
-                product_name: data.nombre,
-                external_id: data.id,
-                min_amount: data.valor_minimo,
-                max_amount: data.valor_maximo,
-                default_amount: data.valor_minimo,
-                step_amount: 1000,
-                min_term: data.periodo_min,
-                max_term: data.periodo_max,
-                default_term: data.periodo_min,
-                min_rate: data.tasa_anual_min.toString(),
-                max_rate: data.tasa_anual_max.toString(),
-                rate: data.tasa_anual_min.toString(),
-                tax: data.impuesto.toString(),
-                years_type: data.tipo_ano,
-                allowed_term_type:
-                    freqTypes.map(
-                        (w: any, increment: number) => ({
-                            _id: increment,
-                            identifier: mapIdentifierForTerm(w),
-                            value: mapValueForTerm(w),
-                            year_periods: mapYearPeriodForTerm(w)
+        const docsEliminate = productsDestroy.docs.map(doc => ({ _deleted: true, _id: doc._id, _rev: doc._rev }))
+        await db.bulk({ docs: docsEliminate })
 
-                        }))
-                ,
-                allowed_frequency:
-                    freqTypes.map(
-                        (w: any, increment: number) => ({
-                            _id: increment,
-                            identifier: mapIdentifierForFrequency(w),
-                            value: w
-                        })),
-                liquid_guarantee: data.garantia_liquida.toString(),
-                GL_financeable: data.garantia_liquida_financiable,
-                requires_insurance: data.requiere_seguro,
-                logo: '',
-                avatar: '',
-                createdAt: creationDatetime,
-                updatedAt: creationDatetime,
-                couchdb_type: 'PRODUCT'
-            }
-        )
-    });
-    await db.bulk({ docs: rowData });
+        const rowData: any = [];
+        const creationDatetime = Date.now().toString();
 
-    return { docs: rowData.length }
+        product.forEach((data: any) => {
+            /// el dato de SQL viene en una lista separada por comas. Una vez split, hay que limpiar la cadena devuelta
+            const freqTypes = data.periodicidades.split(",").map((x: string) => x.trim());
+            rowData.push(
+                {
+                    default_frecuency: [
+                        mapIdentifierForFrequency(freqTypes[0]),
+                        freqTypes[0]
+                    ],
+                    deleted: false,
+                    default_mobile_product: false,
+                    enabled: true,
+                    product_type: "1",
+                    product_name: data.nombre,
+                    external_id: data.id,
+                    min_amount: data.valor_minimo,
+                    max_amount: data.valor_maximo,
+                    default_amount: data.valor_minimo,
+                    step_amount: 1000,
+                    min_term: data.periodo_min,
+                    max_term: data.periodo_max,
+                    default_term: data.periodo_min,
+                    min_rate: data.tasa_anual_min.toString(),
+                    max_rate: data.tasa_anual_max.toString(),
+                    rate: data.tasa_anual_min.toString(),
+                    tax: data.impuesto.toString(),
+                    years_type: data.tipo_ano,
+                    allowed_term_type:
+                        freqTypes.map(
+                            (w: any, increment: number) => ({
+                                _id: increment,
+                                identifier: mapIdentifierForTerm(w),
+                                value: mapValueForTerm(w),
+                                year_periods: mapYearPeriodForTerm(w)
+
+                            }))
+                    ,
+                    allowed_frequency:
+                        freqTypes.map(
+                            (w: any, increment: number) => ({
+                                _id: increment,
+                                identifier: mapIdentifierForFrequency(w),
+                                value: w
+                            })),
+                    liquid_guarantee: data.garantia_liquida.toString(),
+                    GL_financeable: data.garantia_liquida_financiable,
+                    requires_insurance: data.requiere_seguro,
+                    logo: '',
+                    avatar: '',
+                    createdAt: creationDatetime,
+                    updatedAt: creationDatetime,
+                    couchdb_type: 'PRODUCT'
+                })
+
+        });
+        await db.bulk({ docs: rowData });
+        dbResult.push({ dbName,deletedProducts: docsEliminate.length, insertedProducts: rowData.length })
+    }
+
+    return dbResult
 
 }
-
-
 
 
 

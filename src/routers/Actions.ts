@@ -750,10 +750,9 @@ router.get("/actions/client_with_wrong_lastname", authorize, async (req: any, re
     // dbList, string array with target DB name.
     try {
 
-
         const dbList = await findDbs();
         const results = [];
-
+        
         for (let index = 0; index < dbList.length; index++) {
             const dbName = dbList[index];
             const db = nano.use(dbName);
